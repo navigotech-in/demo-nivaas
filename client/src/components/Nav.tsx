@@ -320,7 +320,7 @@ export default function Nav({ onOpenConsult, onOpenLogin }: NavProps) {
             <button
               type="button"
               onClick={() => onOpenConsult()}
-              className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#1F9D66] text-[#FFFFFF] hover:bg-white shadow-md transition active:scale-[0.98] flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#1F9D66] text-[#FFFFFF] hover:bg-[#2BB578] shadow-md transition active:scale-[0.98] flex items-center gap-2"
             >
               <Icons.Phone size={15} />
               <span>Consult Online</span>
@@ -369,7 +369,7 @@ export default function Nav({ onOpenConsult, onOpenLogin }: NavProps) {
                 <a
                   href="#plans"
                   onClick={() => setSearchOpen(false)}
-                  className="shrink-0 px-6 py-2.5 bg-[#0EA5E9] text-white text-sm font-bold rounded-xl hover:bg-[#0EA5E9] transition"
+                  className="shrink-0 px-6 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition"
                 >
                   Search
                 </a>
@@ -468,7 +468,7 @@ export default function Nav({ onOpenConsult, onOpenLogin }: NavProps) {
 
       {/* News & Spotlight Modal */}
       {newsOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0EA5E9]/70 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
           <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white p-6 shadow-2xl border border-slate-300 text-slate-900">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2">

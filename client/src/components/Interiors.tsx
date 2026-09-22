@@ -25,7 +25,7 @@ export default function Interiors({ onOpenConsult }: InteriorsProps) {
           <button
             type="button"
             onClick={() => onOpenConsult('Complete Interior 3D Design')}
-            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-700 text-white hover:bg-[#0EA5E9] transition shadow-md"
+            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 transition shadow-md"
           >
             <Icons.Sparkles size={15} />
             <span>Get 3D Interior Quotation →</span>
@@ -34,21 +34,13 @@ export default function Interiors({ onOpenConsult }: InteriorsProps) {
 
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {interiorCategories.map((item, idx) => (
-            <div
-              key={idx}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card transition-all hover:-translate-y-0.5 hover:shadow-card-hover hover:border-slate-400"
-            >
+            <div key={idx} className="group flex flex-col overflow-hidden rounded-2xl bg-white transition-transform hover:-translate-y-0.5">
               <div className="relative aspect-[16/10] overflow-hidden bg-slate-200">
                 <Img
                   src={item.image}
                   alt={item.title}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center">
-                  <span className="select-none -rotate-12 rounded-md border border-white/30 bg-white/15 px-3 py-1 font-display text-xl font-extrabold tracking-[0.25em] text-white/85 shadow-sm backdrop-blur-[1px]">
-                    NIVAAS
-                  </span>
-                </div>
                 <span className="absolute bottom-3.5 left-3.5 z-[2] rounded-md border border-white/40 bg-white/90 px-2.5 py-1 text-[10px] font-bold text-slate-800 backdrop-blur shadow-sm">
                   {item.items}
                 </span>
@@ -64,14 +56,17 @@ export default function Interiors({ onOpenConsult }: InteriorsProps) {
                   </p>
                 </div>
 
-                <div className="mt-5 pt-3.5 border-t border-slate-200">
+                <div className="mt-5 pt-3.5 border-t border-slate-200 flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                    From ₹599 / sq.ft
+                  </span>
                   <button
                     type="button"
                     onClick={() => onOpenConsult(`Interior Category: ${item.title}`)}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200 py-2.5 text-center text-xs font-semibold text-slate-700 hover:bg-white hover:border-slate-500 hover:text-slate-900 transition flex items-center justify-center gap-1.5"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 transition group/link"
                   >
                     <span>Explore {item.title}</span>
-                    <Icons.ChevronRight size={14} />
+                    <Icons.ChevronRight size={14} className="transition group-hover/link:translate-x-0.5" />
                   </button>
                 </div>
               </div>

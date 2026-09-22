@@ -43,11 +43,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0EA5E9]/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
       <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-slate-300 text-slate-800">
         <div className="flex items-center justify-between border-b border-slate-200 pb-3.5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-700 text-white font-bold text-xs shadow">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white font-bold text-xs shadow">
               <Icons.User size={16} />
             </span>
             <h3 className="font-display text-lg font-bold text-slate-900">
@@ -76,7 +76,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="button"
                 onClick={handleClose}
-                className="mt-5 w-full rounded-xl bg-slate-700 py-3 text-sm font-bold text-white shadow-md hover:bg-[#0EA5E9]"
+                className="mt-5 w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md hover:bg-blue-700"
               >
                 Continue Browsing Plans
               </button>
@@ -109,7 +109,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="submit"
                 disabled={mobile.length < 10 || loading}
-                className="w-full rounded-xl bg-slate-700 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#0EA5E9] disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Icons.Phone size={15} />
                 <span>{loading ? 'Sending OTP...' : 'Get OTP on WhatsApp / SMS →'}</span>
@@ -138,7 +138,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="submit"
                 disabled={otp.length < 4 || loading}
-                className="w-full rounded-xl bg-slate-700 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#0EA5E9] disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Icons.Check size={16} />
                 <span>{loading ? 'Verifying...' : 'Verify & Continue →'}</span>

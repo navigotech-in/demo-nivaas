@@ -639,6 +639,153 @@ export const trends = [
   },
 ]
 
+export const platformStats = [
+  { label: 'Projects Completed', value: '35,000+', suffix: 'Pan-India' },
+  { label: 'Cities Served', value: '1,200+', suffix: 'Designs Delivered' },
+  { label: 'Partner Offices', value: '80+', suffix: '& Growing' },
+  { label: 'Homeowner Rating', value: '4.8★', suffix: 'Avg. Google Score' },
+]
+
+export const processSteps = [
+  {
+    step: '01',
+    title: 'Share Your Plot Details',
+    text: 'Tell us your plot size, facing, floors and budget. Our architects review zoning rules and Vastu orientation for free.',
+    icon: 'blueprint',
+    cta: 'Calculate My Estimate',
+  },
+  {
+    step: '02',
+    title: 'Get Plans & Cost Estimate',
+    text: 'Receive 2D layouts, 3D elevations and structural drawings with a transparent per sq.ft cost breakdown within days.',
+    icon: 'layers',
+    cta: 'Browse Ready Plans',
+  },
+  {
+    step: '03',
+    title: 'Build With Site Supervision',
+    text: 'Hand the drawings to our verified contractor network or take PMC supervision for milestone-wise quality audits.',
+    icon: 'hardhat',
+    cta: 'Consult a Supervisor',
+  },
+]
+
+export const contractorTrades = [
+  { title: 'Civil & Masonry', desc: 'Foundation, brickwork & plinth', icon: 'hardhat' },
+  { title: 'Concrete & RCC', desc: 'Column, slab & beam casting', icon: 'building' },
+  { title: 'Roofing & Waterproofing', desc: 'Slab treatments & terrace work', icon: 'shieldcheck' },
+  { title: 'Flooring & Tiling', desc: 'Vitrified, marble & anti-skid', icon: 'grid' },
+  { title: 'Electrical Wiring', desc: 'Concealed conduit & switchgear', icon: 'calculator' },
+  { title: 'Plumbing & Sanitary', desc: 'CPVC lines, drainage & fixtures', icon: 'compass' },
+  { title: 'Painting & Textures', desc: 'Puttios, weather-proof & designer', icon: 'sun' },
+  { title: 'False Ceiling & Carpentry', desc: 'POP, gypsum & modular units', icon: 'sofa' },
+  { title: 'Landscape & Garden', desc: 'Lawns, planters & pergolas', icon: 'home' },
+  { title: 'Solar & Rainwater', desc: 'Roof solar, harvest & sump lines', icon: 'layers' },
+]
+
+export const oneStopServices = [
+  {
+    id: 'pmc',
+    title: 'Project Management',
+    icon: 'briefcase',
+    desc: 'Single-point accountability from drawings to handover — budget, billing, contractors and quality all governed by one team.',
+    link: '#services',
+    cta: 'Explore PMC',
+  },
+  {
+    id: 'turnkey',
+    title: 'Turnkey Construction',
+    icon: 'building',
+    desc: 'Give us the keys to your plot. We handle every trade, every material bill and every milestone under a fixed-price contract.',
+    link: '#contact',
+    cta: 'Get Fixed Quote',
+  },
+  {
+    id: 'contractors',
+    title: 'Contractors & Labour',
+    icon: 'hardhat',
+    desc: 'A vetted network of licensed masons, electricians, plumbers and interior carpenters ready for on-demand engagement.',
+    link: '#contractors',
+    cta: 'Hire a Contractor',
+  },
+  {
+    id: 'homeloan',
+    title: 'Home Loan Assistance',
+    icon: 'calculator',
+    desc: 'Documentation support and pre-approved sanctions through partner banks for construction, plot purchase and interiors.',
+    link: '#contact',
+    cta: 'Check Eligibility',
+  },
+]
+
+export const commercialTabs = [
+  {
+    id: 'commercial',
+    label: 'Commercial',
+    desc: 'Shops, showrooms & office blocks with parking norms and signage-ready facades.',
+    image: img('https://images.pexels.com/photos/19510801/pexels-photo-19510801.jpeg'),
+  },
+  {
+    id: 'institutional',
+    label: 'Institutional',
+    desc: 'Schools, clinics, banks and community halls with crowd-flow and safety planning.',
+    image: img('https://images.pexels.com/photos/35114454/pexels-photo-35114454.jpeg'),
+  },
+  {
+    id: 'hospitality',
+    label: 'Hospitality',
+    desc: 'Budget lodges, homestays and farmhouses with service zones and guest privacy.',
+    image: img('https://images.pexels.com/photos/29120121/pexels-photo-29120121.jpeg'),
+  },
+  {
+    id: 'residential',
+    label: 'Residential + Rental',
+    desc: 'Multi-unit rentals, G+3 floors and mixed-use schemes for steady rental yield.',
+    image: img('https://images.pexels.com/photos/38794776/pexels-photo-38794776.jpeg'),
+  },
+]
+
+export const quickAnswers = [
+  {
+    q: 'Can I build from NIVAAS plan in my city?',
+    a: 'Yes — plans are code-compliant and our architects help with local municipal approvals.',
+    tag: 'Approvals',
+  },
+  {
+    q: 'Do you provide structural engineers?',
+    a: 'Yes, every package includes certified structural drawing sets.',
+    tag: 'Engineering',
+  },
+  {
+    q: 'What is the fastest delivery time?',
+    a: 'Ready 2D plans download instantly; custom drawings take 3-7 days.',
+    tag: 'Delivery',
+  },
+  {
+    q: 'Do you sell land or construction material?',
+    a: 'No — we focus purely on design, engineering and supervision.',
+    tag: 'Scope',
+  },
+]
+
+export const achievements = [
+  { title: 'Startup of the Year 2025', org: 'Architecture & Design Summit' },
+  { title: 'Top PropTech Platform', org: 'Realty+ India Awards' },
+  { title: "India's Most Trusted Design Brand", org: 'Consumer Choice Award' },
+  { title: 'Best Online Architectural Service', org: 'National Design Council' },
+]
+
+export const ventures = [
+  { name: 'NIVAAS Studio', tag: 'Interior Design' },
+  { name: 'NIVAAS Construction', tag: 'PMC & Build' },
+  { name: 'NIVAAS Finance', tag: 'Home Loans' },
+  { name: 'NIVAAS Commerce', tag: 'Materials' },
+  { name: 'NIVAAS Academy', tag: 'Site Training' },
+  { name: 'NIVAAS.ai', tag: 'AI Design Desk' },
+]
+
+export const paymentPartners = ['Razorpay', 'HDFC Bank', 'ICICI Bank', 'SBI', 'Paytm', 'UPI']
+
 export function img(url: string): string {
   if (url.includes('images.pexels.com')) {
     return url + '?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop'

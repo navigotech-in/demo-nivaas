@@ -58,7 +58,7 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
             onClick={() => setActiveTab('area')}
             className={`px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 ${
               activeTab === 'area'
-                ? 'bg-slate-700 text-white shadow-md'
+                ? 'bg-blue-600 text-white shadow-md'
                 : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
             }`}
           >
@@ -70,7 +70,7 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
             onClick={() => setActiveTab('bhk')}
             className={`px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 ${
               activeTab === 'bhk'
-                ? 'bg-slate-700 text-white shadow-md'
+                ? 'bg-blue-600 text-white shadow-md'
                 : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
             }`}
           >
@@ -82,7 +82,7 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
             onClick={() => setActiveTab('direction')}
             className={`px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 ${
               activeTab === 'direction'
-                ? 'bg-slate-700 text-white shadow-md'
+                ? 'bg-blue-600 text-white shadow-md'
                 : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
             }`}
           >
@@ -94,7 +94,7 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
             onClick={() => setActiveTab('location')}
             className={`px-4 py-2.5 rounded-xl transition shrink-0 flex items-center gap-2 ${
               activeTab === 'location'
-                ? 'bg-slate-700 text-white shadow-md'
+                ? 'bg-blue-600 text-white shadow-md'
                 : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
             }`}
           >
@@ -103,12 +103,12 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
           </button>
         </div>
 
-        {/* Plans Grid */}
+        {/* Trending Card Grid */}
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
           {items.map((item, idx) => (
             <div
               key={idx}
-              className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card transition-all hover:-translate-y-0.5 hover:shadow-card-hover hover:border-slate-400 flex flex-col"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card transition-all hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-card-hover"
             >
               <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
                 <Img
@@ -116,40 +116,38 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
                   alt={item.label}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center">
-                  <span className="select-none -rotate-12 rounded-md border border-white/30 bg-white/15 px-3 py-1 font-display text-xl font-extrabold tracking-[0.25em] text-white/85 shadow-sm backdrop-blur-[1px]">
-                    NIVAAS
-                  </span>
-                </div>
-                <span className="absolute top-3.5 left-3.5 z-[2] rounded-md border border-white/40 bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-800 backdrop-blur shadow-sm">
+                <span className="absolute left-3.5 top-3.5 z-[2] rounded-md border border-white/40 bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-800 backdrop-blur shadow-sm">
                   {item.label}
                 </span>
               </div>
-
-              <div className="p-5 flex flex-1 flex-col justify-between">
+              <div className="flex flex-1 flex-col justify-between p-5">
                 <div>
-                  <div className="flex items-center justify-between text-xs text-slate-600 mb-1.5 font-medium">
+                  <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-slate-700">
                     <span className="flex items-center gap-1">
-                      <Icons.Ruler size={13} className="text-slate-700" /> {item.size}
+                      <Icons.Ruler size={13} className="text-slate-700" />
+                      {item.size}
                     </span>
-                    <span className="font-bold text-slate-950 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-300">
+                    <span className="rounded-md bg-slate-100 border border-slate-300 px-2 py-0.5 text-[11px] font-bold text-slate-950">
                       {item.bhk}
                     </span>
                   </div>
-                  <h3 className="font-display text-base sm:text-lg font-bold text-slate-900 group-hover:text-slate-900 transition">
+                  <h3 className="font-display text-base sm:text-lg font-bold text-slate-900">
                     {item.label} Architectural Blueprint
                   </h3>
                 </div>
-
-                <div className="mt-5 pt-3.5 border-t border-slate-200 flex items-center justify-between">
+                <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
                   <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Package Starting</span>
-                    <span className="text-base font-extrabold text-slate-950">{item.price}</span>
+                    <span className="block text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                      Package Starting
+                    </span>
+                    <span className="mt-0.5 block text-base font-extrabold text-slate-950">
+                      {item.price}
+                    </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => onOpenConsult(`Interested in ${item.label} (${item.size})`)}
-                    className="px-4 py-2 rounded-xl bg-slate-100 border border-slate-300 text-xs font-bold text-slate-800 hover:bg-slate-700 hover:text-white hover:border-slate-700 transition shadow-sm flex items-center gap-1.5"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
                   >
                     <Icons.FileText size={13} />
                     <span>Get Floor Plan →</span>

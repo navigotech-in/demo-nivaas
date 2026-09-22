@@ -76,7 +76,7 @@ export default function ConsultModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0EA5E9]/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
       <div
         className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-300 animate-fadeIn"
         role="dialog"
@@ -85,7 +85,7 @@ export default function ConsultModal({
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-slate-200 bg-slate-100 px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-700 text-white font-bold text-sm shadow">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white font-bold text-sm shadow">
               <Icons.Blueprint size={18} />
             </span>
             <div>
@@ -121,7 +121,7 @@ export default function ConsultModal({
               <button
                 type="button"
                 onClick={handleReset}
-                className="mt-6 inline-flex rounded-xl bg-slate-700 px-7 py-2.5 text-xs font-bold text-white shadow hover:bg-[#0EA5E9]"
+                className="mt-6 inline-flex rounded-xl bg-blue-600 px-7 py-2.5 text-xs font-bold text-white shadow hover:bg-blue-700"
               >
                 Close & Browse Plans
               </button>
@@ -244,7 +244,7 @@ export default function ConsultModal({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-slate-700 py-3.5 text-sm font-bold text-white shadow-md transition hover:bg-[#0EA5E9] disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? 'Submitting...' : 'Book Free Online Consultation →'}
               </button>

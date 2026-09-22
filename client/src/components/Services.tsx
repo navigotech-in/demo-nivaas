@@ -41,7 +41,7 @@ export default function Services({ onOpenConsult }: ServicesProps) {
           <button
             type="button"
             onClick={() => onOpenConsult()}
-            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-700 text-white hover:bg-[#0EA5E9] transition shadow-md"
+            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 transition shadow-md"
           >
             <Icons.Sparkles size={15} />
             <span>Request Custom Package →</span>
@@ -94,7 +94,7 @@ export default function Services({ onOpenConsult }: ServicesProps) {
                 <button
                   type="button"
                   onClick={() => onOpenConsult(srv.title)}
-                  className="w-full rounded-xl bg-slate-100 border border-slate-300 py-2.5 text-xs font-bold text-slate-800 hover:bg-slate-700 hover:text-white hover:border-slate-700 transition shadow-sm flex items-center justify-center gap-2"
+                  className="w-full rounded-xl bg-slate-100 border border-slate-300 py-2.5 text-xs font-bold text-slate-800 hover:bg-blue-600 hover:text-white hover:border-slate-700 transition shadow-sm flex items-center justify-center gap-2"
                 >
                   <span>Enquire for {srv.title}</span>
                   <Icons.ChevronRight size={14} />

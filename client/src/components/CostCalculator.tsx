@@ -135,7 +135,7 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                     onClick={() => setFloors(fl.val)}
                     className={`py-2.5 px-1 rounded-xl border text-xs text-center transition ${
                       floors === fl.val
-                        ? 'border-slate-700 bg-slate-700 text-white font-bold shadow'
+                        ? 'border-slate-700 bg-blue-600 text-white font-bold shadow'
                         : 'border-slate-300 bg-white text-slate-800 hover:border-slate-400'
                     }`}
                   >
@@ -175,7 +175,7 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                     <span>₹{(civilCost / 100000).toFixed(2)} L (52%)</span>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#0EA5E9] h-2 rounded-full" style={{ width: '52%' }} />
+                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '52%' }} />
                   </div>
                 </div>
 
@@ -206,12 +206,12 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                 <div>
                   <div className="flex justify-between text-xs font-semibold text-slate-800 mb-1">
                     <span className="flex items-center gap-1.5">
-                      <Icons.Blueprint size={13} className="text-sky-400" /> Architecture, CAD & Approvals
+                      <Icons.Blueprint size={13} className="text-blue-500" /> Architecture, CAD & Approvals
                     </span>
                     <span>₹{(designPermitCost / 100000).toFixed(2)} L (8%)</span>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                    <div className="bg-sky-400 h-2 rounded-full" style={{ width: '8%' }} />
+                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '8%' }} />
                   </div>
                 </div>
               </div>
@@ -224,7 +224,7 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                   `Cost Estimate Query: ${area} sq.ft, ${quality.toUpperCase()} grade, ${floors} Floor(s), Est. ₹${(totalCost / 100000).toFixed(2)} Lakhs`
                 )
               }
-              className="mt-6 w-full rounded-xl bg-slate-700 py-3 text-center text-sm font-bold text-white shadow-md hover:bg-[#0EA5E9] transition flex items-center justify-center gap-2"
+              className="mt-6 w-full rounded-xl bg-blue-600 py-3 text-center text-sm font-bold text-white shadow-md hover:bg-blue-700 transition flex items-center justify-center gap-2"
             >
               <Icons.FileText size={16} />
               <span>Get Free Detailed BOQ & Material List →</span>

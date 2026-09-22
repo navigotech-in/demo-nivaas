@@ -1,4 +1,4 @@
-import { site } from '../lib/data'
+import { site, paymentPartners } from '../lib/data'
 import { Icons } from './Icons'
 
 export default function Footer() {
@@ -145,6 +145,25 @@ export default function Footer() {
               <Icons.MapPin size={13} className="text-[#6FC39A]" />
               <span>{site.city}</span>
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Partners */}
+      <div className="border-t border-[#1F5037] bg-[#0B2A1F]/40 py-5">
+        <div className="container-content flex flex-col md:flex-row items-center justify-between gap-3">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-[#8BE4BC] flex items-center gap-1.5">
+            <Icons.ShieldCheck size={13} /> Secure Payments via
+          </span>
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            {paymentPartners.map((p) => (
+              <span
+                key={p}
+                className="rounded-full border border-[#2B5940] bg-[#0A2818]/70 px-3.5 py-1.5 text-[11px] font-bold text-[#9FC8B2]"
+              >
+                {p}
+              </span>
+            ))}
           </div>
         </div>
       </div>

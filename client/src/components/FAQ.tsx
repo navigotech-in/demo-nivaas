@@ -58,7 +58,7 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
                   <div
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base font-bold transition-transform ${
                       isOpen
-                        ? 'bg-slate-700 text-white rotate-45'
+                        ? 'bg-blue-600 text-white rotate-45'
                         : 'bg-white border border-slate-300 text-slate-600'
                     }`}
                   >
@@ -92,7 +92,7 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
           <button
             type="button"
             onClick={onOpenConsult}
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-700 px-7 py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#0EA5E9] transition active:scale-[0.98]"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-700 transition active:scale-[0.98]"
           >
             <Icons.Phone size={15} />
             <span>Talk to an Architect Now</span>

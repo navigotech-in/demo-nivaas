@@ -3,7 +3,7 @@ import Img from './Img'
 import { Icons } from './Icons'
 
 const HERO_BG =
-  'https://images.pexels.com/photos/34968154/pexels-photo-34968154.jpeg?auto=compress&cs=tinysrgb&w=2000&h=1200&fit=crop'
+  'https://images.pexels.com/photos/35289099/pexels-photo-35289099.jpeg?auto=compress&cs=tinysrgb&w=1920'
 
 const stats = [
   { value: '12,000+', label: 'Verified House Plans', icon: Icons.Blueprint },
@@ -75,17 +75,17 @@ export default function Hero({ onCalculate }: HeroProps) {
       <div className="relative min-h-[600px] lg:min-h-[660px] overflow-hidden">
         <Img
           src={HERO_BG}
-          alt="Modern Indian residential home design with warm ambient lighting"
-          className="h-[640px] lg:h-[700px] w-full object-cover"
+          alt="Modern Indian residential building design with warm ambient lighting"
+          className="aspect-[4/3] w-full object-cover sm:aspect-[16/9]"
           loading="eager"
         />
-        {/* Cool Slate Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/65 to-[#0F172A]/35" />
+        {/* Dark Bottom Overlay (keeps house visible at top, fixes card contrast) */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0F1220]/90 via-[#0F1220]/35 to-[#0F1220]/10" />
 
         {/* Hero Central Content */}
         <div className="container-content absolute inset-0 flex flex-col justify-center py-10 sm:py-12">
           {/* Hindi / English Headline */}
-          <div className="text-center text-white mb-6 animate-fadeIn">
+          <div className="text-center text-white mb-5 animate-fadeIn">
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-500/20 border border-slate-400/30 px-4 py-1.5 text-xs font-bold text-slate-300 uppercase tracking-widest backdrop-blur-md mb-3 shadow-sm">
               <Icons.Sparkles size={14} className="text-amber-300" />
               <span>India's #1 Architectural & Home Planning Network</span>
@@ -99,7 +99,7 @@ export default function Hero({ onCalculate }: HeroProps) {
           </div>
 
           {/* Interactive Calculator Widget (Glass: house image visible behind) */}
-          <div className="w-full max-w-5xl mx-auto rounded-3xl bg-white/60 backdrop-blur-xl p-4 sm:p-7 shadow-2xl border border-white/40 text-slate-800">
+          <div className="w-full max-w-5xl mx-auto rounded-3xl bg-white/70 backdrop-blur-2xl p-4 sm:p-7 shadow-2xl border border-white/60 text-slate-800">
             {/* Service Selection Tabs */}
             <div className="flex items-center justify-start sm:justify-center gap-1.5 sm:gap-2.5 overflow-x-auto pb-3.5 border-b border-slate-200 scrollbar-none text-xs sm:text-sm font-semibold">
               <button
@@ -107,7 +107,7 @@ export default function Hero({ onCalculate }: HeroProps) {
                 onClick={() => setActiveTab('2d')}
                 className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${
                   activeTab === '2d'
-                    ? 'bg-slate-700 text-white shadow-md'
+                    ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
@@ -120,7 +120,7 @@ export default function Hero({ onCalculate }: HeroProps) {
                 onClick={() => setActiveTab('3d')}
                 className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${
                   activeTab === '3d'
-                    ? 'bg-slate-700 text-white shadow-md'
+                    ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
@@ -133,7 +133,7 @@ export default function Hero({ onCalculate }: HeroProps) {
                 onClick={() => setActiveTab('structural')}
                 className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${
                   activeTab === 'structural'
-                    ? 'bg-slate-700 text-white shadow-md'
+                    ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
@@ -146,7 +146,7 @@ export default function Hero({ onCalculate }: HeroProps) {
                 onClick={() => setActiveTab('presentation')}
                 className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${
                   activeTab === 'presentation'
-                    ? 'bg-slate-700 text-white shadow-md'
+                    ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
@@ -159,7 +159,7 @@ export default function Hero({ onCalculate }: HeroProps) {
                 onClick={() => setActiveTab('more')}
                 className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${
                   activeTab === 'more'
-                    ? 'bg-slate-700 text-white shadow-md'
+                    ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
@@ -282,7 +282,7 @@ export default function Hero({ onCalculate }: HeroProps) {
                 <div className="col-span-2 sm:col-span-1 lg:col-span-1">
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-slate-700 py-2.5 px-4 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#0EA5E9] transition active:scale-[0.98] flex items-center justify-center gap-2"
+                    className="w-full rounded-xl bg-blue-600 py-2.5 px-4 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-700 transition active:scale-[0.98] flex items-center justify-center gap-2"
                   >
                     <Icons.Calculator size={16} />
                     <span>Calculate Price</span>
@@ -390,7 +390,7 @@ export default function Hero({ onCalculate }: HeroProps) {
               href="https://play.google.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-[#0EA5E9] text-white px-4 py-2 rounded-xl text-xs hover:bg-[#0369A1] transition shadow-md"
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-xs hover:bg-blue-700 transition shadow-md"
             >
               <span>🤖</span>
               <div className="text-left">
@@ -402,7 +402,7 @@ export default function Hero({ onCalculate }: HeroProps) {
               href="https://apple.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-[#0EA5E9] text-white px-4 py-2 rounded-xl text-xs hover:bg-[#0369A1] transition shadow-md"
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-xs hover:bg-blue-700 transition shadow-md"
             >
               <span>🍏</span>
               <div className="text-left">

@@ -2,16 +2,26 @@ import { useState } from 'react'
 import Nav from './components/Nav'
 import Hero from './components/Hero'
 import MediaSpotlight from './components/MediaSpotlight'
+import StatsCounter from './components/StatsCounter'
+import AboutNivaas from './components/AboutNivaas'
 import Projects from './components/Projects'
 import Elevations from './components/Elevations'
 import TrendingPlans from './components/TrendingPlans'
 import Interiors from './components/Interiors'
+import CommercialDesigns from './components/CommercialDesigns'
 import Services from './components/Services'
+import OneStop from './components/OneStop'
 import CostCalculator from './components/CostCalculator'
+import ContractorGrid from './components/ContractorGrid'
 import Reviews from './components/Reviews'
 import Blogs from './components/Blogs'
+import HowItWorks from './components/HowItWorks'
+import QuickAnswers from './components/QuickAnswers'
 import FAQ from './components/FAQ'
 import Contact from './components/Contact'
+import AppCta from './components/AppCta'
+import Achievements from './components/Achievements'
+import ProjectCompleted from './components/ProjectCompleted'
 import Footer from './components/Footer'
 import ConsultModal from './components/ConsultModal'
 import LoginModal from './components/LoginModal'
@@ -80,6 +90,12 @@ function App() {
         {/* Media Coverage & Credibility Spotlight */}
         <MediaSpotlight />
 
+        {/* Trusted Numbers */}
+        <StatsCounter />
+
+        {/* About NIVAAS */}
+        <AboutNivaas />
+
         {/* House Plans Catalog */}
         <Projects onOpenConsult={handleOpenConsult} />
 
@@ -92,11 +108,20 @@ function App() {
         {/* Interior Design by Room */}
         <Interiors onOpenConsult={handleOpenConsult} />
 
+        {/* Commercial & Mixed-Use Designs */}
+        <CommercialDesigns onOpenConsult={handleOpenConsult} />
+
         {/* Architectural, Structural & PMC Services */}
         <Services onOpenConsult={handleOpenConsult} />
 
+        {/* One-Stop: PMC, Turnkey, Contractors, Loans */}
+        <OneStop onOpenConsult={handleOpenConsult} />
+
         {/* Interactive Construction Cost Estimator */}
         <CostCalculator onOpenConsult={handleOpenConsult} />
+
+        {/* Verified Contractors & Skilled Trades */}
+        <ContractorGrid />
 
         {/* Client Reviews & Video Testimonials */}
         <Reviews />
@@ -104,11 +129,26 @@ function App() {
         {/* Architecture & Vastu Guides */}
         <Blogs onOpenConsult={handleOpenConsult} />
 
+        {/* How NIVAAS Works */}
+        <HowItWorks onOpenConsult={handleOpenConsult} />
+
+        {/* Quick Answers */}
+        <QuickAnswers onOpenConsult={handleOpenConsult} />
+
         {/* Frequently Asked Questions */}
         <FAQ onOpenConsult={() => handleOpenConsult('FAQ Architect Consultation')} />
 
+        {/* Pan-India Projects Completed */}
+        <ProjectCompleted />
+
         {/* Contact & Enquiry Form */}
         <Contact />
+
+        {/* Mobile App CTA */}
+        <AppCta />
+
+        {/* Achievements & Ventures */}
+        <Achievements />
       </main>
 
       {/* Global Footer */}

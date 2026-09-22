@@ -35,9 +35,9 @@ export default function WhatsAppWidget({ onOpenConsult }: WhatsAppWidgetProps) {
         {openChat && (
           <div className="w-[320px] sm:w-[380px] rounded-3xl bg-white shadow-2xl border border-slate-300 overflow-hidden animate-fadeIn text-slate-800">
             {/* Header */}
-            <div className="bg-[#0369A1] p-4 text-white flex items-center justify-between border-b border-slate-700">
+            <div className="bg-blue-600 p-4 text-white flex items-center justify-between border-b border-blue-700">
               <div className="flex items-center gap-2.5">
-                <div className="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center text-white shadow">
+                <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow">
                   <Icons.WhatsApp size={22} />
                 </div>
                 <div>
@@ -98,7 +98,7 @@ export default function WhatsAppWidget({ onOpenConsult }: WhatsAppWidgetProps) {
               />
               <button
                 type="submit"
-                className="shrink-0 px-4 py-2.5 bg-slate-700 hover:bg-[#0EA5E9] text-white rounded-xl text-xs font-bold transition shadow"
+                className="shrink-0 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow"
               >
                 Send
               </button>

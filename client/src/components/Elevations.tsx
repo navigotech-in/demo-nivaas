@@ -25,7 +25,7 @@ export default function Elevations({ onOpenConsult }: ElevationsProps) {
           <button
             type="button"
             onClick={() => onOpenConsult('Custom 3D Elevation')}
-            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-700 text-white hover:bg-[#0EA5E9] transition shadow-md active:scale-[0.98]"
+            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 transition shadow-md active:scale-[0.98]"
           >
             <Icons.Sparkles size={15} />
             <span>Get Custom 3D Elevation →</span>
@@ -44,7 +44,7 @@ export default function Elevations({ onOpenConsult }: ElevationsProps) {
                   alt={item.title}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <span className="absolute top-3.5 left-3.5 rounded-full bg-[#0EA5E9]/85 backdrop-blur px-3 py-1 text-[11px] font-bold text-white shadow-md flex items-center gap-1">
+                <span className="absolute top-3.5 left-3.5 rounded-full bg-slate-900/85 backdrop-blur px-3 py-1 text-[11px] font-bold text-white shadow-md flex items-center gap-1">
                   <Icons.Sparkles size={11} className="text-amber-400" />
                   <span>{item.badge}</span>
                 </span>
@@ -64,7 +64,7 @@ export default function Elevations({ onOpenConsult }: ElevationsProps) {
                   <button
                     type="button"
                     onClick={() => onOpenConsult(`Elevation Style: ${item.title}`)}
-                    className="w-full rounded-xl bg-slate-100 border border-slate-300 py-2.5 text-center text-xs font-bold text-slate-800 hover:bg-slate-700 hover:text-white hover:border-slate-700 transition shadow-sm flex items-center justify-center gap-1.5"
+                    className="w-full rounded-xl bg-slate-100 border border-slate-300 py-2.5 text-center text-xs font-bold text-slate-800 hover:bg-blue-600 hover:text-white hover:border-slate-700 transition shadow-sm flex items-center justify-center gap-1.5"
                   >
                     <Icons.Eye size={14} />
                     <span>View 3D Designs</span>

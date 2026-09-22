@@ -6,14 +6,17 @@ import { Icons } from './Icons'
 export default function Reviews() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [playingVideo, setPlayingVideo] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState(false)
 
   const current: ReviewItem = clientReviews[activeIndex]
 
   const handlePrev = () => {
+    setExpanded(false)
     setActiveIndex((prev) => (prev === 0 ? clientReviews.length - 1 : prev - 1))
   }
 
   const handleNext = () => {
+    setExpanded(false)
     setActiveIndex((prev) => (prev === clientReviews.length - 1 ? 0 : prev + 1))
   }
 
@@ -43,7 +46,7 @@ export default function Reviews() {
                 <button
                   key={rev.id}
                   type="button"
-                  onClick={() => setActiveIndex(idx)}
+                  onClick={() => { setExpanded(false); setActiveIndex(idx) }}
                   className={`relative flex flex-col items-center transition-all duration-300 group ${
                     isSelected ? 'scale-110' : 'opacity-60 hover:opacity-90'
                   }`}
@@ -62,7 +65,7 @@ export default function Reviews() {
                       className="h-full w-full rounded-full object-cover shadow-sm"
                     />
                     {isSelected && (
-                      <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-white text-[10px] shadow">
+                      <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white text-[10px] shadow">
                         <Icons.Play size={10} />
                       </span>
                     )}
@@ -80,61 +83,90 @@ export default function Reviews() {
           </div>
 
           {/* Active Review Spotlight Card */}
-          <div className="mt-8 rounded-3xl bg-white p-6 sm:p-10 shadow-xl border border-slate-300 relative text-center max-w-3xl mx-auto">
-            {/* Nav arrows */}
-            <button
-              type="button"
-              onClick={handlePrev}
-              className="absolute left-2 sm:-left-6 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-lg border border-slate-300 text-slate-800 hover:bg-slate-700 hover:text-white transition"
-              aria-label="Previous review"
-            >
-              <Icons.ChevronLeft size={20} />
-            </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              className="absolute right-2 sm:-right-6 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-lg border border-slate-300 text-slate-800 hover:bg-slate-700 hover:text-white transition"
-              aria-label="Next review"
-            >
-              <Icons.ChevronRight size={20} />
-            </button>
-
-            {/* Stars */}
-            <div className="flex justify-center gap-1 text-amber-500 mb-3.5">
-              {[...Array(current.stars)].map((_, i) => (
-                <Icons.Star key={i} size={18} />
-              ))}
-            </div>
-
-            {/* Quote */}
-            <blockquote className="font-display text-lg sm:text-xl text-slate-900 leading-relaxed italic">
-              "{current.quote}"
-            </blockquote>
-
-            {/* Author info & tags */}
-            <div className="mt-6 pt-6 border-t border-slate-200">
-              <h3 className="font-display text-lg font-bold text-slate-900">{current.name}</h3>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-900 flex items-center justify-center gap-1 mt-0.5">
-                <Icons.MapPin size={13} /> {current.city}
-              </p>
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs">
-                <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700 border border-slate-300 flex items-center gap-1.5">
-                  <Icons.Ruler size={13} className="text-slate-700" /> {current.plotSize}
-                </span>
-                <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-950 border border-slate-300 flex items-center gap-1.5">
-                  <Icons.Blueprint size={13} className="text-slate-900" /> {current.service}
-                </span>
-              </div>
-
-              {/* Watch Video Button */}
+          <div className="mt-8 max-w-2xl mx-auto">
+            <div className="rounded-2xl bg-white shadow-lg border border-slate-200 p-5 sm:p-6 flex flex-col sm:flex-row items-start gap-5 sm:gap-6 relative text-left">
+              {/* Nav arrows */}
               <button
                 type="button"
-                onClick={() => setPlayingVideo(current.youtubeId)}
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-700 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#0EA5E9] transition"
+                onClick={handlePrev}
+                className="absolute left-2 -top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-slate-300 text-slate-800 hover:bg-blue-600 hover:text-white transition"
+                aria-label="Previous review"
               >
-                <Icons.Play size={13} />
-                <span>Watch Client Video Story</span>
+                <Icons.ChevronLeft size={16} />
               </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                className="absolute right-2 -top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-slate-300 text-slate-800 hover:bg-blue-600 hover:text-white transition"
+                aria-label="Next review"
+              >
+                <Icons.ChevronRight size={16} />
+              </button>
+
+              {/* Big client image */}
+              <div className="shrink-0 w-full sm:w-56">
+                <div className="relative overflow-hidden rounded-xl border border-slate-200 shadow-md">
+                  <img
+                    src={current.avatar}
+                    alt={current.name}
+                    className="h-48 w-full sm:h-56 object-cover"
+                  />
+                  <span className="absolute bottom-2 left-2 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white shadow">
+                    <Icons.Play size={12} />
+                  </span>
+                </div>
+                <div className="mt-2.5 flex items-center gap-1.5 text-amber-500">
+                  {[...Array(current.stars)].map((_, i) => (
+                    <Icons.Star key={i} size={15} />
+                  ))}
+                  <span className="ml-1 text-xs font-bold text-slate-900">{current.stars}.0</span>
+                </div>
+              </div>
+
+              {/* Review content */}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline justify-between gap-1.5">
+                  <h3 className="font-display text-base sm:text-lg font-bold text-slate-900">{current.name}</h3>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                    <Icons.MapPin size={12} /> {current.city}
+                  </span>
+                </div>
+
+                <blockquote className="mt-2 font-display text-sm sm:text-base text-slate-800 leading-relaxed italic">
+                  "{(() => {
+                    const full = current.quote
+                    const short = full.length > 130 ? `${full.slice(0, 130)}\u2026` : full
+                    return expanded ? full : short
+                  })()}"
+                  {current.quote.length > 130 && (
+                    <button
+                      type="button"
+                      onClick={() => setExpanded((v) => !v)}
+                      className="mt-1 block text-xs font-bold text-blue-600 hover:text-blue-700 not-italic"
+                    >
+                      {expanded ? 'Read less' : 'Read more'}
+                    </button>
+                  )}
+                </blockquote>
+
+                <div className="mt-3.5 flex flex-wrap gap-2 text-[11px]">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700 border border-slate-300 flex items-center gap-1.5">
+                    <Icons.Ruler size={12} className="text-slate-700" /> {current.plotSize}
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-950 border border-slate-300 flex items-center gap-1.5">
+                    <Icons.Blueprint size={12} className="text-slate-900" /> {current.service}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setPlayingVideo(current.youtubeId)}
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-blue-700 transition"
+                >
+                  <Icons.Play size={12} />
+                  <span>Watch Client Video Story</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -146,7 +178,7 @@ export default function Reviews() {
                 type="button"
                 onClick={() => setActiveIndex(i)}
                 className={`h-2 rounded-full transition-all ${
-                  i === activeIndex ? 'w-6 bg-slate-700' : 'w-2 bg-slate-400 hover:bg-slate-600'
+                  i === activeIndex ? 'w-6 bg-blue-600' : 'w-2 bg-slate-400 hover:bg-slate-600'
                 }`}
                 aria-label={`Go to slide ${i + 1}`}
               />
@@ -159,7 +191,7 @@ export default function Reviews() {
       {playingVideo && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
           <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-black shadow-2xl border border-slate-700">
-            <div className="flex items-center justify-between bg-[#0EA5E9] px-4 py-3 text-white">
+            <div className="flex items-center justify-between bg-blue-600 px-4 py-3 text-white">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Icons.Play size={12} /> Client Story · {current.name} ({current.city})
               </span>

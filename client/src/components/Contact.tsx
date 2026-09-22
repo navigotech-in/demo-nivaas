@@ -104,7 +104,7 @@ export default function Contact() {
               </p>
               <button
                 type="button"
-                className="mt-6 rounded-xl bg-slate-700 px-6 py-2.5 text-xs font-bold text-white shadow hover:bg-[#0EA5E9]"
+                className="mt-6 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow hover:bg-blue-700"
                 onClick={() => setStatus('idle')}
               >
                 Send another enquiry
@@ -192,7 +192,7 @@ export default function Contact() {
               <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="w-full rounded-xl bg-slate-700 py-3.5 text-center text-sm font-bold text-white shadow-md hover:bg-[#0EA5E9] transition active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-blue-600 py-3.5 text-center text-sm font-bold text-white shadow-md hover:bg-blue-700 transition active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {status === 'sending' ? (
                   <span>Submitting...</span>
