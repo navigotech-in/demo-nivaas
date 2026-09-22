@@ -83,7 +83,7 @@ export default function Hero({ onCalculate }: HeroProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-[#0F1220]/90 via-[#0F1220]/35 to-[#0F1220]/10" />
 
         {/* Hero Central Content */}
-        <div className="container-content absolute inset-0 flex flex-col justify-center py-10 sm:py-12">
+        <div className="container-content absolute inset-0 flex flex-col justify-start pt-10 sm:pt-14 lg:pt-20">
           {/* Hindi / English Headline */}
           <div className="text-center text-white mb-5 animate-fadeIn">
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-500/20 border border-slate-400/30 px-4 py-1.5 text-xs font-bold text-slate-300 uppercase tracking-widest backdrop-blur-md mb-3 shadow-sm">
@@ -99,17 +99,16 @@ export default function Hero({ onCalculate }: HeroProps) {
           </div>
 
           {/* Interactive Calculator Widget (Glass: house image visible behind) */}
-          <div className="w-full max-w-5xl mx-auto rounded-3xl bg-white/70 backdrop-blur-2xl p-4 sm:p-7 shadow-2xl border border-white/60 text-slate-800">
+          <div className="w-full max-w-5xl mx-auto rounded-3xl bg-white/40 backdrop-blur-xl p-4 sm:p-7 shadow-2xl border border-white/40 text-slate-800">
             {/* Service Selection Tabs */}
             <div className="flex items-center justify-start sm:justify-center gap-1.5 sm:gap-2.5 overflow-x-auto pb-3.5 border-b border-slate-200 scrollbar-none text-xs sm:text-sm font-semibold">
               <button
                 type="button"
                 onClick={() => setActiveTab('2d')}
-                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${
-                  activeTab === '2d'
+                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${activeTab === '2d'
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                  }`}
               >
                 <Icons.Blueprint size={16} />
                 <span>2D Layout Plan</span>
@@ -118,11 +117,10 @@ export default function Hero({ onCalculate }: HeroProps) {
               <button
                 type="button"
                 onClick={() => setActiveTab('3d')}
-                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${
-                  activeTab === '3d'
+                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${activeTab === '3d'
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                  }`}
               >
                 <Icons.Home size={16} />
                 <span>3D Front Elevation</span>
@@ -131,11 +129,10 @@ export default function Hero({ onCalculate }: HeroProps) {
               <button
                 type="button"
                 onClick={() => setActiveTab('structural')}
-                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${
-                  activeTab === 'structural'
+                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${activeTab === 'structural'
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                  }`}
               >
                 <Icons.HardHat size={16} />
                 <span>Structural Drawings</span>
@@ -144,11 +141,10 @@ export default function Hero({ onCalculate }: HeroProps) {
               <button
                 type="button"
                 onClick={() => setActiveTab('presentation')}
-                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${
-                  activeTab === 'presentation'
+                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${activeTab === 'presentation'
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                  }`}
               >
                 <Icons.FileText size={16} />
                 <span>Presentation Plan</span>
@@ -157,11 +153,10 @@ export default function Hero({ onCalculate }: HeroProps) {
               <button
                 type="button"
                 onClick={() => setActiveTab('more')}
-                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${
-                  activeTab === 'more'
+                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition shrink-0 ${activeTab === 'more'
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                  }`}
               >
                 <Icons.Layers size={16} />
                 <span>More Services</span>
@@ -171,148 +166,148 @@ export default function Hero({ onCalculate }: HeroProps) {
             {/* Tab Form Content */}
             {activeTab !== 'more' ? (
               <>
-              <form onSubmit={handleSubmit} className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
-                {/* Depth */}
-                <div>
-                  <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                    <Icons.Ruler size={13} className="text-slate-700" />
-                    <span>Plot Depth (ft)</span>
-                  </label>
-                  <input
-                    type="number"
-                    min={10}
-                    max={300}
-                    value={depth}
-                    onChange={(e) =>
-                      handleDimensionChange(
-                        e.target.value === '' ? '' : Number(e.target.value),
-                        width,
-                        floors
-                      )
-                    }
-                    placeholder="e.g. 30"
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-700 focus:bg-white transition"
-                    required
-                  />
-                </div>
+                <form onSubmit={handleSubmit} className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
+                  {/* Depth */}
+                  <div>
+                    <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                      <Icons.Ruler size={13} className="text-slate-700" />
+                      <span>Plot Depth (ft)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={10}
+                      max={300}
+                      value={depth}
+                      onChange={(e) =>
+                        handleDimensionChange(
+                          e.target.value === '' ? '' : Number(e.target.value),
+                          width,
+                          floors
+                        )
+                      }
+                      placeholder="e.g. 30"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-700 focus:bg-white transition"
+                      required
+                    />
+                  </div>
 
-                {/* Width */}
-                <div>
-                  <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                    <Icons.Ruler size={13} className="text-slate-700" />
-                    <span>Plot Width (ft)</span>
-                  </label>
-                  <input
-                    type="number"
-                    min={10}
-                    max={300}
-                    value={width}
-                    onChange={(e) =>
-                      handleDimensionChange(
-                        depth,
-                        e.target.value === '' ? '' : Number(e.target.value),
-                        floors
-                      )
-                    }
-                    placeholder="e.g. 50"
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-700 focus:bg-white transition"
-                    required
-                  />
-                </div>
+                  {/* Width */}
+                  <div>
+                    <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                      <Icons.Ruler size={13} className="text-slate-700" />
+                      <span>Plot Width (ft)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={10}
+                      max={300}
+                      value={width}
+                      onChange={(e) =>
+                        handleDimensionChange(
+                          depth,
+                          e.target.value === '' ? '' : Number(e.target.value),
+                          floors
+                        )
+                      }
+                      placeholder="e.g. 50"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-700 focus:bg-white transition"
+                      required
+                    />
+                  </div>
 
-                {/* Floors */}
-                <div>
-                  <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                    <Icons.Building size={13} className="text-slate-700" />
-                    <span>Floors</span>
-                  </label>
-                  <select
-                    value={floors}
-                    onChange={(e) =>
-                      handleDimensionChange(depth, width, Number(e.target.value))
-                    }
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-700 focus:bg-white transition"
-                  >
-                    <option value={1}>G (Single Floor)</option>
-                    <option value={2}>G+1 (Duplex)</option>
-                    <option value={3}>G+2 (Triple)</option>
-                    <option value={4}>G+3 (Multi-Storey)</option>
-                    <option value={5}>G+4 (Apartment)</option>
-                  </select>
-                </div>
+                  {/* Floors */}
+                  <div>
+                    <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                      <Icons.Building size={13} className="text-slate-700" />
+                      <span>Floors</span>
+                    </label>
+                    <select
+                      value={floors}
+                      onChange={(e) =>
+                        handleDimensionChange(depth, width, Number(e.target.value))
+                      }
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-700 focus:bg-white transition"
+                    >
+                      <option value={1}>G (Single Floor)</option>
+                      <option value={2}>G+1 (Duplex)</option>
+                      <option value={3}>G+2 (Triple)</option>
+                      <option value={4}>G+3 (Multi-Storey)</option>
+                      <option value={5}>G+4 (Apartment)</option>
+                    </select>
+                  </div>
 
-                {/* Built-up Area */}
-                <div>
-                  <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                    <Icons.Grid size={13} className="text-slate-700" />
-                    <span>Est. Area (sq.ft)</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={builtUpArea}
-                    onChange={(e) =>
-                      setBuiltUpArea(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    placeholder="Area"
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-700 focus:bg-white transition"
-                  />
-                </div>
+                  {/* Built-up Area */}
+                  <div>
+                    <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                      <Icons.Grid size={13} className="text-slate-700" />
+                      <span>Est. Area (sq.ft)</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={builtUpArea}
+                      onChange={(e) =>
+                        setBuiltUpArea(e.target.value === '' ? '' : Number(e.target.value))
+                      }
+                      placeholder="Area"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-700 focus:bg-white transition"
+                    />
+                  </div>
 
-                {/* Direction */}
-                <div>
-                  <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                    <Icons.Compass size={13} className="text-slate-700" />
-                    <span>Vastu Facing</span>
-                  </label>
-                  <select
-                    value={direction}
-                    onChange={(e) => setDirection(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-700 focus:bg-white transition"
-                  >
-                    <option value="East Facing">East (Purva)</option>
-                    <option value="North Facing">North (Uttar)</option>
-                    <option value="West Facing">West (Pashchim)</option>
-                    <option value="South Facing">South (Dakshin)</option>
-                    <option value="North-East Facing">North-East (Ishan)</option>
-                    <option value="South-East Facing">South-East (Agneya)</option>
-                  </select>
-                </div>
+                  {/* Direction */}
+                  <div>
+                    <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                      <Icons.Compass size={13} className="text-slate-700" />
+                      <span>Vastu Facing</span>
+                    </label>
+                    <select
+                      value={direction}
+                      onChange={(e) => setDirection(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-slate-700 focus:bg-white transition"
+                    >
+                      <option value="East Facing">East (Purva)</option>
+                      <option value="North Facing">North (Uttar)</option>
+                      <option value="West Facing">West (Pashchim)</option>
+                      <option value="South Facing">South (Dakshin)</option>
+                      <option value="North-East Facing">North-East (Ishan)</option>
+                      <option value="South-East Facing">South-East (Agneya)</option>
+                    </select>
+                  </div>
 
-                {/* Submit Action */}
-                <div className="col-span-2 sm:col-span-1 lg:col-span-1">
-                  <button
-                    type="submit"
-                    className="w-full rounded-xl bg-blue-600 py-2.5 px-4 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-700 transition active:scale-[0.98] flex items-center justify-center gap-2"
-                  >
-                    <Icons.Calculator size={16} />
-                    <span>Calculate Price</span>
-                  </button>
-                </div>
-              </form>
+                  {/* Submit Action */}
+                  <div className="col-span-2 sm:col-span-1 lg:col-span-1">
+                    <button
+                      type="submit"
+                      className="w-full rounded-xl bg-blue-600 py-2.5 px-4 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-700 transition active:scale-[0.98] flex items-center justify-center gap-2"
+                    >
+                      <Icons.Calculator size={16} />
+                      <span>Calculate Price</span>
+                    </button>
+                  </div>
+                </form>
 
-              {/* Popular Indian Plot Dimensions Chips */}
-              <div className="mt-3.5 pt-3 border-t border-slate-200/80 flex items-center gap-2 overflow-x-auto scrollbar-none text-[11px]">
-                <span className="font-bold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1">
-                  <Icons.Ruler size={11} className="text-slate-700" />
-                  <span>Popular Plots:</span>
-                </span>
-                {[
-                  { label: '30x50 ft (167 Sq.Yd)', d: 50, w: 30, f: 2 },
-                  { label: '20x40 ft (88 Sq.Yd)', d: 40, w: 20, f: 2 },
-                  { label: '40x60 ft (266 Sq.Yd)', d: 60, w: 40, f: 2 },
-                  { label: '25x50 ft (138 Sq.Yd)', d: 50, w: 25, f: 2 },
-                  { label: '50x80 ft (444 Sq.Yd)', d: 80, w: 50, f: 2 },
-                ].map((chip) => (
-                  <button
-                    key={chip.label}
-                    type="button"
-                    onClick={() => handleDimensionChange(chip.d, chip.w, chip.f)}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300 font-semibold transition shrink-0"
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
+                {/* Popular Indian Plot Dimensions Chips */}
+                <div className="mt-3.5 pt-3 border-t border-slate-200/80 flex items-center gap-2 overflow-x-auto scrollbar-none text-[11px]">
+                  <span className="font-bold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1">
+                    <Icons.Ruler size={11} className="text-slate-700" />
+                    <span>Popular Plots:</span>
+                  </span>
+                  {[
+                    { label: '30x50 ft (167 Sq.Yd)', d: 50, w: 30, f: 2 },
+                    { label: '20x40 ft (88 Sq.Yd)', d: 40, w: 20, f: 2 },
+                    { label: '40x60 ft (266 Sq.Yd)', d: 60, w: 40, f: 2 },
+                    { label: '25x50 ft (138 Sq.Yd)', d: 50, w: 25, f: 2 },
+                    { label: '50x80 ft (444 Sq.Yd)', d: 80, w: 50, f: 2 },
+                  ].map((chip) => (
+                    <button
+                      key={chip.label}
+                      type="button"
+                      onClick={() => handleDimensionChange(chip.d, chip.w, chip.f)}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300 font-semibold transition shrink-0"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
               </>
             ) : (
               <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
