@@ -18,9 +18,9 @@ export default function BrowseBy() {
           {browseBy.map((group) => (
             <div
               key={group.heading}
-              className="rounded-[12px] border border-line bg-surface p-6 shadow-card"
+              className="rounded-lg border border-line bg-surface p-6 shadow-card"
             >
-              <h3 className="font-display text-lg text-ink">{group.heading}</h3>
+              <h3 className="font-display text-lg text-[#292826]">{group.heading}</h3>
               <p className="mt-1 text-xs uppercase tracking-wide text-muted">{group.hint}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {group.chips.map((chip) => (

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchProjects } from '../lib/api'
 import { fallbackProjects } from '../lib/data'
-import type { Project } from '../lib/data'
 import Img from './Img'
 import { Icons } from './Icons'
 
@@ -10,100 +9,17 @@ interface ProjectsProps {
   onOpenConsult: (planTitle?: string) => void
 }
 
-function ProjectCard({
-  project,
-  onOpenConsult,
-}: {
-  project: Project
-  onOpenConsult: (title: string) => void
-}) {
-  const [saved, setSaved] = useState(false)
-  return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card transition-all hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-card-hover">
-      <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-        <Img
-          src={project.image}
-          alt={project.title}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-        {project.tag && (
-          <span className="absolute left-3.5 top-3.5 z-[2] rounded-md border border-white/40 bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-800 backdrop-blur shadow-sm">
-            {project.tag}
-          </span>
-        )}
-        {project.vastuCompliant && (
-          <span className="absolute bottom-3.5 left-3.5 z-[2] rounded-md bg-slate-950/80 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur flex items-center gap-1">
-            <Icons.Check size={12} />
-            <span>100% Vastu Approved</span>
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={() => setSaved((s) => !s)}
-          aria-label={saved ? 'Remove from saved' : 'Save this plan'}
-          className={`absolute right-3.5 top-3.5 z-[2] flex h-8 w-8 items-center justify-center rounded-full backdrop-blur transition ${
-            saved ? 'bg-red-500 text-white' : 'bg-white/80 text-slate-600 hover:bg-white hover:text-red-500'
-          }`}
-        >
-          <Icons.Heart size={15} className={saved ? 'fill-current' : ''} />
-        </button>
-      </div>
+const ARCH_IMAGE =
+  'https://images.pexels.com/photos/37129015/pexels-photo-37129015.jpeg'
 
-      <div className="flex flex-1 flex-col bg-white p-5 sm:p-6">
-        <h3 className="font-display text-lg font-bold text-slate-900 line-clamp-1 transition group-hover:text-blue-700">
-          {project.title}
-        </h3>
-        {project.plotDetails && (
-          <p className="mt-1.5 text-xs font-medium text-slate-600 leading-relaxed">{project.plotDetails}</p>
-        )}
-
-        <div className="mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs font-semibold text-slate-700">
-          <span className="flex items-center gap-1">
-            <Icons.Ruler size={13} className="text-slate-700" />
-            {project.size}
-          </span>
-          <span className="flex items-center gap-1">
-            <Icons.Bed size={13} className="text-slate-700" />
-            {project.bhk}
-          </span>
-          <span className="flex items-center gap-1">
-            <Icons.Building size={13} className="text-slate-700" />
-            {project.floors}
-          </span>
-        </div>
-
-        {project.keyFeatures && (
-          <div className="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-slate-200 pt-3.5 text-[11px] font-medium text-slate-600">
-            {project.keyFeatures.map((feat, i) => (
-              <span key={i} className="flex items-center gap-1.5">
-                <span className="h-1 w-1 shrink-0 rounded-full bg-slate-400" />
-                {feat}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-4 flex items-end justify-between gap-3 border-t border-slate-200 pt-3.5">
-          <div>
-            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              {project.facing} · {project.area}
-            </span>
-            <span className="mt-0.5 block text-base font-extrabold text-slate-950">{project.price}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => onOpenConsult(`Customize Plan: ${project.title} (${project.size})`)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
-          >
-            <Icons.Ruler size={13} />
-            <span>Customize</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
+const tiers = [
+  { col: 'col-span-2', row: 'row-span-2' }, // large
+  { col: 'col-span-1', row: 'row-span-1' }, // normal
+  { col: 'col-span-1', row: 'row-span-2' }, // tall
+  { col: 'col-span-1', row: 'row-span-1' }, // normal
+  { col: 'col-span-2', row: 'row-span-1' }, // wide
+  { col: 'col-span-1', row: 'row-span-1' }, // normal
+]
 
 export default function Projects({ onOpenConsult }: ProjectsProps) {
   const [selectedBhk, setSelectedBhk] = useState<string>('All')
@@ -121,67 +37,131 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
     ? allProjects.filter((p) => p.floors.includes('Rental') || p.title.includes('Rental') || p.tag?.includes('Rental'))
     : allProjects.filter((p) => p.bhk.includes(selectedBhk))
 
+  const selectBhk = (value: string) => {
+    setSelectedBhk(value)
+  }
+
   return (
-    <section id="plans" className="py-20 sm:py-24 bg-[#F1F5F9] border-t border-slate-300">
+    <section id="plans" className="py-20 sm:py-28 bg-[#FDFCF9] border-t border-[#E7E0D7]">
       <div className="container-content">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        {/* Editorial Split Intro — Architecture: text left, image right */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           <div>
             <span className="eyebrow flex items-center gap-1.5">
-              <Icons.Blueprint size={14} /> Verified Blueprint Catalog
+              <Icons.Blueprint size={14} /> Architecture
             </span>
-            <h2 className="section-title mt-2 max-w-xl text-slate-900">
-              Indian House Plans & Working Blueprints
+            <h2 className="section-title mt-2">
+              Floor plans designed around your plot, sunlight and daily routine.
             </h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              Every house plan is crafted for standard Indian plot sizes (30x50, 20x40, 40x60, 25x50) and municipal setbacks (GHMC, BBMP, DDA, PMRDA), with 100% Vastu compliance, covered car parking, and complete structural CAD drawings.
+            <p className="mt-4 max-w-xl text-sm text-[#74706A] leading-relaxed">
+              Every house plan is crafted for standard Indian plot sizes (30x50,
+              20x40, 40x60, 25x50) and municipal setbacks (GHMC, BBMP, DDA,
+              PMRDA), with 100% Vastu compliance, covered car parking, and
+              complete structural CAD drawings.
             </p>
-          </div>
-
-          {/* BHK Filter Buttons */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {[
-              { label: 'All House Plans', value: 'All' },
-              { label: '2 BHK Compact', value: '2 BHK' },
-              { label: '3 BHK Duplex', value: '3 BHK' },
-              { label: '4 BHK Luxury Villa', value: '4 BHK' },
-              { label: '5 BHK Joint Family', value: '5 BHK' },
-              { label: 'Rental Income Units', value: 'Rental' },
-            ].map((tab) => (
+            <div className="mt-7 flex flex-col sm:flex-row sm:items-center gap-4">
               <button
-                key={tab.value}
                 type="button"
-                onClick={() => setSelectedBhk(tab.value)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-1.5 ${
-                  selectedBhk === tab.value
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-white border border-slate-300 text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-                }`}
+                onClick={() => onOpenConsult('Architecture Consultation: Floor Plan Design')}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#E76F2E] text-white text-sm font-bold transition hover:bg-[#C65320] active:scale-[0.98] group/link"
               >
-                {tab.value !== 'All' && <Icons.Bed size={13} />}
-                <span>{tab.label}</span>
+                <span>Explore architecture</span>
+                <Icons.ChevronRight
+                  size={16}
+                  className="transition-transform group-hover/link:translate-x-0.5"
+                />
               </button>
-            ))}
+              <span className="text-xs font-medium text-[#74706A]">
+                12,000+ verified plans · Dimensions from 20x40 to 60x80
+              </span>
+            </div>
+          </div>
+          <div className="relative overflow-hidden bg-[#FFF6E8]">
+            <Img
+              src={ARCH_IMAGE}
+              alt="Modern Indian architecture under construction"
+              className="h-full w-full object-cover aspect-[45/20]"
+            />
           </div>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
-          {filtered.map((project) => (
-            <ProjectCard key={project.id} project={project} onOpenConsult={onOpenConsult} />
+        {/* BHK Filter Tabs */}
+        <div className="mt-16 flex items-center gap-7 overflow-x-auto pb-3 scrollbar-none border-b border-[#E7E0D7]">
+          {[
+            { label: 'All House Plans', value: 'All' },
+            { label: '2 BHK Compact', value: '2 BHK' },
+            { label: '3 BHK Duplex', value: '3 BHK' },
+            { label: '4 BHK Luxury Villa', value: '4 BHK' },
+            { label: '5 BHK Joint Family', value: '5 BHK' },
+            { label: 'Rental Income Units', value: 'Rental' },
+          ].map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => selectBhk(tab.value)}
+              className={`pb-2.5 -mb-px text-xs sm:text-sm font-bold whitespace-nowrap transition border-b-2 ${
+                selectedBhk === tab.value
+                  ? 'border-[#E76F2E] text-[#E76F2E]'
+                  : 'border-transparent text-[#74706A] hover:text-[#292826]'
+              }`}
+            >
+              {tab.label}
+            </button>
           ))}
         </div>
 
-        <div className="mt-6 text-center text-xs text-slate-500">
-          Showing {filtered.length} plans from {allProjects.length} verified catalog entries · Request custom dimensions anytime
+        {/* Masonry-style Plan Grid */}
+        <div className="mt-14 grid grid-cols-2 auto-rows-[130px] grid-flow-dense gap-4 sm:grid-cols-3 xl:grid-cols-4">
+          {filtered.map((project, index) => {
+            const tier = tiers[index % tiers.length]
+            return (
+              <button
+                key={project.id}
+                type="button"
+                onClick={() => onOpenConsult(`Plan: ${project.title} (${project.size})`)}
+                className={`${tier.col} ${tier.row} relative overflow-hidden rounded-xl bg-[#FFF6E8] text-left group cursor-pointer`}
+                aria-label={`View plan: ${project.title}`}
+              >
+                <Img
+                  src={project.image}
+                  alt={project.title}
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/0 to-transparent" />
+                {project.featured && (
+                  <span className="absolute top-2.5 left-2.5 rounded-md bg-[#E76F2E] px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-white">
+                    Featured
+                  </span>
+                )}
+                <div className="absolute inset-x-0 bottom-0 p-3">
+                  <p className="font-display text-[13px] font-bold leading-snug text-white line-clamp-2">
+                    {project.title}
+                  </p>
+                  <p className="mt-1 text-[10px] font-medium text-white/80">
+                    {project.size} · {project.bhk}
+                  </p>
+                  <span className="mt-2 inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1 text-[10px] font-bold text-[#292826]">
+                    View plan
+                    <Icons.ChevronRight size={12} />
+                  </span>
+                </div>
+              </button>
+            )
+          })}
         </div>
 
         <div className="mt-10 text-center">
           <button
             type="button"
             onClick={() => onOpenConsult('Browse 12,000+ House Plans Catalog')}
-            className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-blue-600 bg-white px-8 py-3.5 text-sm font-bold text-blue-700 shadow-md hover:bg-blue-50 transition active:scale-[0.98]"
+            className="inline-flex items-center gap-2 text-sm font-bold text-[#E76F2E] transition hover:text-[#292826] group/link underline underline-offset-4 decoration-[#E7E0D7] hover:decoration-[#E76F2E]"
           >
-            <Icons.Blueprint size={18} className="text-blue-600" />
-            <span>Browse All 12,000+ House Plans by Dimension →</span>
+            <span>Browse All 12,000+ House Plans by Dimension</span>
+            <Icons.ChevronRight
+              size={16}
+              className="transition-transform group-hover/link:translate-x-0.5"
+            />
           </button>
         </div>
       </div>

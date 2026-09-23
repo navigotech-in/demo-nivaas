@@ -4,20 +4,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        base: '#F1F5F9', // Cool modern slate grey
-        'base-soft': '#F8FAFC',
-        surface: '#FFFFFF',
-        'surface-grey': '#E2E8F0',
-        'surface-dark': '#0F172A',
-        ink: '#0F172A',
-        'ink-light': '#334155',
-        muted: '#64748B',
-        line: '#CBD5E1',
-        'line-subtle': '#E2E8F0',
-        accent: '#334155',
-        'accent-dark': '#1E293B',
-        'accent-soft': '#64748B',
-        'accent-tint': '#F1F5F9',
+        base: '#FDFCF9', // Soft White/Cream
+        'base-soft': '#FFF6E8', // Warm Cream
+        surface: '#FFFFFF', // Pure White
+        'surface-grey': '#E7E0D7', // Warm Taupe Border
+        'surface-dark': '#292826', // Graphite
+        ink: '#292826', // Graphite
+        'ink-light': '#74706A', // Warm Grey
+        muted: '#74706A', // Warm Grey
+        line: '#E7E0D7', // Warm Taupe Border
+        'line-subtle': '#F0EBE6',
+        accent: '#E76F2E', // Saffron Orange
+        'accent-dark': '#C65320', // Deep Saffron
+        'accent-soft': '#74706A',
+        'accent-tint': '#FBE7D3', // Soft Saffron Tint
         slatecard: '#FFFFFF',
       },
       fontFamily: {

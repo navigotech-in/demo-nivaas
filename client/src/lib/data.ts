@@ -163,6 +163,7 @@ export interface Project {
   image: string
   planImage?: string
   tag?: string
+  featured?: boolean
   vastuCompliant?: boolean
   dimension: string
   plotDetails?: string
@@ -182,6 +183,7 @@ export const fallbackProjects: Project[] = [
     price: '₹4,999',
     image: img('https://images.pexels.com/photos/37129015/pexels-photo-37129015.jpeg'),
     tag: 'Best Seller in India',
+    featured: true,
     vastuCompliant: true,
     plotDetails: '167 Sq. Yards (1500 sq.ft plot) · 30ft Road Facing',
     keyFeatures: ['Covered Car Porch & Portico', 'NE Ishan Pooja Room', 'SE Agneya Modular Kitchen', 'Open Balcony with Glass Railing'],
@@ -262,6 +264,7 @@ export const fallbackProjects: Project[] = [
     price: '₹12,999',
     image: img('https://images.pexels.com/photos/35289099/pexels-photo-35289099.jpeg'),
     tag: 'Royal Estate Series',
+    featured: true,
     vastuCompliant: true,
     plotDetails: '444 Sq. Yards (4000 sq.ft plot) · Private Gated Plot',
     keyFeatures: ['Stilt Parking for 4 Cars', 'Private Hydraulic Home Lift', 'Landscaped Rooftop Gazebo & Lawn', 'Master Suite with Walk-in Wardrobe'],
@@ -723,7 +726,7 @@ export const commercialTabs = [
     id: 'commercial',
     label: 'Commercial',
     desc: 'Shops, showrooms & office blocks with parking norms and signage-ready facades.',
-    image: img('https://images.pexels.com/photos/19510801/pexels-photo-19510801.jpeg'),
+    image: img('https://images.pexels.com/photos/258160/pexels-photo-258160.jpeg'),
   },
   {
     id: 'institutional',

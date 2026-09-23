@@ -7,33 +7,33 @@ interface QuickAnswersProps {
 
 export default function QuickAnswers({ onOpenConsult }: QuickAnswersProps) {
   return (
-    <section className="py-20 bg-[#F1F5F9] border-t border-slate-300">
+    <section className="py-20 bg-[#FDFCF9] border-t border-[#E7E0D7]">
       <div className="container-content">
         <div className="text-center max-w-2xl mx-auto">
           <span className="eyebrow flex items-center justify-center gap-1.5">
             <Icons.HelpCircle size={14} /> Quick Answers
           </span>
-          <h2 className="section-title mt-2 text-slate-900">
+          <h2 className="section-title mt-2">
             Questions homeowners ask us first
           </h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-[#74706A]">
             Short, practical answers to the things that decide most buying decisions.
           </p>
         </div>
 
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickAnswers.map((qa) => (
-            <div key={qa.q} className="flex flex-col justify-between rounded-2xl border border-slate-300 bg-white p-5 shadow-sm transition-all hover:shadow-card-hover hover:border-slate-500">
+            <div key={qa.q} className="flex flex-col justify-between rounded-lg border border-[#E7E0D7] bg-white p-5 shadow-sm transition-all hover:shadow-card-hover hover:border-[#E7E0D7]">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full inline-block border border-blue-100">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E76F2E] bg-[#F1ECE5] px-2.5 py-0.5 rounded-lg inline-block border border-[#E7E0D7]">
                   {qa.tag}
                 </span>
-                <h3 className="mt-3 font-display text-sm font-bold text-slate-900 leading-snug">{qa.q}</h3>
-                <p className="mt-2 text-xs text-slate-600 leading-relaxed">{qa.a}</p>
+                <h3 className="mt-3 font-display text-sm font-bold text-[#292826] leading-snug">{qa.q}</h3>
+                <p className="mt-2 text-xs text-[#74706A] leading-relaxed">{qa.a}</p>
               </div>
               <a
                 href="#faq"
-                className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-600 hover:text-blue-700 transition"
+                className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-[#E76F2E] hover:text-[#292826] transition"
               >
                 <span>See full FAQ</span>
                 <Icons.ChevronRight size={12} />
@@ -46,7 +46,7 @@ export default function QuickAnswers({ onOpenConsult }: QuickAnswersProps) {
           <button
             type="button"
             onClick={() => onOpenConsult('Quick Answer Enquiry')}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-blue-700 transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#C65320] transition"
           >
             <Icons.Sparkles size={14} />
             <span>Ask us anything</span>

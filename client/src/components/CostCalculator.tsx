@@ -25,32 +25,45 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
   const mepCost = Math.round(totalCost * 0.12)
   const designPermitCost = Math.round(totalCost * 0.08)
 
+  const qualityOptions = [
+    { id: 'standard', label: 'Standard', price: '₹1,650' },
+    { id: 'premium', label: 'Premium', price: '₹2,150' },
+    { id: 'luxury', label: 'Luxury', price: '₹2,850' },
+  ] as const
+
+  const breakdown = [
+    { label: 'Civil Structure (Cement, Steel, Bricks)', value: civilCost, pct: 52, icon: <Icons.HardHat size={13} className="text-[#E76F2E]" /> },
+    { label: 'Finishing (Tiles, Paint, Windows)', value: finishingCost, pct: 28, icon: <Icons.Home size={13} className="text-[#E76F2E]" /> },
+    { label: 'MEP (Electrical & Plumbing)', value: mepCost, pct: 12, icon: <Icons.Sun size={13} className="text-[#E76F2E]" /> },
+    { label: 'Architecture, CAD & Approvals', value: designPermitCost, pct: 8, icon: <Icons.Blueprint size={13} className="text-[#E76F2E]" /> },
+  ]
+
   return (
-    <section id="calculator" className="py-20 bg-white border-t border-slate-300">
+    <section id="calculator" className="py-20 bg-white border-t border-[#E7E0D7]">
       <div className="container-content">
         <div className="text-center max-w-2xl mx-auto">
           <span className="eyebrow flex items-center justify-center gap-1.5">
             <Icons.Calculator size={15} /> Interactive Estimator
           </span>
-          <h2 className="section-title mt-2 text-slate-900">
+          <h2 className="section-title mt-2">
             House Construction Cost Estimator (2026)
           </h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-[#74706A]">
             Plan your construction budget with realistic material and labor rate breakdowns for Indian residential plots.
           </p>
         </div>
 
-        <div className="mt-12 max-w-5xl mx-auto rounded-3xl bg-[#F8FAFC] p-6 sm:p-10 shadow-xl border border-slate-300 grid grid-cols-1 lg:grid-cols-12 gap-8 text-slate-800">
+        <div className="mt-12 max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
           {/* Controls Column */}
-          <div className="lg:col-span-6 space-y-6">
+          <div className="space-y-8">
             {/* Plot Area Slider */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                  <Icons.Grid size={14} className="text-slate-700" />
+                <label className="text-xs font-bold uppercase tracking-wider text-[#74706A] flex items-center gap-1.5">
+                  <Icons.Grid size={14} className="text-[#74706A]" />
                   <span>Plot Ground Area</span>
                 </label>
-                <span className="text-sm font-bold text-slate-950 bg-slate-200 px-3 py-1 rounded-full border border-slate-300">
+                <span className="text-sm font-bold text-[#292826]">
                   {area} sq.ft (~{(area / 9).toFixed(0)} sq.yards)
                 </span>
               </div>
@@ -61,9 +74,9 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                 step={50}
                 value={area}
                 onChange={(e) => setArea(Number(e.target.value))}
-                className="w-full accent-slate-700 h-2.5 bg-slate-200 rounded-lg cursor-pointer"
+                className="w-full accent-[#E76F2E] h-2.5 bg-[#E7E0D7] rounded-lg cursor-pointer"
               />
-              <div className="flex justify-between text-[11px] text-slate-500 mt-1.5 font-medium">
+              <div className="flex justify-between text-[11px] text-[#74706A] mt-1.5 font-medium">
                 <span>500 sq.ft</span>
                 <span>2,500 sq.ft</span>
                 <span>5,000 sq.ft</span>
@@ -72,54 +85,35 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
 
             {/* Quality Grade */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2.5 flex items-center gap-1.5">
-                <Icons.Layers size={14} className="text-slate-700" />
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#74706A] mb-2.5 flex items-center gap-1.5">
+                <Icons.Layers size={14} className="text-[#74706A]" />
                 <span>Construction Package & Finishes</span>
               </label>
               <div className="grid grid-cols-3 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setQuality('standard')}
-                  className={`p-3.5 rounded-2xl border text-center transition ${
-                    quality === 'standard'
-                      ? 'border-slate-700 bg-white text-slate-900 font-bold shadow-md ring-2 ring-slate-500/20'
-                      : 'border-slate-300 bg-white/60 text-slate-600 hover:border-slate-400'
-                  }`}
-                >
-                  <div className="text-xs font-bold">Standard</div>
-                  <div className="text-[11px] font-semibold text-slate-900 mt-1">₹1,650/sqft</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQuality('premium')}
-                  className={`p-3.5 rounded-2xl border text-center transition ${
-                    quality === 'premium'
-                      ? 'border-slate-700 bg-white text-slate-900 font-bold shadow-md ring-2 ring-slate-500/20'
-                      : 'border-slate-300 bg-white/60 text-slate-600 hover:border-slate-400'
-                  }`}
-                >
-                  <div className="text-xs font-bold">Premium</div>
-                  <div className="text-[11px] font-semibold text-slate-900 mt-1">₹2,150/sqft</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQuality('luxury')}
-                  className={`p-3.5 rounded-2xl border text-center transition ${
-                    quality === 'luxury'
-                      ? 'border-slate-700 bg-white text-slate-900 font-bold shadow-md ring-2 ring-slate-500/20'
-                      : 'border-slate-300 bg-white/60 text-slate-600 hover:border-slate-400'
-                  }`}
-                >
-                  <div className="text-xs font-bold">Luxury</div>
-                  <div className="text-[11px] font-semibold text-slate-900 mt-1">₹2,850/sqft</div>
-                </button>
+                {qualityOptions.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setQuality(opt.id)}
+                    className={`py-3 px-2 rounded-lg border text-center transition text-xs font-bold ${
+                      quality === opt.id
+                        ? 'border-[#E76F2E] bg-[#E76F2E] text-white'
+                        : 'border-[#E7E0D7] bg-white text-[#74706A] hover:border-[#C65320]'
+                    }`}
+                  >
+                    {opt.label}
+                    <span className={`block mt-0.5 text-[11px] font-semibold ${quality === opt.id ? 'text-white/80' : 'text-[#292826]'}`}>
+                      {opt.price}/sqft
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Floors */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2.5 flex items-center gap-1.5">
-                <Icons.Building size={14} className="text-slate-700" />
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#74706A] mb-2.5 flex items-center gap-1.5">
+                <Icons.Building size={14} className="text-[#74706A]" />
                 <span>Number of Floors</span>
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -133,10 +127,10 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                     key={fl.val}
                     type="button"
                     onClick={() => setFloors(fl.val)}
-                    className={`py-2.5 px-1 rounded-xl border text-xs text-center transition ${
+                    className={`py-2.5 px-1 rounded-lg border text-xs text-center transition font-bold ${
                       floors === fl.val
-                        ? 'border-slate-700 bg-blue-600 text-white font-bold shadow'
-                        : 'border-slate-300 bg-white text-slate-800 hover:border-slate-400'
+                        ? 'border-[#E76F2E] bg-[#E76F2E] text-white'
+                        : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#C65320]'
                     }`}
                   >
                     {fl.label}
@@ -147,73 +141,39 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
           </div>
 
           {/* Results Column */}
-          <div className="lg:col-span-6 rounded-2xl bg-white p-6 sm:p-7 border border-slate-300 shadow-sm flex flex-col justify-between">
+          <div className="lg:border-l lg:border-[#EEE9E3] lg:pl-12 flex flex-col justify-between">
             <div>
-              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Icons.Tag size={13} className="text-slate-700" />
+              <div className="text-xs font-bold text-[#74706A] uppercase tracking-wider flex items-center gap-1.5">
+                <Icons.Tag size={13} className="text-[#74706A]" />
                 <span>Estimated Turnkey Project Cost</span>
               </div>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+                <span className="text-3xl sm:text-4xl font-extrabold text-[#292826]">
                   ₹{(totalCost / 100000).toFixed(2)} Lakhs
                 </span>
-                <span className="text-xs text-slate-500 font-semibold">
+                <span className="text-xs text-[#74706A] font-semibold">
                   (~₹{totalCost.toLocaleString('en-IN')})
                 </span>
               </div>
-              <p className="mt-1 text-xs text-slate-500">
-                Total constructed area: <span className="font-bold text-slate-800">{totalBuiltup.toLocaleString('en-IN')} sq.ft</span>
+              <p className="mt-1 text-xs text-[#74706A]">
+                Total constructed area: <span className="font-bold text-[#292826]">{totalBuiltup.toLocaleString('en-IN')} sq.ft</span>
               </p>
 
               {/* Progress bars / breakdown */}
               <div className="mt-6 space-y-3.5">
-                <div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-800 mb-1">
-                    <span className="flex items-center gap-1.5">
-                      <Icons.HardHat size={13} className="text-slate-900" /> Civil Structure (Cement, Steel, Bricks)
-                    </span>
-                    <span>₹{(civilCost / 100000).toFixed(2)} L (52%)</span>
+                {breakdown.map((item) => (
+                  <div key={item.label}>
+                    <div className="flex justify-between text-xs font-semibold text-[#292826] mb-1">
+                      <span className="flex items-center gap-1.5">
+                        {item.icon} {item.label}
+                      </span>
+                      <span>₹{(item.value / 100000).toFixed(2)} L ({item.pct}%)</span>
+                    </div>
+                    <div className="w-full bg-[#F1ECE5] rounded-full h-2 overflow-hidden">
+                      <div className="bg-[#E76F2E] h-2 rounded-full" style={{ width: `${item.pct}%` }} />
+                    </div>
                   </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '52%' }} />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-800 mb-1">
-                    <span className="flex items-center gap-1.5">
-                      <Icons.Home size={13} className="text-slate-500" /> Finishing (Tiles, Paint, Windows)
-                    </span>
-                    <span>₹{(finishingCost / 100000).toFixed(2)} L (28%)</span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                    <div className="bg-slate-500 h-2 rounded-full" style={{ width: '28%' }} />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-800 mb-1">
-                    <span className="flex items-center gap-1.5">
-                      <Icons.Sun size={13} className="text-amber-500" /> MEP (Electrical & Plumbing)
-                    </span>
-                    <span>₹{(mepCost / 100000).toFixed(2)} L (12%)</span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                    <div className="bg-amber-500 h-2 rounded-full" style={{ width: '12%' }} />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-800 mb-1">
-                    <span className="flex items-center gap-1.5">
-                      <Icons.Blueprint size={13} className="text-blue-500" /> Architecture, CAD & Approvals
-                    </span>
-                    <span>₹{(designPermitCost / 100000).toFixed(2)} L (8%)</span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '8%' }} />
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
@@ -224,7 +184,7 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                   `Cost Estimate Query: ${area} sq.ft, ${quality.toUpperCase()} grade, ${floors} Floor(s), Est. ₹${(totalCost / 100000).toFixed(2)} Lakhs`
                 )
               }
-              className="mt-6 w-full rounded-xl bg-blue-600 py-3 text-center text-sm font-bold text-white shadow-md hover:bg-blue-700 transition flex items-center justify-center gap-2"
+              className="mt-6 w-full rounded-lg bg-[#E76F2E] py-3 text-center text-sm font-bold text-white shadow-sm hover:bg-[#C65320] transition flex items-center justify-center gap-2"
             >
               <Icons.FileText size={16} />
               <span>Get Free Detailed BOQ & Material List →</span>

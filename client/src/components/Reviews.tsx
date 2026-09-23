@@ -6,7 +6,7 @@ import { Icons } from './Icons'
 export default function Reviews() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [playingVideo, setPlayingVideo] = useState<string | null>(null)
-  const [expanded, setExpanded] = useState(false)
+  const [, setExpanded] = useState(false)
 
   const current: ReviewItem = clientReviews[activeIndex]
 
@@ -21,17 +21,17 @@ export default function Reviews() {
   }
 
   return (
-    <section id="reviews" className="py-20 sm:py-24 bg-[#E2E8F0] border-t border-slate-300 overflow-hidden">
+    <section id="reviews" className="py-20 sm:py-24 bg-[#FDFCF9] border-t border-[#E7E0D7]">
       <div className="container-content">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto">
           <span className="eyebrow flex items-center justify-center gap-1.5">
-            <Icons.Star size={14} className="text-amber-500" /> Client Testimonials
+            <Icons.Star size={14} className="text-[#E76F2E]" /> Client Testimonials
           </span>
-          <h2 className="section-title mt-2 text-slate-900">
+          <h2 className="section-title mt-2">
             Real voices, real experiences, Real legacy
           </h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-[#74706A]">
             Over 800+ families across 60+ Indian cities built their dream homes with NIVAAS architectural plans and on-site engineering supervision.
           </p>
         </div>
@@ -55,7 +55,7 @@ export default function Reviews() {
                   <div
                     className={`relative h-16 w-16 sm:h-20 sm:w-20 rounded-full p-1 transition-all ${
                       isSelected
-                        ? 'ring-4 ring-slate-500 shadow-xl'
+                        ? 'ring-4 ring-[#74706A] shadow-sm'
                         : 'ring-2 ring-transparent'
                     }`}
                   >
@@ -65,14 +65,29 @@ export default function Reviews() {
                       className="h-full w-full rounded-full object-cover shadow-sm"
                     />
                     {isSelected && (
-                      <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white text-[10px] shadow">
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setPlayingVideo(rev.youtubeId)
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setPlayingVideo(rev.youtubeId)
+                          }
+                        }}
+                        aria-label={`Play ${rev.name} video story`}
+                        className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#E76F2E] text-white text-[10px] shadow cursor-pointer hover:bg-[#C65320] transition"
+                      >
                         <Icons.Play size={10} />
                       </span>
                     )}
                   </div>
                   <span
                     className={`mt-2 text-[11px] font-semibold whitespace-nowrap ${
-                      isSelected ? 'text-slate-900 font-bold' : 'text-slate-500'
+                      isSelected ? 'text-[#292826] font-bold' : 'text-[#74706A]'
                     }`}
                   >
                     {rev.name.split(' ')[0]}
@@ -83,90 +98,85 @@ export default function Reviews() {
           </div>
 
           {/* Active Review Spotlight Card */}
-          <div className="mt-8 max-w-2xl mx-auto">
-            <div className="rounded-2xl bg-white shadow-lg border border-slate-200 p-5 sm:p-6 flex flex-col sm:flex-row items-start gap-5 sm:gap-6 relative text-left">
-              {/* Nav arrows */}
-              <button
-                type="button"
-                onClick={handlePrev}
-                className="absolute left-2 -top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-slate-300 text-slate-800 hover:bg-blue-600 hover:text-white transition"
-                aria-label="Previous review"
-              >
-                <Icons.ChevronLeft size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={handleNext}
-                className="absolute right-2 -top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-slate-300 text-slate-800 hover:bg-blue-600 hover:text-white transition"
-                aria-label="Next review"
-              >
-                <Icons.ChevronRight size={16} />
-              </button>
+          <div className="relative mt-8 max-w-3xl mx-auto" key={current.id}>
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="absolute left-2 -top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm border border-[#E7E0D7] text-[#292826] hover:bg-[#C65320] hover:text-white transition"
+              aria-label="Previous review"
+            >
+              <Icons.ChevronLeft size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              className="absolute right-2 -top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm border border-[#E7E0D7] text-[#292826] hover:bg-[#C65320] hover:text-white transition"
+              aria-label="Next review"
+            >
+              <Icons.ChevronRight size={16} />
+            </button>
 
-              {/* Big client image */}
-              <div className="shrink-0 w-full sm:w-56">
-                <div className="relative overflow-hidden rounded-xl border border-slate-200 shadow-md">
+            <div className="rounded-lg border border-[#E7E0D7] bg-white shadow-sm p-6 sm:p-9 flex flex-col items-center text-center">
+              <div className="flex items-start gap-4">
+                <div
+                  className="relative shrink-0 cursor-pointer"
+                  onClick={() => setPlayingVideo(current.youtubeId)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setPlayingVideo(current.youtubeId)
+                    }
+                  }}
+                  aria-label={`Play ${current.name} video story`}
+                >
                   <img
                     src={current.avatar}
                     alt={current.name}
-                    className="h-48 w-full sm:h-56 object-cover"
+                    className="h-16 w-16 rounded-full object-cover ring-2 ring-[#E76F2E]"
                   />
-                  <span className="absolute bottom-2 left-2 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white shadow">
-                    <Icons.Play size={12} />
+                  <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#E76F2E] text-white text-[10px] shadow cursor-pointer">
+                    <Icons.Play size={10} />
                   </span>
                 </div>
-                <div className="mt-2.5 flex items-center gap-1.5 text-amber-500">
-                  {[...Array(current.stars)].map((_, i) => (
-                    <Icons.Star key={i} size={15} />
-                  ))}
-                  <span className="ml-1 text-xs font-bold text-slate-900">{current.stars}.0</span>
+                <div className="text-left pt-0.5">
+                  <h3 className="font-display text-base sm:text-lg font-bold text-[#292826]">{current.name}</h3>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#74706A] flex items-center gap-1 mt-0.5">
+                    <Icons.MapPin size={12} className="text-[#E76F2E]" /> {current.city}
+                  </span>
+                  <div className="mt-1.5 flex items-center gap-1.5 text-[#E76F2E]">
+                    {[...Array(current.stars)].map((_, i) => (
+                      <Icons.Star key={i} size={14} />
+                    ))}
+                    <span className="ml-1 text-xs font-bold text-[#292826]">{current.stars}.0</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Review content */}
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline justify-between gap-1.5">
-                  <h3 className="font-display text-base sm:text-lg font-bold text-slate-900">{current.name}</h3>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-                    <Icons.MapPin size={12} /> {current.city}
-                  </span>
-                </div>
+              <blockquote className="mt-6 font-display text-lg sm:text-xl lg:text-2xl font-bold text-[#292826] leading-snug max-w-2xl mx-auto">
+                <span className="select-none text-[#E76F2E]">“</span>
+                {current.quote}
+                <span className="select-none text-[#E76F2E]">”</span>
+              </blockquote>
 
-                <blockquote className="mt-2 font-display text-sm sm:text-base text-slate-800 leading-relaxed italic">
-                  "{(() => {
-                    const full = current.quote
-                    const short = full.length > 130 ? `${full.slice(0, 130)}\u2026` : full
-                    return expanded ? full : short
-                  })()}"
-                  {current.quote.length > 130 && (
-                    <button
-                      type="button"
-                      onClick={() => setExpanded((v) => !v)}
-                      className="mt-1 block text-xs font-bold text-blue-600 hover:text-blue-700 not-italic"
-                    >
-                      {expanded ? 'Read less' : 'Read more'}
-                    </button>
-                  )}
-                </blockquote>
-
-                <div className="mt-3.5 flex flex-wrap gap-2 text-[11px]">
-                  <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700 border border-slate-300 flex items-center gap-1.5">
-                    <Icons.Ruler size={12} className="text-slate-700" /> {current.plotSize}
-                  </span>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-950 border border-slate-300 flex items-center gap-1.5">
-                    <Icons.Blueprint size={12} className="text-slate-900" /> {current.service}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setPlayingVideo(current.youtubeId)}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-blue-700 transition"
-                >
-                  <Icons.Play size={12} />
-                  <span>Watch Client Video Story</span>
-                </button>
+              <div className="mt-5 flex flex-wrap gap-2 justify-center text-[11px]">
+                <span className="rounded-lg bg-[#FFF6E8] px-3 py-1 font-semibold text-[#292826] border border-[#E7E0D7] flex items-center gap-1.5">
+                  <Icons.Ruler size={12} className="text-[#E76F2E]" /> {current.plotSize}
+                </span>
+                <span className="rounded-lg bg-[#FFF6E8] px-3 py-1 font-semibold text-[#292826] border border-[#E7E0D7] flex items-center gap-1.5">
+                  <Icons.Blueprint size={12} className="text-[#E76F2E]" /> {current.service}
+                </span>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setPlayingVideo(current.youtubeId)}
+                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#C65320] transition"
+              >
+                <Icons.Play size={12} />
+                <span>Watch Client Video Story</span>
+              </button>
             </div>
           </div>
 
@@ -178,7 +188,7 @@ export default function Reviews() {
                 type="button"
                 onClick={() => setActiveIndex(i)}
                 className={`h-2 rounded-full transition-all ${
-                  i === activeIndex ? 'w-6 bg-blue-600' : 'w-2 bg-slate-400 hover:bg-slate-600'
+                  i === activeIndex ? 'w-6 bg-[#E76F2E]' : 'w-2 bg-[#D8D2CC] hover:bg-[#74706A]'
                 }`}
                 aria-label={`Go to slide ${i + 1}`}
               />
@@ -189,10 +199,10 @@ export default function Reviews() {
 
       {/* Video Modal Player */}
       {playingVideo && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-          <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-black shadow-2xl border border-slate-700">
-            <div className="flex items-center justify-between bg-blue-600 px-4 py-3 text-white">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A1815]/80 p-4">
+          <div className="relative w-full max-w-3xl overflow-hidden rounded-lg bg-black shadow-sm border border-[#292826]">
+            <div className="flex items-center justify-between bg-[#E76F2E] px-4 py-3 text-white">
+              <span className="text-xs font-bold uppercase tracking-wider text-white/90 flex items-center gap-1.5">
                 <Icons.Play size={12} /> Client Story · {current.name} ({current.city})
               </span>
               <button
@@ -205,7 +215,7 @@ export default function Reviews() {
             </div>
             <div className="relative aspect-video w-full">
               <iframe
-                src={`https://www.youtube-nocookie.com/embed/${playingVideo}?autoplay=1`}
+                src={`https://www.youtube.com/embed/${playingVideo}?autoplay=1&rel=0`}
                 title="Client Review Video"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen

@@ -43,21 +43,21 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-slate-300 text-slate-800">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3.5">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A1815]/70 p-4 ">
+      <div className="relative w-full max-w-md overflow-hidden rounded-lg bg-white p-6 sm:p-7 shadow-sm border border-[#E7E0D7] text-[#292826]">
+        <div className="flex items-center justify-between border-b border-[#EEE9E3] pb-3.5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white font-bold text-xs shadow">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E76F2E] text-white font-bold text-xs shadow">
               <Icons.User size={16} />
             </span>
-            <h3 className="font-display text-lg font-bold text-slate-900">
+            <h3 className="font-display text-lg font-bold text-[#292826]">
               {loggedIn ? 'Welcome to NIVAAS' : otpSent ? 'Enter OTP Verification' : 'Sign In / Register'}
             </h3>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[#74706A] hover:bg-[#FFF6E8] hover:text-[#74706A] transition"
           >
             <Icons.Close size={16} />
           </button>
@@ -66,32 +66,32 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         <div className="py-4">
           {loggedIn ? (
             <div className="py-6 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 text-slate-700 text-2xl font-bold shadow-sm">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F1ECE5] text-[#E76F2E] text-2xl font-bold shadow-sm">
                 <Icons.Check size={28} />
               </div>
-              <h4 className="mt-3 font-display text-xl font-bold text-slate-900">Logged In Successfully</h4>
-              <p className="mt-1 text-xs text-slate-600 max-w-xs mx-auto">
+              <h4 className="mt-3 font-display text-xl font-bold text-[#292826]">Logged In Successfully</h4>
+              <p className="mt-1 text-xs text-[#74706A] max-w-xs mx-auto">
                 Welcome back! You can now track your enquiries, save favorite plans and download CAD samples.
               </p>
               <button
                 type="button"
                 onClick={handleClose}
-                className="mt-5 w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md hover:bg-blue-700"
+                className="mt-5 w-full rounded-lg bg-[#E76F2E] py-3 text-sm font-bold text-white shadow-sm hover:bg-[#C65320]"
               >
                 Continue Browsing Plans
               </button>
             </div>
           ) : !otpSent ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-[#74706A]">
                 Enter your mobile number to access saved designs, project drawings and consultations.
               </p>
               <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
                   Mobile Number
                 </label>
-                <div className="flex rounded-xl border border-slate-300 bg-slate-50 focus-within:border-slate-700 focus-within:bg-white">
-                  <span className="inline-flex items-center px-3.5 text-xs font-bold text-slate-500 border-r border-slate-300 bg-slate-100 rounded-l-xl">
+                <div className="flex rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] focus-within:border-[#292826] focus-within:bg-white">
+                  <span className="inline-flex items-center px-3.5 text-xs font-bold text-[#74706A] border-r border-[#E7E0D7] bg-[#FFF6E8] rounded-l-xl">
                     +91
                   </span>
                   <input
@@ -101,7 +101,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
                     placeholder="Enter 10-digit number"
-                    className="w-full rounded-r-xl px-3.5 py-2.5 text-sm font-semibold text-slate-900 outline-none bg-transparent"
+                    className="w-full rounded-r-xl px-3.5 py-2.5 text-sm font-semibold text-[#292826] outline-none bg-transparent"
                   />
                 </div>
               </div>
@@ -109,7 +109,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="submit"
                 disabled={mobile.length < 10 || loading}
-                className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full rounded-lg bg-[#E76F2E] py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#C65320] disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Icons.Phone size={15} />
                 <span>{loading ? 'Sending OTP...' : 'Get OTP on WhatsApp / SMS →'}</span>
@@ -117,11 +117,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <p className="text-xs text-slate-600">
-                We sent a 4-digit OTP to <span className="font-bold text-slate-900">+91 {mobile}</span>
+              <p className="text-xs text-[#74706A]">
+                We sent a 4-digit OTP to <span className="font-bold text-[#292826]">+91 {mobile}</span>
               </p>
               <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
                   4-Digit OTP
                 </label>
                 <input
@@ -131,14 +131,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                   placeholder="Enter OTP"
-                  className="w-full text-center tracking-[0.4em] font-mono text-xl font-bold rounded-xl border border-slate-300 bg-slate-50 py-3 text-slate-900 outline-none focus:border-slate-700 focus:bg-white"
+                  className="w-full text-center tracking-[0.4em] font-mono text-xl font-bold rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] py-3 text-[#292826] outline-none focus:border-[#292826] focus:bg-white"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={otp.length < 4 || loading}
-                className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full rounded-lg bg-[#E76F2E] py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#C65320] disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Icons.Check size={16} />
                 <span>{loading ? 'Verifying...' : 'Verify & Continue →'}</span>
@@ -147,7 +147,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="button"
                 onClick={() => setOtpSent(false)}
-                className="w-full text-center text-xs font-semibold text-slate-500 hover:text-slate-800 underline"
+                className="w-full text-center text-xs font-semibold text-[#74706A] hover:text-[#292826] underline"
               >
                 Change mobile number
               </button>

@@ -22,13 +22,13 @@ export default function Trends() {
           {trends.map((t) => (
             <article
               key={t.title}
-              className="flex flex-col overflow-hidden rounded-[12px] border border-line bg-white shadow-card"
+              className="flex flex-col overflow-hidden rounded-lg border border-line bg-white shadow-card"
             >
-              <div className="aspect-[4/3] overflow-hidden">
+              <div className="aspect-[45/20] overflow-hidden">
                 <Img src={t.image} alt={t.title} className="h-full w-full object-cover" />
               </div>
               <div className="flex flex-1 flex-col p-5">
-                <h3 className="font-display text-lg text-ink">{t.title}</h3>
+                <h3 className="font-display text-lg text-[#292826]">{t.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted">{t.text}</p>
                 <a href="#blog" className="mt-4 text-sm font-medium text-accent hover:underline">
                   Read more

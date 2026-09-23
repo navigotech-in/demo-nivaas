@@ -11,17 +11,17 @@ export default function CommercialDesigns({ onOpenConsult }: CommercialDesignsPr
   const active = commercialTabs.find((t) => t.id === activeTab) || commercialTabs[0]
 
   return (
-    <section className="py-20 bg-white border-t border-slate-300">
+    <section className="py-20 bg-white border-t border-[#E7E0D7]">
       <div className="container-content">
         <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-4">
           <div>
             <span className="eyebrow flex items-center gap-1.5">
               <Icons.Building size={14} /> Commercial & Mixed-Use
             </span>
-            <h2 className="section-title mt-2 text-slate-900">
+            <h2 className="section-title mt-2">
               Commercial building designs, engineered for business
             </h2>
-            <p className="mt-2 text-sm text-slate-600 max-w-2xl">
+            <p className="mt-2 text-sm text-[#74706A] max-w-2xl">
               Retail, institutional, hospitality and rental schemes drawn to your city's commercial bye-laws with optimized vehicle access and service zones.
             </p>
           </div>
@@ -31,10 +31,10 @@ export default function CommercialDesigns({ onOpenConsult }: CommercialDesignsPr
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 ${
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition shrink-0 ${
                   activeTab === tab.id
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-[#E76F2E] text-white shadow-sm'
+                    : 'bg-[#FFF6E8] text-[#74706A] hover:bg-[#F1ECE5]'
                 }`}
               >
                 {tab.label}
@@ -43,38 +43,46 @@ export default function CommercialDesigns({ onOpenConsult }: CommercialDesignsPr
           </div>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-          <div className="relative overflow-hidden rounded-3xl border border-slate-300 shadow-card min-h-[260px]">
-            <img src={active.image} alt={active.label} className="absolute inset-0 h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0F1220]/80 via-[#0F1220]/20 to-transparent" />
-            <h3 className="absolute bottom-4 left-5 font-display text-2xl font-extrabold text-white">{active.label}</h3>
-          </div>
-          <div className="flex flex-col justify-center rounded-3xl border border-slate-300 bg-[#F8FAFC] p-6 sm:p-8">
-            <h3 className="font-display text-xl font-bold text-slate-900">{active.label} Design</h3>
-            <p className="mt-2 text-sm text-slate-600 leading-relaxed">{active.desc}</p>
-            <ul className="mt-4 space-y-2 text-xs text-slate-700">
-              {['Local bye-law & set-back compliance', 'Civil + structural + MEP drawing sets', 'Facade, signage & parking planning'].map((f) => (
-                <li key={f} className="flex items-center gap-2">
-                  <Icons.Check size={13} className="text-blue-600 shrink-0" />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => onOpenConsult(`${active.label} Commercial Design`)}
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-blue-700 transition"
-              >
-                <span>Request a Quote</span>
-                <Icons.ChevronRight size={14} />
-              </button>
-              <a
-                href="#interiors"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-xs font-bold text-slate-900 shadow-sm hover:border-slate-500 transition"
-              >
-                <span>See Reference Images</span>
-              </a>
+        {/* Single Unified Commercial Card */}
+        <div key={active.id} className="relative overflow-hidden rounded-lg border border-[#E7E0D7] shadow-card animate-fadeIn">
+          <img src={active.image} alt={active.label} className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#292826]/90 via-[#292826]/45 to-[#292826]/10" />
+
+          <div className="relative min-h-[360px] sm:min-h-[408px] flex flex-col justify-end p-6 sm:p-10">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#E76F2E] ring-1 ring-[#E7E0D7]">
+                {active.label}
+              </span>
+              <h3 className="mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">
+                {active.label} Design
+              </h3>
+              <p className="mt-2 text-sm text-white/85 leading-relaxed max-w-xl">
+                {active.desc}
+              </p>
+              <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-white/80">
+                {['Local bye-law & set-back compliance', 'Civil + structural + MEP drawing sets', 'Facade, signage & parking planning'].map((f) => (
+                  <li key={f} className="flex items-center gap-1.5">
+                    <Icons.Check size={13} className="text-[#E76F2E] shrink-0" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => onOpenConsult(`${active.label} Commercial Design`)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-xs font-bold text-[#E76F2E] shadow-sm hover:bg-[#F1ECE5] transition"
+                >
+                  <span>Request a Quote</span>
+                  <Icons.ChevronRight size={14} />
+                </button>
+                <a
+                  href="#interiors"
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/40 bg-[#292826]/90 px-5 py-2.5 text-xs font-bold text-white hover:bg-[#292826] transition transition"
+                >
+                  <span>See Reference Images</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>

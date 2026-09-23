@@ -12,24 +12,24 @@
   }
 
   ::selection {
-    background: #334155;
+    background: #E76F2E;
     color: #FFFFFF;
   }
 
-  /* Custom scrollbar for modern grey theme */
+  /* Custom scrollbar for warm grey theme */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #F1F5F9;
+    background: #F0EBE6;
   }
   ::-webkit-scrollbar-thumb {
-    background: #CBD5E1;
+    background: #D8D2CC;
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #94A3B8;
+    background: #B9B2AB;
   }
 }
 
@@ -39,27 +39,27 @@
   }
 
   .eyebrow {
-    @apply inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-accent;
+    @apply inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#E76F2E];
   }
 
   .section-title {
-    @apply font-display text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight text-ink;
+    @apply font-display text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight text-[#292826];
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-semibold transition-all;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-xs sm:text-sm font-semibold transition-all;
   }
 
   .btn-primary {
-    @apply btn bg-accent text-white hover:bg-accent-dark shadow-sm hover:shadow active:scale-[0.98];
+    @apply btn bg-[#E76F2E] text-white hover:bg-[#C65320] shadow-sm hover:shadow active:scale-[0.98];
   }
 
   .btn-ghost {
-    @apply btn border border-line bg-surface text-ink hover:border-accent hover:text-accent shadow-sm;
+    @apply btn border border-[#E76F2E] bg-white text-[#E76F2E] hover:bg-[#FBE7D3] hover:text-[#C65320] shadow-sm;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-1.5 text-xs font-medium text-ink transition-all hover:border-accent hover:text-accent hover:bg-accent-tint/40 shadow-sm;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-[#E7E0D7] bg-white px-3.5 py-1.5 text-xs font-medium text-[#74706A] transition-all hover:border-[#E76F2E] hover:text-[#E76F2E] shadow-sm;
   }
 }
 

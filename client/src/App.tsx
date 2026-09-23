@@ -68,10 +68,10 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-base text-ink font-body selection:bg-slate-950 selection:text-white">
+    <div className="min-h-screen bg-base text-ink font-body selection:bg-[#292826] selection:text-white">
       <a
         href="#plans"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-slate-900 focus:px-4 focus:py-2 focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-[#292826] focus:px-4 focus:py-2 focus:text-white"
       >
         Skip to content
       </a>
@@ -87,14 +87,14 @@ function App() {
         {/* Hero Section with Interactive Calculator */}
         <Hero onCalculate={handleCalculateEstimate} />
 
+        {/* Approach / Split-layout section */}
+        <AboutNivaas />
+
         {/* Media Coverage & Credibility Spotlight */}
         <MediaSpotlight />
 
         {/* Trusted Numbers */}
         <StatsCounter />
-
-        {/* About NIVAAS */}
-        <AboutNivaas />
 
         {/* House Plans Catalog */}
         <Projects onOpenConsult={handleOpenConsult} />

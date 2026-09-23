@@ -6,6 +6,18 @@ export interface IconProps extends React.SVGProps<SVGSVGElement> {
 }
 
 export const Icons = {
+  // Brand mark: minimal architectural house (oxide orange)
+  NivaasMark: ({ size = 22, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" className={className} {...props}>
+      <g stroke="#C94F36" strokeWidth="2" strokeLinejoin="miter" strokeLinecap="butt" fill="none">
+        <path d="M8 10 L56 26" />
+        <path d="M52 24.667 L52 54 L12 54 L12 11.333" />
+        <path d="M27 54 L27 30 L37 30 L37 54" />
+        <path d="M44 54 L44 22" />
+      </g>
+    </svg>
+  ),
+
   // Navigation & UI
   Search: ({ size = 18, className = '', ...props }: IconProps) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
