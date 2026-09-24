@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { megaMenus, site } from '../lib/data'
 import { Icons } from './Icons'
-import ChatAi from './ChatAi'
+import NivaasAiStudio from './NivaasAiStudio'
 
 interface NavProps {
   onOpenConsult: (req?: string) => void
@@ -14,7 +14,8 @@ export default function Nav({ onOpenConsult, onOpenLogin }: NavProps) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [newsOpen, setNewsOpen] = useState(false)
-  const [chatOpen, setChatOpen] = useState(false)
+  const [aiStudioOpen, setAiStudioOpen] = useState(false)
+  const [aiStudioMode, setAiStudioMode] = useState<'generator' | 'chat'>('generator')
   const navRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -290,13 +291,17 @@ export default function Nav({ onOpenConsult, onOpenLogin }: NavProps) {
               <Icons.Search size={18} className="text-[#E76F2E]" />
             </button>
 
-            {/* News button */}
+            {/* Ask AI Generator Button */}
             <button
               type="button"
-              onClick={() => setNewsOpen(true)}
-              className="hidden md:inline-flex items-center gap-1 px-3.5 py-2 text-xs font-semibold rounded-lg border border-[#E7E0D7] bg-white text-[#E76F2E] hover:bg-[#FFF6E8] transition"
+              onClick={() => {
+                setAiStudioMode('generator')
+                setAiStudioOpen(true)
+              }}
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg border border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E] hover:bg-[#E76F2E] hover:text-white transition shadow-xs"
             >
-              <span>📰</span> News
+              <Icons.Sparkles size={13} />
+              <span>Ask NIVAAS AI</span>
             </button>
 
             {/* Consult Online Now Button */}
@@ -428,6 +433,18 @@ export default function Nav({ onOpenConsult, onOpenLogin }: NavProps) {
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false)
+                  setAiStudioMode('generator')
+                  setAiStudioOpen(true)
+                }}
+                className="w-full py-3 rounded-lg border-2 border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E] font-bold text-sm text-center flex items-center justify-center gap-2 hover:bg-[#E76F2E] hover:text-white transition"
+              >
+                <Icons.Sparkles size={15} />
+                <span>Ask NIVAAS AI Floor Plan Generator</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false)
                   onOpenConsult()
                 }}
                 className="w-full py-3 rounded-lg border border-[#E76F2E] bg-white text-[#E76F2E] font-bold text-sm text-center hover:bg-[#FFF6E8]"
@@ -494,15 +511,26 @@ export default function Nav({ onOpenConsult, onOpenLogin }: NavProps) {
         </div>
       )}
 
-      {/* AI Chat Assistant */}
-      <ChatAi open={chatOpen} onClose={() => setChatOpen(false)} />
+      {/* NIVAAS AI Architect Studio (MakeMyHouse 20-Step Guided Flow + AI Assistant) */}
+      <NivaasAiStudio
+        open={aiStudioOpen}
+        onClose={() => setAiStudioOpen(false)}
+        onOpenConsult={(planDetails) => {
+          setAiStudioOpen(false)
+          onOpenConsult(planDetails)
+        }}
+        initialMode={aiStudioMode}
+      />
 
       {/* Floating AI Assistant (sits above the WhatsApp FAB, like the callback pill) */}
       <div className="fixed bottom-32 right-6 z-50 flex items-center gap-2.5">
         <button
           type="button"
-          onClick={() => setChatOpen(true)}
-          className="hidden sm:inline-flex items-center gap-2 bg-white text-[#E76F2E] border border-[#E7E0D7] px-4 py-2.5 rounded-lg text-xs font-bold hover:bg-[#FFF6E8] transition"
+          onClick={() => {
+            setAiStudioMode('generator')
+            setAiStudioOpen(true)
+          }}
+          className="hidden sm:inline-flex items-center gap-2 bg-white text-[#E76F2E] border border-[#E7E0D7] px-4 py-2.5 rounded-lg text-xs font-bold hover:bg-[#FFF6E8] transition shadow-md"
         >
           <Icons.Sparkles size={14} className="text-[#E76F2E]" />
           <span>Ask NIVAAS AI</span>
@@ -510,10 +538,13 @@ export default function Nav({ onOpenConsult, onOpenLogin }: NavProps) {
 
         <button
           type="button"
-          onClick={() => setChatOpen(true)}
+          onClick={() => {
+            setAiStudioMode('generator')
+            setAiStudioOpen(true)
+          }}
           aria-label="Open NIVAAS AI floor plan assistant"
           title="Ask NIVAAS AI"
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E76F2E] font-display text-sm font-extrabold tracking-wide text-white shadow-sm transition hover:scale-105 hover:bg-[#C65320]"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E76F2E] font-display text-sm font-extrabold tracking-wide text-white shadow-lg transition hover:scale-105 hover:bg-[#C65320] active:scale-95"
         >
           AI
         </button>
