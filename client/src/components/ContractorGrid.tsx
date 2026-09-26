@@ -43,7 +43,7 @@ export default function ContractorGrid() {
           {contractorTrades.map((trade) => (
             <div
               key={trade.title}
-              className="flex flex-col rounded-lg border border-[#E7E0D7] bg-white p-4 sm:p-5 transition-all hover:-translate-y-1 hover:shadow-card-hover hover:border-[#E7E0D7] group"
+              className="flex flex-col rounded-lg border border-[#E7E0D7] bg-white px-4 py-6 sm:px-5 sm:py-6 transition-all hover:-translate-y-1 hover:shadow-card-hover hover:border-[#E7E0D7] group"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] group-hover:bg-[#292826] group-hover:border-[#C65320] transition-colors">
                 <div className="group-hover:[&>*]:text-white [&>*]:transition-colors">

@@ -1,7 +1,9 @@
 import { useRef } from 'react'
 import { elevations } from '../lib/data'
-import Img from './Img'
 import { Icons } from './Icons'
+import { DesignCatalogFilterBar } from './Projects'
+import { DesignEmptyState, DesignImageBadge, DesignImageCard } from './DesignImageCard'
+import { useDesignCatalogFilters } from './useDesignCatalogFilters'
 
 interface ElevationsProps {
   onOpenConsult: (style?: string) => void
@@ -9,18 +11,28 @@ interface ElevationsProps {
 
 export default function Elevations({ onOpenConsult }: ElevationsProps) {
   const trackRef = useRef<HTMLDivElement>(null)
+  const {
+    filters,
+    filtered,
+    cities,
+    openMenu,
+    onChange,
+    onToggle,
+    onClose,
+    clearAll,
+  } = useDesignCatalogFilters(elevations)
 
   const scroll = (dir: 1 | -1) => {
     const track = trackRef.current
     if (!track) return
     const card = track.querySelector<HTMLElement>('[data-slide]')
-    const gap = 24
+    const gap = 16
     const amount = card ? card.offsetWidth + gap : track.clientWidth
     track.scrollBy({ left: dir * amount, behavior: 'smooth' })
   }
 
   return (
-    <section id="elevations" className="py-20 bg-white border-t border-[#E7E0D7]">
+    <section id="elevations" className="py-12 sm:py-14 bg-white border-t border-[#E7E0D7]">
       <div className="container-content">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
@@ -67,57 +79,49 @@ export default function Elevations({ onOpenConsult }: ElevationsProps) {
           </div>
         </div>
 
-        {/* Horizontal Slider */}
-        <div
-          ref={trackRef}
-          className="mt-10 flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-none pb-2"
-        >
-          {elevations.map((item, idx) => (
-            <article
-              key={idx}
-              data-slide
-              className="relative shrink-0 snap-start w-[85%] sm:w-[55%] md:w-[46%] lg:w-[38%] rounded-lg border border-[#E7E0D7] bg-white overflow-hidden shadow-sm group"
-            >
-              {/* Image */}
-              <div className="relative overflow-hidden bg-[#FFF6E8]">
-                <Img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full object-cover aspect-[4/3] sm:aspect-[45/20] transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-                />
-                <span className="absolute top-4 left-4 rounded-lg bg-[#292826] px-3 py-1 text-[11px] font-bold text-white shadow-sm flex items-center gap-1">
-                  <Icons.Sparkles size={11} className="text-[#E76F2E]" />
-                  <span>{item.badge}</span>
-                </span>
-              </div>
+        <DesignCatalogFilterBar
+          filters={filters}
+          cities={cities}
+          openMenu={openMenu}
+          onChange={onChange}
+          onToggle={onToggle}
+          onClose={onClose}
+        />
 
-              {/* Slide content */}
-              <div className="p-5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#74706A]">
-                  3D Elevation
-                </span>
-                <h3 className="mt-1 font-display text-base font-bold text-[#292826] leading-snug">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm text-[#74706A] leading-relaxed line-clamp-3">
-                  {item.text}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => onOpenConsult(`Elevation Style: ${item.title}`)}
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#C65320] active:scale-[0.98] group/link"
-                >
-                  <Icons.Eye size={14} />
-                  <span>View 3D Designs</span>
-                  <Icons.ChevronRight
-                    size={14}
-                    className="transition-transform group-hover/link:translate-x-0.5"
-                  />
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
+        {/* Horizontal Slider */}
+        {filtered.length > 0 ? (
+          <div
+            ref={trackRef}
+            className="mt-6 flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-none pb-2"
+          >
+            {filtered.map((item) => (
+              <DesignImageCard
+                key={item.id}
+                dataSlide
+                aesthetic
+                className="w-[88%] shrink-0 snap-start sm:w-[53%] md:w-[42%] lg:w-[34%] xl:w-[32%]"
+                image={item.image}
+                alt={item.title}
+                title={item.title}
+                description={item.text}
+                leftBadges={
+                  <DesignImageBadge icon={<Icons.Sparkles size={11} className="text-[#FFA366]" />}>
+                    3D Elevation
+                  </DesignImageBadge>
+                }
+                rightBadge={<DesignImageBadge variant="accent">{item.badge}</DesignImageBadge>}
+                actionIcon={<Icons.Eye size={14} />}
+                actionLabel="View 3D Designs"
+                onAction={() => onOpenConsult(`Elevation Style: ${item.title}`)}
+              />
+            ))}
+          </div>
+        ) : (
+          <DesignEmptyState
+            message="No elevations match these filters"
+            onClear={clearAll}
+          />
+        )}
       </div>
     </section>
   )

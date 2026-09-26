@@ -1,28 +1,419 @@
-import { useState } from 'react'
+import { useMemo, useRef, useState, type MouseEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchProjects } from '../lib/api'
-import { fallbackProjects } from '../lib/data'
-import Img from './Img'
+import { fallbackProjects, type Project } from '../lib/data'
 import { Icons } from './Icons'
+import { cityAliases, type CatalogOpenMenu, type DesignFilterState } from './useDesignCatalogFilters'
+import { DesignEmptyState, DesignImageBadge, DesignImageCard } from './DesignImageCard'
 
 interface ProjectsProps {
   onOpenConsult: (planTitle?: string) => void
 }
 
-const ARCH_IMAGE =
-  'https://images.pexels.com/photos/37129015/pexels-photo-37129015.jpeg'
-
-const tiers = [
-  { col: 'col-span-2', row: 'row-span-2' }, // large
-  { col: 'col-span-1', row: 'row-span-1' }, // normal
-  { col: 'col-span-1', row: 'row-span-2' }, // tall
-  { col: 'col-span-1', row: 'row-span-1' }, // normal
-  { col: 'col-span-2', row: 'row-span-1' }, // wide
-  { col: 'col-span-1', row: 'row-span-1' }, // normal
+const bhkPills = [
+  { label: 'All Plans', value: 'All', icon: Icons.Grid },
+  { label: '2 BHK', value: '2 BHK', icon: Icons.Bed },
+  { label: '3 BHK', value: '3 BHK', icon: Icons.Bed },
+  { label: '4 BHK', value: '4 BHK', icon: Icons.Bed },
+  { label: '5 BHK', value: '5 BHK', icon: Icons.Bed },
 ]
 
+const homeTypeOptions = ['Compact Home', 'Duplex', 'Luxury Villa', 'Joint Family Home', 'Rental Units']
+const areaOptions = ['Under 1,000 sq.ft', '1,000 - 1,500 sq.ft', '1,500 - 2,000 sq.ft', '2,000 - 3,000 sq.ft', 'Above 3,000 sq.ft']
+const directionOptions = ['East Facing', 'West Facing', 'North Facing', 'South Facing']
+
+interface CityOption {
+  name: string
+  slug: string
+  aliases?: string[]
+  planCount: number
+}
+
+type OpenMenu = CatalogOpenMenu
+
+const parseBuiltUp = (area: string) => {
+  const n = parseInt(area.replace(/[^0-9]/g, ''), 10)
+  return Number.isNaN(n) ? 0 : n
+}
+
+const areaMatches = (range: string, builtUp: number) => {
+  switch (range) {
+    case 'Under 1,000 sq.ft': return builtUp > 0 && builtUp < 1000
+    case '1,000 - 1,500 sq.ft': return builtUp >= 1000 && builtUp < 1500
+    case '1,500 - 2,000 sq.ft': return builtUp >= 1500 && builtUp < 2000
+    case '2,000 - 3,000 sq.ft': return builtUp >= 2000 && builtUp < 3000
+    case 'Above 3,000 sq.ft': return builtUp >= 3000
+    default: return true
+  }
+}
+
+const homeTypeMatches = (p: Project, homeType: string) => {
+  if (!homeType) return true
+  const hay = `${p.title} ${p.bhk} ${p.floors} ${p.tag ?? ''} ${(p.keyFeatures ?? []).join(' ')}`.toLowerCase()
+  switch (homeType) {
+    case 'Compact Home': return /compact|narrow frontage/.test(hay)
+    case 'Duplex': return hay.includes('duplex')
+    case 'Luxury Villa': return /luxury|villa|haveli|home theatre/.test(hay)
+    case 'Joint Family Home': return /joint|family|estate|parent/.test(hay)
+    case 'Rental Units': return hay.includes('rental')
+    default: return true
+  }
+}
+
+const directionMatches = (facing: string, direction: string) => {
+  if (!direction) return true
+  return facing.toLowerCase().startsWith(direction.split(' ')[0].toLowerCase())
+}
+
+const shortFacing = (facing: string) => facing.split(' (')[0] || 'House Plan'
+
+interface FilterDropdownProps {
+  placeholder: string
+  icon: typeof Icons.Ruler
+  value: string
+  options: string[]
+  isOpen: boolean
+  onToggle: (e: MouseEvent<HTMLButtonElement>) => void
+  onChange: (v: string) => void
+}
+
+function FilterDropdown({ placeholder, icon: Icon, value, options, isOpen, onToggle, onChange }: FilterDropdownProps) {
+  const [pos, setPos] = useState({ left: 0, top: 0 })
+
+  const handleToggle = (e: MouseEvent<HTMLButtonElement>) => {
+    if (!isOpen) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const left = Math.min(Math.max(8, rect.left), window.innerWidth - 228)
+      setPos({ left, top: rect.bottom + 6 })
+    }
+    onToggle(e)
+  }
+
+  return (
+    <div className="shrink-0">
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        onClick={handleToggle}
+        className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-bold transition ${
+          value
+            ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-sm'
+            : 'border-[#E7E0D7] bg-white text-[#74706A] hover:border-[#C65320] hover:text-[#292826]'
+        }`}
+      >
+        <Icon size={13} />
+        <span className="max-w-[120px] truncate">{value || placeholder}</span>
+        <Icons.ChevronDown size={12} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div
+          className="fixed z-50 w-[220px] rounded-xl border border-[#E7E0D7] bg-white p-1.5 shadow-xl animate-fadeIn"
+          style={{ left: pos.left, top: pos.top }}
+        >
+          {value && (
+            <button
+              type="button"
+              onClick={() => onChange('')}
+              className="mb-1 flex w-full items-center justify-between rounded-lg border-b border-[#E7E0D7] px-3 py-2 text-xs font-semibold text-[#74706A] transition hover:bg-[#F5F2EC]"
+            >
+              Any {placeholder}
+              <Icons.Close size={11} />
+            </button>
+          )}
+          {options.map((opt) => {
+            const active = value === opt
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => onChange(opt)}
+                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-bold transition ${
+                  active ? 'bg-[#FFF6E8] text-[#E76F2E]' : 'text-[#292826] hover:bg-[#F5F2EC]'
+                }`}
+              >
+                <span>{opt}</span>
+                {active && <Icons.ChevronRight size={13} />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CityOptionsList({
+  cities,
+  value,
+  onSelect,
+  resultNoun = 'plan',
+}: {
+  cities: CityOption[]
+  value: string
+  onSelect: (name: string) => void
+  resultNoun?: 'plan' | 'design'
+}) {
+  if (cities.length === 0) {
+    return <p className="px-3 py-4 text-center text-xs text-[#74706A]">No city found</p>
+  }
+  return (
+    <div className="max-h-[240px] overflow-y-auto">
+      {cities.map((c) => {
+        const active = value === c.name
+        return (
+          <button
+            key={c.name}
+            type="button"
+            onClick={() => onSelect(c.name)}
+            className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-bold transition ${
+              active ? 'bg-[#FFF6E8] text-[#E76F2E]' : 'text-[#292826] hover:bg-[#F5F2EC]'
+            }`}
+          >
+            <span>{c.name}</span>
+            <span className={`text-[10px] font-semibold ${active ? 'text-[#E76F2E]' : 'text-[#A8A29B]'}`}>
+              {c.planCount} {c.planCount === 1 ? resultNoun : `${resultNoun}s`}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function CityDropdown({
+  value,
+  open,
+  onToggle,
+  onSelect,
+  cities,
+  resultNoun = 'plan',
+}: {
+  value: string
+  open: boolean
+  onToggle: () => void
+  onSelect: (name: string) => void
+  cities: CityOption[]
+  resultNoun?: 'plan' | 'design'
+}) {
+  const [search, setSearch] = useState('')
+  const [pos, setPos] = useState({ left: 0, top: 0 })
+
+  const query = search.trim().toLowerCase()
+  const filtered = query
+    ? cities.filter((c) =>
+        [c.name, ...(c.aliases ?? [])].some((t) => t.toLowerCase().includes(query)),
+      )
+    : cities
+
+  const handleToggle = (e: MouseEvent<HTMLButtonElement>) => {
+    if (!open) {
+      setSearch('')
+      const rect = e.currentTarget.getBoundingClientRect()
+      setPos({
+        left: Math.min(Math.max(8, rect.left), window.innerWidth - 250),
+        top: rect.bottom + 6,
+      })
+    }
+    onToggle()
+  }
+
+  const searchInput = (
+    <div className="relative">
+      <Icons.Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29B]" />
+      <input
+        autoFocus
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search city..."
+        className="w-full rounded-lg border border-[#E7E0D7] bg-white py-2 pl-8 pr-3 text-xs font-medium text-[#292826] placeholder:text-[#A8A29B] focus:border-[#C94F36] focus:outline-none"
+      />
+    </div>
+  )
+
+  const clearRow = (
+    <button
+      type="button"
+      onClick={() => { onSelect(''); setSearch('') }}
+      className="mb-1 flex w-full items-center justify-between rounded-lg border-b border-[#E7E0D7] px-3 py-2 text-xs font-semibold text-[#74706A] transition hover:bg-[#F5F2EC]"
+    >
+      Clear city
+      <Icons.Close size={11} />
+    </button>
+  )
+
+  return (
+    <>
+      <div className="shrink-0">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={handleToggle}
+          className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-bold transition ${
+            value
+              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-sm'
+              : 'border-[#E7E0D7] bg-white text-[#74706A] hover:border-[#C65320] hover:text-[#292826]'
+          }`}
+        >
+          <Icons.MapPin size={13} />
+          <span className="max-w-[120px] truncate">{value || 'Search City'}</span>
+          <Icons.ChevronDown size={12} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      {/* Desktop searchable popover */}
+      {open && (
+        <div
+          className="hidden sm:block fixed z-50 w-[240px] rounded-xl border border-[#E7E0D7] bg-white p-2 shadow-xl animate-fadeIn"
+          style={{ left: pos.left, top: pos.top }}
+        >
+          {searchInput}
+          <div className="mt-2">
+            {value && clearRow}
+            <CityOptionsList cities={filtered} value={value} onSelect={onSelect} resultNoun={resultNoun} />
+          </div>
+        </div>
+      )}
+
+      {/* Mobile searchable bottom sheet */}
+      {open && (
+        <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-white p-4 pb-6 shadow-xl animate-fadeIn">
+          <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[#E7E0D7]" />
+          <div className="mb-2 flex items-center justify-between">
+            <h4 className="font-display text-base font-bold text-[#292826]">Search City</h4>
+            <button
+              type="button"
+              onClick={onToggle}
+              className="flex items-center gap-1.5 rounded-full text-[11px] font-bold text-[#C94F36]"
+            >
+              Done
+            </button>
+          </div>
+          <div className="relative">{searchInput}</div>
+          <div className="mt-2">
+            {value && clearRow}
+            <CityOptionsList cities={filtered} value={value} onSelect={onSelect} resultNoun={resultNoun} />
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+interface DesignCatalogFilterBarProps {
+  filters: DesignFilterState
+  cities: CityOption[]
+  openMenu: OpenMenu
+  onChange: (key: keyof DesignFilterState, value: string) => void
+  onToggle: (menu: OpenMenu) => void
+  onClose: () => void
+}
+
+export function DesignCatalogFilterBar({
+  filters,
+  cities,
+  openMenu,
+  onChange,
+  onToggle,
+  onClose,
+}: DesignCatalogFilterBarProps) {
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const advancedFilterCount = [filters.homeType, filters.area, filters.direction].filter(Boolean).length
+
+  return (
+    <>
+      <div className="relative z-50 mt-6 rounded-xl border border-[#E7E0D7] bg-white p-3.5 shadow-xs">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <FilterDropdown
+            placeholder="BHK"
+            icon={Icons.Bed}
+            value={filters.bhk === 'All' ? '' : filters.bhk}
+            options={bhkPills.map((tab) => tab.value)}
+            isOpen={openMenu === 'bhk'}
+            onToggle={() => onToggle('bhk')}
+            onChange={(value) => onChange('bhk', value)}
+          />
+          <button
+            type="button"
+            aria-expanded={showAdvanced}
+            onClick={() => {
+              setShowAdvanced((current) => !current)
+              onClose()
+            }}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold transition ${
+              advancedFilterCount > 0 || showAdvanced
+                ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-sm'
+                : 'border-[#E7E0D7] bg-white text-[#74706A] hover:border-[#C65320] hover:text-[#292826]'
+            }`}
+          >
+            <Icons.Layers size={13} />
+            Filters{advancedFilterCount > 0 ? ` (${advancedFilterCount})` : ''}
+            <Icons.ChevronDown size={12} className={`transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+          </button>
+          <CityDropdown
+            value={filters.city}
+            open={openMenu === 'city'}
+            onToggle={() => onToggle('city')}
+            onSelect={(value) => onChange('city', value)}
+            cities={cities}
+            resultNoun="design"
+          />
+        </div>
+
+        {showAdvanced && (
+          <div className="mt-3 flex flex-wrap gap-2.5 border-t border-[#E7E0D7] pt-3">
+            <FilterDropdown
+              placeholder="Home Type"
+              icon={Icons.Layers}
+              value={filters.homeType}
+              options={homeTypeOptions}
+              isOpen={openMenu === 'homeType'}
+              onToggle={() => onToggle('homeType')}
+              onChange={(value) => onChange('homeType', value)}
+            />
+            <FilterDropdown
+              placeholder="Built-up Area"
+              icon={Icons.Ruler}
+              value={filters.area}
+              options={areaOptions}
+              isOpen={openMenu === 'area'}
+              onToggle={() => onToggle('area')}
+              onChange={(value) => onChange('area', value)}
+            />
+            <FilterDropdown
+              placeholder="Vastu Direction"
+              icon={Icons.Compass}
+              value={filters.direction}
+              options={directionOptions}
+              isOpen={openMenu === 'direction'}
+              onToggle={() => onToggle('direction')}
+              onChange={(value) => onChange('direction', value)}
+            />
+          </div>
+        )}
+      </div>
+
+      {openMenu && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 sm:bg-transparent"
+          aria-hidden="true"
+          onClick={onClose}
+        />
+      )}
+    </>
+  )
+}
+
 export default function Projects({ onOpenConsult }: ProjectsProps) {
-  const [selectedBhk, setSelectedBhk] = useState<string>('All')
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [bhk, setBhk] = useState('All')
+  const [homeType, setHomeType] = useState('')
+  const [areaRange, setAreaRange] = useState('')
+  const [direction, setDirection] = useState('')
+  const [city, setCity] = useState('')
+  const [openMenu, setOpenMenu] = useState<OpenMenu>(null)
+
   const { data, isError } = useQuery({
     queryKey: ['projects'],
     queryFn: fetchProjects,
@@ -31,125 +422,276 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
 
   const allProjects = data && !isError ? data : fallbackProjects
 
-  const filtered = selectedBhk === 'All'
-    ? allProjects
-    : selectedBhk === 'Rental'
-    ? allProjects.filter((p) => p.floors.includes('Rental') || p.title.includes('Rental') || p.tag?.includes('Rental'))
-    : allProjects.filter((p) => p.bhk.includes(selectedBhk))
+  const availableCities = useMemo<CityOption[]>(() => {
+    const counts = new Map<string, number>()
+    for (const p of allProjects) {
+      if (p.city) counts.set(p.city, (counts.get(p.city) ?? 0) + 1)
+    }
+    return Array.from(counts, ([name, planCount]) => ({
+      name,
+      slug: name.toLowerCase(),
+      aliases: cityAliases[name],
+      planCount,
+    })).sort((a, b) => b.planCount - a.planCount || a.name.localeCompare(b.name))
+  }, [allProjects])
 
-  const selectBhk = (value: string) => {
-    setSelectedBhk(value)
+  const filtered = allProjects.filter((p) => {
+    if (bhk !== 'All' && !p.bhk.includes(bhk)) return false
+    if (!homeTypeMatches(p, homeType)) return false
+    if (!areaMatches(areaRange, parseBuiltUp(p.area))) return false
+    if (!directionMatches(p.facing, direction)) return false
+    if (city && p.city !== city) return false
+    return true
+  })
+
+  const chips: { key: string; label: string; onRemove: () => void }[] = []
+  if (bhk !== 'All') chips.push({ key: 'bhk', label: bhk, onRemove: () => setBhk('All') })
+  if (homeType) chips.push({ key: 'homeType', label: homeType, onRemove: () => setHomeType('') })
+  if (areaRange) chips.push({ key: 'area', label: areaRange, onRemove: () => setAreaRange('') })
+  if (direction) chips.push({ key: 'direction', label: direction, onRemove: () => setDirection('') })
+  if (city) chips.push({ key: 'city', label: city, onRemove: () => setCity('') })
+  const hasActiveFilters = chips.length > 0
+
+  const clearAll = () => {
+    setBhk('All')
+    setHomeType('')
+    setAreaRange('')
+    setDirection('')
+    setCity('')
+    setOpenMenu(null)
+  }
+
+  const closeMenu = () => setOpenMenu(null)
+
+  const scrollPlans = (dir: 1 | -1) => {
+    const track = trackRef.current
+    if (!track) return
+    const card = track.querySelector<HTMLElement>('[data-slide]')
+    const gap = 16
+    const amount = card ? card.offsetWidth + gap : track.clientWidth
+    track.scrollBy({ left: dir * amount, behavior: 'smooth' })
   }
 
   return (
-    <section id="plans" className="py-20 sm:py-28 bg-[#FDFCF9] border-t border-[#E7E0D7]">
+    <div id="plans" className="pt-4 pb-12">
       <div className="container-content">
-        {/* Editorial Split Intro — Architecture: text left, image right */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-          <div>
-            <span className="eyebrow flex items-center gap-1.5">
-              <Icons.Blueprint size={14} /> Architecture
+        <div className="mb-6">
+          <span className="eyebrow flex items-center gap-1.5">
+            <Icons.Blueprint size={14} /> House Plans & Blueprints
+          </span>
+          <h2 className="section-title mt-2">
+            Indian House Plans with 2D & 3D Layouts
+          </h2>
+          <p className="mt-2 text-sm text-[#74706A] max-w-2xl">
+            Vastu-compliant house plans with practical space planning, structural clarity, and photorealistic 3D previews — designed for Indian plot sizes, family needs, and contemporary living.
+          </p>
+        </div>
+
+        {/* Compact Trust & Specification Metadata Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-white border border-[#E7E0D7] shadow-2xs mb-6">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#74706A]">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] px-3 py-1 text-[#E76F2E] font-bold">
+              <Icons.ShieldCheck size={13} />
+              <span>GHMC & BBMP Setbacks</span>
             </span>
-            <h2 className="section-title mt-2">
-              Floor plans designed around your plot, sunlight and daily routine.
-            </h2>
-            <p className="mt-4 max-w-xl text-sm text-[#74706A] leading-relaxed">
-              Every house plan is crafted for standard Indian plot sizes (30x50,
-              20x40, 40x60, 25x50) and municipal setbacks (GHMC, BBMP, DDA,
-              PMRDA), with 100% Vastu compliance, covered car parking, and
-              complete structural CAD drawings.
-            </p>
-            <div className="mt-7 flex flex-col sm:flex-row sm:items-center gap-4">
-              <button
-                type="button"
-                onClick={() => onOpenConsult('Architecture Consultation: Floor Plan Design')}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#E76F2E] text-white text-sm font-bold transition hover:bg-[#C65320] active:scale-[0.98] group/link"
-              >
-                <span>Explore architecture</span>
-                <Icons.ChevronRight
-                  size={16}
-                  className="transition-transform group-hover/link:translate-x-0.5"
-                />
-              </button>
-              <span className="text-xs font-medium text-[#74706A]">
-                12,000+ verified plans · Dimensions from 20x40 to 60x80
-              </span>
-            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] px-3 py-1 text-[#E76F2E] font-bold">
+              <Icons.Sun size={13} />
+              <span>100% Vastu Approved</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] px-3 py-1 text-[#E76F2E] font-bold">
+              <Icons.Blueprint size={13} />
+              <span>Structural CAD Sets</span>
+            </span>
           </div>
-          <div className="relative overflow-hidden bg-[#FFF6E8]">
-            <Img
-              src={ARCH_IMAGE}
-              alt="Modern Indian architecture under construction"
-              className="h-full w-full object-cover aspect-[45/20]"
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-[#74706A] hidden sm:inline">
+              12,000+ verified plans available
+            </span>
+            <button
+              type="button"
+              onClick={() => onOpenConsult('Custom Architecture Consultation')}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#E76F2E] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#C65320] transition active:scale-[0.98]"
+            >
+              <span>Custom Layout</span>
+              <Icons.ChevronRight size={13} />
+            </button>
+          </div>
+        </div>
+
+        {/* Single Seamless Studio Filter Bar */}
+        <div className="rounded-2xl border border-[#E7E0D7] bg-white p-4 sm:p-5 shadow-xs mb-8">
+          <div className="flex flex-nowrap items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none sm:flex-wrap sm:overflow-visible sm:pb-0">
+            {bhkPills.map((tab) => {
+              const isActive = bhk === tab.value
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => setBhk(tab.value)}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold whitespace-nowrap transition ${
+                    isActive
+                      ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-sm'
+                      : 'border-[#E7E0D7] bg-white text-[#74706A] hover:border-[#C65320] hover:text-[#292826]'
+                  }`}
+                >
+                  <tab.icon size={13} />
+                  {tab.label}
+                </button>
+              )
+            })}
+
+            <span className="hidden sm:block h-6 w-px bg-[#E7E0D7] shrink-0" />
+
+            <FilterDropdown
+              placeholder="Home Type"
+              icon={Icons.Layers}
+              value={homeType}
+              options={homeTypeOptions}
+              isOpen={openMenu === 'homeType'}
+              onToggle={() => setOpenMenu(openMenu === 'homeType' ? null : 'homeType')}
+              onChange={(v) => { setHomeType(v); closeMenu() }}
+            />
+            <FilterDropdown
+              placeholder="Built-up Area"
+              icon={Icons.Ruler}
+              value={areaRange}
+              options={areaOptions}
+              isOpen={openMenu === 'area'}
+              onToggle={() => setOpenMenu(openMenu === 'area' ? null : 'area')}
+              onChange={(v) => { setAreaRange(v); closeMenu() }}
+            />
+            <FilterDropdown
+              placeholder="Vastu Direction"
+              icon={Icons.Compass}
+              value={direction}
+              options={directionOptions}
+              isOpen={openMenu === 'direction'}
+              onToggle={() => setOpenMenu(openMenu === 'direction' ? null : 'direction')}
+              onChange={(v) => { setDirection(v); closeMenu() }}
+            />
+            <CityDropdown
+              value={city}
+              open={openMenu === 'city'}
+              onToggle={() => setOpenMenu(openMenu === 'city' ? null : 'city')}
+              onSelect={(v) => { setCity(v); closeMenu() }}
+              cities={availableCities}
             />
           </div>
         </div>
 
-        {/* BHK Filter Tabs */}
-        <div className="mt-16 flex items-center gap-7 overflow-x-auto pb-3 scrollbar-none border-b border-[#E7E0D7]">
-          {[
-            { label: 'All House Plans', value: 'All' },
-            { label: '2 BHK Compact', value: '2 BHK' },
-            { label: '3 BHK Duplex', value: '3 BHK' },
-            { label: '4 BHK Luxury Villa', value: '4 BHK' },
-            { label: '5 BHK Joint Family', value: '5 BHK' },
-            { label: 'Rental Income Units', value: 'Rental' },
-          ].map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              onClick={() => selectBhk(tab.value)}
-              className={`pb-2.5 -mb-px text-xs sm:text-sm font-bold whitespace-nowrap transition border-b-2 ${
-                selectedBhk === tab.value
-                  ? 'border-[#E76F2E] text-[#E76F2E]'
-                  : 'border-transparent text-[#74706A] hover:text-[#292826]'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* Backdrop closes any open dropdown */}
+        {openMenu && (
+          <div className="fixed inset-0 z-40" aria-hidden="true" onClick={closeMenu} />
+        )}
+        {openMenu === 'city' && (
+          <div className="fixed inset-0 z-40 bg-black/50 sm:hidden" aria-hidden="true" onClick={closeMenu} />
+        )}
 
-        {/* Masonry-style Plan Grid */}
-        <div className="mt-14 grid grid-cols-2 auto-rows-[130px] grid-flow-dense gap-4 sm:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((project, index) => {
-            const tier = tiers[index % tiers.length]
-            return (
+        {filtered.length === 0 ? (
+          <DesignEmptyState
+            message="No house plans match these filters"
+            onClear={clearAll}
+          />
+        ) : (
+          <>
+            <div className="mt-6 flex items-center justify-end gap-2">
               <button
-                key={project.id}
                 type="button"
-                onClick={() => onOpenConsult(`Plan: ${project.title} (${project.size})`)}
-                className={`${tier.col} ${tier.row} relative overflow-hidden rounded-xl bg-[#FFF6E8] text-left group cursor-pointer`}
-                aria-label={`View plan: ${project.title}`}
+                onClick={() => scrollPlans(-1)}
+                aria-label="Previous house plans"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E7E0D7] bg-white text-[#292826] shadow-sm transition hover:border-[#E76F2E] hover:bg-[#E76F2E] hover:text-white active:scale-95"
               >
-                <Img
-                  src={project.image}
-                  alt={project.title}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/0 to-transparent" />
-                {project.featured && (
-                  <span className="absolute top-2.5 left-2.5 rounded-md bg-[#E76F2E] px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-white">
-                    Featured
-                  </span>
-                )}
-                <div className="absolute inset-x-0 bottom-0 p-3">
-                  <p className="font-display text-[13px] font-bold leading-snug text-white line-clamp-2">
-                    {project.title}
-                  </p>
-                  <p className="mt-1 text-[10px] font-medium text-white/80">
-                    {project.size} · {project.bhk}
-                  </p>
-                  <span className="mt-2 inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1 text-[10px] font-bold text-[#292826]">
-                    View plan
-                    <Icons.ChevronRight size={12} />
-                  </span>
-                </div>
+                <Icons.ChevronLeft size={16} />
               </button>
-            )
-          })}
-        </div>
+              <button
+                type="button"
+                onClick={() => scrollPlans(1)}
+                aria-label="Next house plans"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E7E0D7] bg-white text-[#292826] shadow-sm transition hover:border-[#E76F2E] hover:bg-[#E76F2E] hover:text-white active:scale-95"
+              >
+                <Icons.ChevronRight size={16} />
+              </button>
+            </div>
+
+            <div
+              ref={trackRef}
+              className="mt-3 flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-none pb-2"
+            >
+              {filtered.map((project) => (
+                <DesignImageCard
+                  key={project.id}
+                  dataSlide
+                  aesthetic
+                  className="w-[88%] shrink-0 snap-start sm:w-[53%] md:w-[42%] lg:w-[34%] xl:w-[32%]"
+                  image={project.image}
+                  alt={project.title}
+                  title={project.title}
+                  description={project.plotDetails ?? 'Complete architectural working drawing with structural reinforcement, electrical & plumbing CAD sets.'}
+                  leftBadges={
+                    <>
+                      <DesignImageBadge icon={<Icons.Compass size={11} className="text-[#FFA366]" />}>
+                        {shortFacing(project.facing)}
+                      </DesignImageBadge>
+                      {project.vastuCompliant && (
+                        <DesignImageBadge variant="accent">100% Vastu</DesignImageBadge>
+                      )}
+                    </>
+                  }
+                  rightBadge={
+                    <DesignImageBadge variant="light" className="text-xs font-black normal-case tracking-normal">
+                      {project.price || '₹4,999'}
+                    </DesignImageBadge>
+                  }
+                  meta={
+                    <>
+                      <span className="rounded border border-white/10 bg-[#FFF6E8]/20 px-2 py-0.5 text-white/90">
+                        {project.size}
+                      </span>
+                      <span className="text-white/60">•</span>
+                      <span className="text-white/90">{project.bhk}</span>
+                      {project.area && (
+                        <>
+                          <span className="text-white/60">•</span>
+                          <span className="text-white/80">{project.area}</span>
+                        </>
+                      )}
+                    </>
+                  }
+                  actionIcon={<Icons.Blueprint size={14} />}
+                  actionLabel="View Blueprint"
+                  onAction={() => onOpenConsult(`Plan: ${project.title} (${project.size})`)}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Active filter summary + Clear Filters */}
+        {hasActiveFilters && (
+          <div className="mt-8 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-[#74706A]">Active filters:</span>
+            {chips.map((chip) => (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={chip.onRemove}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#E7E0D7] bg-white px-3 py-1.5 text-[11px] font-bold text-[#292826] transition hover:border-[#E76F2E] hover:text-[#E76F2E]"
+              >
+                {chip.label}
+                <Icons.Close size={11} />
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={clearAll}
+              className="ml-1 inline-flex items-center gap-1.5 rounded-full border border-[#E76F2E] bg-[#FFF6E8] px-3.5 py-1.5 text-[11px] font-bold text-[#E76F2E] transition hover:bg-[#E76F2E] hover:text-white"
+            >
+              <Icons.Close size={11} />
+              Clear Filters
+            </button>
+          </div>
+        )}
 
         <div className="mt-10 text-center">
           <button
@@ -165,6 +707,6 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
           </button>
         </div>
       </div>
-    </section>
+    </div>
   )
 }

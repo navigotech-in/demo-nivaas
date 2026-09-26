@@ -14,7 +14,7 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
   }
 
   return (
-    <section id="faq" className="py-20 bg-white border-t border-[#E7E0D7]">
+    <section id="faq" className="py-[68px] bg-white border-t border-[#E7E0D7]">
       <div className="container-content max-w-5xl">
         <div className="text-center">
           <span className="eyebrow flex items-center justify-center gap-1.5">
@@ -29,7 +29,7 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
         </div>
 
         {/* FAQ Accordion (Grey-Slate Palette) */}
-        <div className="mt-12 space-y-3.5">
+        <div className="mt-[41px] space-y-3">
           {faqList.map((item, idx) => {
             const isOpen = openIndex === idx
             return (
@@ -44,7 +44,7 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
                 <button
                   type="button"
                   onClick={() => toggle(idx)}
-                  className="flex w-full items-center justify-between p-5 sm:p-6 text-left transition"
+                  className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition"
                   aria-expanded={isOpen}
                 >
                   <div className="flex items-center gap-3 pr-4">
@@ -67,7 +67,7 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
                 </button>
 
                 {isOpen && (
-                  <div className="border-t border-[#E7E0D7]/60 px-6 pb-6 pt-3.5 animate-fadeIn">
+                  <div className="border-t border-[#E7E0D7]/60 px-5 pb-5 pt-3 animate-fadeIn">
                     <p className="text-sm text-[#74706A] leading-relaxed pl-3.5 border-l-2 border-[#292826]">
                       {item.a}
                     </p>
@@ -79,9 +79,9 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-12 text-center rounded-lg bg-[#FFF6E8] p-8 border border-[#E7E0D7] shadow-sm">
+        <div className="mt-[41px] text-center rounded-lg bg-[#FFF6E8] p-[27px] border border-[#E7E0D7] shadow-sm">
           <div className="flex justify-center mb-2 text-[#E76F2E]">
-            <Icons.Compass size={32} />
+            <Icons.Compass size={27} />
           </div>
           <h3 className="font-display text-xl font-bold text-[#292826]">
             Have a specific plot dimension or custom requirement?
@@ -92,7 +92,7 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
           <button
             type="button"
             onClick={onOpenConsult}
-            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-7 py-3 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-[#C65320] transition active:scale-[0.98]"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-7 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-[#C65320] transition active:scale-[0.98]"
           >
             <Icons.Phone size={15} />
             <span>Talk to an Architect Now</span>

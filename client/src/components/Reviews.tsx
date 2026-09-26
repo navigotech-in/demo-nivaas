@@ -21,7 +21,7 @@ export default function Reviews() {
   }
 
   return (
-    <section id="reviews" className="py-20 sm:py-24 bg-[#FDFCF9] border-t border-[#E7E0D7]">
+    <section id="reviews" className="py-[68px] sm:py-[82px] bg-[#FDFCF9] border-t border-[#E7E0D7]">
       <div className="container-content">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto">
@@ -37,9 +37,9 @@ export default function Reviews() {
         </div>
 
         {/* Interactive Avatar Carousel */}
-        <div className="mt-12 max-w-5xl mx-auto">
+        <div className="mt-[41px] max-w-5xl mx-auto">
           {/* Avatar Track */}
-          <div className="flex items-center justify-center gap-3 sm:gap-6 py-6 overflow-x-auto scrollbar-none">
+          <div className="flex items-center justify-center gap-3 sm:gap-6 py-5 overflow-x-auto scrollbar-none">
             {clientReviews.map((rev, idx) => {
               const isSelected = idx === activeIndex
               return (
@@ -98,7 +98,7 @@ export default function Reviews() {
           </div>
 
           {/* Active Review Spotlight Card */}
-          <div className="relative mt-8 max-w-3xl mx-auto" key={current.id}>
+          <div className="relative mt-[27px] max-w-3xl mx-auto" key={current.id}>
             <button
               type="button"
               onClick={handlePrev}
@@ -116,7 +116,7 @@ export default function Reviews() {
               <Icons.ChevronRight size={16} />
             </button>
 
-            <div className="rounded-lg border border-[#E7E0D7] bg-white shadow-sm p-6 sm:p-9 flex flex-col items-center text-center">
+            <div className="rounded-lg border border-[#E7E0D7] bg-white shadow-sm p-5 sm:p-[31px] flex flex-col items-center text-center">
               <div className="flex items-start gap-4">
                 <div
                   className="relative shrink-0 cursor-pointer"
@@ -154,13 +154,13 @@ export default function Reviews() {
                 </div>
               </div>
 
-              <blockquote className="mt-6 font-display text-lg sm:text-xl lg:text-2xl font-bold text-[#292826] leading-snug max-w-2xl mx-auto">
+              <blockquote className="mt-5 font-display text-lg sm:text-xl lg:text-2xl font-bold text-[#292826] leading-snug max-w-2xl mx-auto">
                 <span className="select-none text-[#E76F2E]">“</span>
                 {current.quote}
                 <span className="select-none text-[#E76F2E]">”</span>
               </blockquote>
 
-              <div className="mt-5 flex flex-wrap gap-2 justify-center text-[11px]">
+              <div className="mt-4 flex flex-wrap gap-2 justify-center text-[11px]">
                 <span className="rounded-lg bg-[#FFF6E8] px-3 py-1 font-semibold text-[#292826] border border-[#E7E0D7] flex items-center gap-1.5">
                   <Icons.Ruler size={12} className="text-[#E76F2E]" /> {current.plotSize}
                 </span>
@@ -172,7 +172,7 @@ export default function Reviews() {
               <button
                 type="button"
                 onClick={() => setPlayingVideo(current.youtubeId)}
-                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#C65320] transition"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#C65320] transition"
               >
                 <Icons.Play size={12} />
                 <span>Watch Client Video Story</span>
@@ -181,7 +181,7 @@ export default function Reviews() {
           </div>
 
           {/* Dots */}
-          <div className="mt-6 flex justify-center gap-2">
+          <div className="mt-5 flex justify-center gap-2">
             {clientReviews.map((_, i) => (
               <button
                 key={i}

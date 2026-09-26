@@ -39,7 +39,7 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
   ]
 
   return (
-    <section id="calculator" className="py-20 bg-white border-t border-[#E7E0D7]">
+    <section id="calculator" className="py-[72px] bg-white border-t border-[#E7E0D7]">
       <div className="container-content">
         <div className="text-center max-w-2xl mx-auto">
           <span className="eyebrow flex items-center justify-center gap-1.5">
@@ -53,12 +53,12 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
           </p>
         </div>
 
-        <div className="mt-12 max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
+        <div className="mt-[43px] max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-x-[43px] gap-y-9">
           {/* Controls Column */}
-          <div className="space-y-8">
+          <div className="space-y-[29px]">
             {/* Plot Area Slider */}
             <div>
-              <div className="flex justify-between items-center mb-2">
+              <div className="flex justify-between items-center mb-[7px]">
                 <label className="text-xs font-bold uppercase tracking-wider text-[#74706A] flex items-center gap-1.5">
                   <Icons.Grid size={14} className="text-[#74706A]" />
                   <span>Plot Ground Area</span>
@@ -85,17 +85,17 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
 
             {/* Quality Grade */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#74706A] mb-2.5 flex items-center gap-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#74706A] mb-[9px] flex items-center gap-1.5">
                 <Icons.Layers size={14} className="text-[#74706A]" />
                 <span>Construction Package & Finishes</span>
               </label>
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-3 gap-[9px]">
                 {qualityOptions.map((opt) => (
                   <button
                     key={opt.id}
                     type="button"
                     onClick={() => setQuality(opt.id)}
-                    className={`py-3 px-2 rounded-lg border text-center transition text-xs font-bold ${
+                    className={`py-[11px] px-2 rounded-lg border text-center transition text-xs font-bold ${
                       quality === opt.id
                         ? 'border-[#E76F2E] bg-[#E76F2E] text-white'
                         : 'border-[#E7E0D7] bg-white text-[#74706A] hover:border-[#C65320]'
@@ -112,11 +112,11 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
 
             {/* Floors */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#74706A] mb-2.5 flex items-center gap-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#74706A] mb-[9px] flex items-center gap-1.5">
                 <Icons.Building size={14} className="text-[#74706A]" />
                 <span>Number of Floors</span>
               </label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-[7px]">
                 {[
                   { label: 'Ground', val: 1 },
                   { label: 'G + 1', val: 2 },
@@ -127,7 +127,7 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                     key={fl.val}
                     type="button"
                     onClick={() => setFloors(fl.val)}
-                    className={`py-2.5 px-1 rounded-lg border text-xs text-center transition font-bold ${
+                    className={`py-[9px] px-1 rounded-lg border text-xs text-center transition font-bold ${
                       floors === fl.val
                         ? 'border-[#E76F2E] bg-[#E76F2E] text-white'
                         : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#C65320]'
@@ -141,13 +141,13 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
           </div>
 
           {/* Results Column */}
-          <div className="lg:border-l lg:border-[#EEE9E3] lg:pl-12 flex flex-col justify-between">
+          <div className="lg:border-l lg:border-[#EEE9E3] lg:pl-[43px] flex flex-col justify-between">
             <div>
               <div className="text-xs font-bold text-[#74706A] uppercase tracking-wider flex items-center gap-1.5">
                 <Icons.Tag size={13} className="text-[#74706A]" />
                 <span>Estimated Turnkey Project Cost</span>
               </div>
-              <div className="mt-2 flex items-baseline gap-2">
+              <div className="mt-[7px] flex items-baseline gap-2">
                 <span className="text-3xl sm:text-4xl font-extrabold text-[#292826]">
                   ₹{(totalCost / 100000).toFixed(2)} Lakhs
                 </span>
@@ -160,7 +160,7 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
               </p>
 
               {/* Progress bars / breakdown */}
-              <div className="mt-6 space-y-3.5">
+              <div className="mt-[22px] space-y-[12px]">
                 {breakdown.map((item) => (
                   <div key={item.label}>
                     <div className="flex justify-between text-xs font-semibold text-[#292826] mb-1">
@@ -184,7 +184,7 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                   `Cost Estimate Query: ${area} sq.ft, ${quality.toUpperCase()} grade, ${floors} Floor(s), Est. ₹${(totalCost / 100000).toFixed(2)} Lakhs`
                 )
               }
-              className="mt-6 w-full rounded-lg bg-[#E76F2E] py-3 text-center text-sm font-bold text-white shadow-sm hover:bg-[#C65320] transition flex items-center justify-center gap-2"
+              className="mt-[22px] w-full rounded-lg bg-[#E76F2E] py-[11px] text-center text-sm font-bold text-white shadow-sm hover:bg-[#C65320] transition flex items-center justify-center gap-2"
             >
               <Icons.FileText size={16} />
               <span>Get Free Detailed BOQ & Material List →</span>

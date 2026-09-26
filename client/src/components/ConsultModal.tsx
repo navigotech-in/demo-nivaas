@@ -78,7 +78,7 @@ export default function ConsultModal({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A1815]/70 p-4 ">
       <div
-        className="relative w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-sm border border-[#E7E0D7] animate-fadeIn"
+        className="relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white shadow-sm border border-[#E7E0D7] animate-fadeIn"
         role="dialog"
         aria-modal="true"
       >

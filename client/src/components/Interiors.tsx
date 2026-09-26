@@ -1,113 +1,131 @@
+import { useRef } from 'react'
 import { interiorCategories } from '../lib/data'
-import Img from './Img'
 import { Icons } from './Icons'
+import { DesignCatalogFilterBar } from './Projects'
+import { DesignEmptyState, DesignImageBadge, DesignImageCard } from './DesignImageCard'
+import { useDesignCatalogFilters } from './useDesignCatalogFilters'
 
 interface InteriorsProps {
   onOpenConsult: (room?: string) => void
 }
 
-const INTRO_IMAGE =
-  'https://images.pexels.com/photos/31925619/pexels-photo-31925619.jpeg'
-
 export default function Interiors({ onOpenConsult }: InteriorsProps) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const {
+    filters,
+    filtered,
+    cities,
+    openMenu,
+    onChange,
+    onToggle,
+    onClose,
+    clearAll,
+  } = useDesignCatalogFilters(interiorCategories)
+
+  const scroll = (dir: 1 | -1) => {
+    const track = trackRef.current
+    if (!track) return
+    const card = track.querySelector<HTMLElement>('[data-slide]')
+    const gap = 16
+    const amount = card ? card.offsetWidth + gap : track.clientWidth
+    track.scrollBy({ left: dir * amount, behavior: 'smooth' })
+  }
+
   return (
-    <section id="interiors" className="py-20 bg-white border-t border-[#E7E0D7]">
+    <section id="interiors" className="py-12 sm:py-14 bg-white border-t border-[#E7E0D7]">
       <div className="container-content">
-        {/* Editorial Split Intro — Interior Design (text left, image right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <span className="eyebrow flex items-center gap-1.5">
-              <Icons.Sofa size={14} /> Interior Design
+              <Icons.Sofa size={14} /> Luxury Interiors
             </span>
             <h2 className="section-title mt-2">
-              Practical interiors without unnecessary decoration.
+              Luxury Interior Designs for Indian Homes
             </h2>
-            <p className="mt-4 max-w-xl text-sm text-[#74706A] leading-relaxed">
-              Complete room-by-room modular kitchen designs, living room TV
-              units, tranquil pooja corners, and wardrobe space planning —
-              starting at just ₹599 / sq.ft.
+            <p className="mt-2 text-sm text-[#74706A] max-w-2xl">
+              Explore thoughtfully planned modular kitchens, living room TV units, pooja corners, wardrobes, and space-efficient storage — with photorealistic 3D views and practical solutions for Indian homes.
             </p>
-            <div className="mt-7">
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => onOpenConsult('Complete Interior 3D Design')}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#E76F2E] text-white text-sm font-bold transition hover:bg-[#C65320] active:scale-[0.98] group/link"
+                onClick={() => scroll(-1)}
+                aria-label="Previous interiors"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E7E0D7] bg-white text-[#292826] shadow-sm transition hover:border-[#E76F2E] hover:bg-[#E76F2E] hover:text-white active:scale-95"
               >
-                <span>Get 3D Interior Quotation</span>
-                <Icons.ChevronRight
-                  size={16}
-                  className="transition-transform group-hover/link:translate-x-0.5"
-                />
+                <Icons.ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => scroll(1)}
+                aria-label="Next interiors"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E7E0D7] bg-white text-[#292826] shadow-sm transition hover:border-[#E76F2E] hover:bg-[#E76F2E] hover:text-white active:scale-95"
+              >
+                <Icons.ChevronRight size={16} />
               </button>
             </div>
-          </div>
-          <div className="relative overflow-hidden bg-[#FFF6E8]">
-            <Img
-              src={INTRO_IMAGE}
-              alt="Practical Indian interior design"
-              className="h-full w-full object-cover aspect-[45/20]"
-            />
+            <button
+              type="button"
+              onClick={() => onOpenConsult('Complete Interior 3D Design')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-[#E76F2E] text-white hover:bg-[#C65320] transition shadow-sm active:scale-[0.98] group/link"
+            >
+              <span>Get 3D Interior Quotation</span>
+              <Icons.ChevronRight
+                size={15}
+                className="transition-transform group-hover/link:translate-x-0.5"
+              />
+            </button>
           </div>
         </div>
 
-        {/* Alternating Editorial Split Sections */}
-        <div className="mt-14 space-y-16 lg:space-y-20">
-          {interiorCategories.map((item, idx) => {
-            const reverse = idx % 2 === 1
-            return (
-              <div
-                key={idx}
-                className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center"
-              >
-                {/* Image */}
-                <div
-                  className={`relative overflow-hidden bg-[#FFF6E8] group ${
-                    reverse ? 'lg:order-2' : ''
-                  }`}
-                >
-                  <Img
-                    src={item.image}
-                    alt={item.title}
-                    className="h-full w-full object-cover aspect-[45/20] transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-                  />
-                  <span className="absolute top-4 left-4 rounded-lg bg-[#292826] px-3 py-1 text-[11px] font-bold text-white shadow-sm flex items-center gap-1">
-                    <Icons.Sparkles size={11} className="text-[#E76F2E]" />
-                    <span>{item.items}</span>
-                  </span>
-                </div>
+        <DesignCatalogFilterBar
+          filters={filters}
+          cities={cities}
+          openMenu={openMenu}
+          onChange={onChange}
+          onToggle={onToggle}
+          onClose={onClose}
+        />
 
-                {/* Text */}
-                <div className={reverse ? 'lg:order-1' : ''}>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#74706A]">
-                    Interior Design
-                  </span>
-                  <h3 className="font-display text-lg font-semibold tracking-tight text-[#292826] transition leading-snug">
-                    {item.title}
-                  </h3>
-                  <p className="mt-3 text-sm text-[#74706A] leading-relaxed max-w-xl">
-                    {item.text}
-                  </p>
-                  <div className="mt-4 flex items-center gap-2 text-xs font-bold text-[#E76F2E]">
-                    <Icons.Tag size={13} />
-                    <span>From ₹599 / sq.ft</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onOpenConsult(`Interior Category: ${item.title}`)}
-                    className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#C65320] active:scale-[0.98] group/link"
-                  >
-                    <Icons.Sofa size={14} />
-                    <span>Get 3D Interior Quotation</span>
-                    <Icons.ChevronRight
-                      size={14}
-                      className="transition-transform group-hover/link:translate-x-0.5"
-                    />
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        {filtered.length > 0 ? (
+          <div
+            ref={trackRef}
+            className="mt-6 flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-none pb-2"
+          >
+            {filtered.map((item) => (
+              <DesignImageCard
+                key={item.id}
+                dataSlide
+                className="w-[88%] shrink-0 snap-start sm:w-[53%] md:w-[42%] lg:w-[34%] xl:w-[32%]"
+                image={item.image}
+                alt={item.title}
+                title={item.title}
+                description={item.text}
+                leftBadges={
+                  <DesignImageBadge icon={<Icons.Sparkles size={11} className="shrink-0 text-[#FFA366]" />}>
+                    {item.items}
+                  </DesignImageBadge>
+                }
+                rightBadge={<DesignImageBadge variant="accent">Interior</DesignImageBadge>}
+                meta={
+                  <>
+                    <Icons.Tag size={12} className="text-[#FFA366]" />
+                    <span className="text-[#FFA366]">From ₹599 / sq.ft</span>
+                  </>
+                }
+                actionIcon={<Icons.Sofa size={13} />}
+                actionLabel="Get 3D Interior Quotation"
+                onAction={() => onOpenConsult(`Interior Category: ${item.title}`)}
+              />
+            ))}
+          </div>
+        ) : (
+          <DesignEmptyState
+            message="No interiors match these filters"
+            onClear={clearAll}
+          />
+        )}
       </div>
     </section>
   )

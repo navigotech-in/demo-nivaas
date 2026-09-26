@@ -45,8 +45,8 @@ export default function Contact() {
     'w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] px-4 py-3 text-sm text-[#292826] outline-none transition focus:border-[#292826] focus:bg-white focus:ring-1 focus:ring-[#E76F2E] placeholder:text-[#74706A]'
 
   return (
-    <section id="contact" className="border-t border-[#E7E0D7] bg-[#FDFCF9] py-20 sm:py-24">
-      <div className="container-content grid gap-12 lg:grid-cols-2 items-center">
+    <section id="contact" className="border-t border-[#E7E0D7] bg-[#FDFCF9] py-[68px] sm:py-[82px]">
+      <div className="container-content grid gap-10 lg:grid-cols-2 items-center">
         <div>
           <span className="eyebrow flex items-center gap-1.5">
             <Icons.Phone size={14} /> Talk to us
@@ -58,9 +58,9 @@ export default function Contact() {
             Share your plot size and the kind of home you have in mind. A NIVAAS chief architect gets back to you within two hours with layout concepts and estimates.
           </p>
 
-          <dl className="mt-8 space-y-5 text-sm">
-            <div className="flex items-center gap-4 bg-white p-3.5 rounded-lg border border-[#E7E0D7]/80 shadow-sm">
-              <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#F1ECE5] text-[#E76F2E]">
+          <dl className="mt-[27px] space-y-[17px] text-sm">
+            <div className="flex items-center gap-4 bg-white p-3 rounded-lg border border-[#E7E0D7]/80 shadow-sm">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F1ECE5] text-[#E76F2E]">
                 <Icons.Phone size={20} />
               </span>
               <div>
@@ -69,8 +69,8 @@ export default function Contact() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 bg-white p-3.5 rounded-lg border border-[#E7E0D7]/80 shadow-sm">
-              <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#F1ECE5] text-[#E76F2E]">
+            <div className="flex items-center gap-4 bg-white p-3 rounded-lg border border-[#E7E0D7]/80 shadow-sm">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F1ECE5] text-[#E76F2E]">
                 <Icons.Mail size={20} />
               </span>
               <div>
@@ -79,8 +79,8 @@ export default function Contact() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 bg-white p-3.5 rounded-lg border border-[#E7E0D7]/80 shadow-sm">
-              <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#F1ECE5] text-[#E76F2E]">
+            <div className="flex items-center gap-4 bg-white p-3 rounded-lg border border-[#E7E0D7]/80 shadow-sm">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F1ECE5] text-[#E76F2E]">
                 <Icons.MapPin size={20} />
               </span>
               <div>
@@ -92,7 +92,7 @@ export default function Contact() {
         </div>
 
         {/* Contact Form Card */}
-        <div className="rounded-lg border border-[#E7E0D7] bg-white p-6 sm:p-10 shadow-sm">
+        <div className="rounded-lg border border-[#E7E0D7] bg-white p-5 sm:p-[34px] shadow-sm">
           {status === 'done' ? (
             <div className="flex h-full flex-col items-center justify-center py-12 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F1ECE5] text-[#E76F2E] text-2xl font-bold shadow-sm">
@@ -112,12 +112,12 @@ export default function Contact() {
               </button>
             </div>
           ) : (
-            <form onSubmit={submit} className="space-y-4">
+            <form onSubmit={submit} className="space-y-[14px]">
 <h3 className="font-display text-xl font-bold text-[#292826] mb-2">
               Book Architect Consultation
             </h3>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-[14px] sm:grid-cols-2">
                 <div>
                   <label htmlFor="c-name" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
                     Your Name *
@@ -149,7 +149,7 @@ export default function Contact() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-[14px] sm:grid-cols-2">
                 <div>
                   <label htmlFor="c-city" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
                     City / Location

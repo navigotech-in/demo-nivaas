@@ -47,13 +47,45 @@ export default function NivaasAiStudio({
   const [activeTab, setActiveTab] = useState<'generator' | 'chat'>(initialMode)
 
   // -----------------------------------------------------------
-  // Wizard State (Steps 1 to 20 + Processing + Lead + Results)
+  // Wizard State
   // -----------------------------------------------------------
   const [step, setStep] = useState(1)
-  const totalWizardSteps = 20
+  
+  // Step 1: Shape Branching State
+  const [plotShape, setPlotShape] = useState<'regular' | 'irregular' | 'not_sure'>('regular')
 
+  // Regular Plot Dimensions (Step 2 & 3 in Regular Path)
   const [plotWidth, setPlotWidth] = useState<number>(initialWidth)
   const [plotDepth, setPlotDepth] = useState<number>(initialDepth)
+
+  // Irregular Plot Dimensions & Details (Steps 2, 3 & 4 in Irregular Path)
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; size: string } | null>(null)
+  const [isDetectingShape, setIsDetectingShape] = useState(false)
+  const [hasMapPin, setHasMapPin] = useState(false)
+  const [sidesCount, setSidesCount] = useState<number>(4)
+  const [sideLengths, setSideLengths] = useState<{ [key: string]: number }>({
+    A: 30,
+    B: 45,
+    C: 22,
+    D: 38,
+    E: 20,
+    F: 25,
+  })
+  const [roadFacingSide, setRoadFacingSide] = useState<string>('A')
+  const [roadWidth, setRoadWidth] = useState<number>(30)
+  const [existingStructures, setExistingStructures] = useState<string[]>(['Boundary wall'])
+
+  // Step 4 Smart Suggestions State (Irregular Path)
+  const [familySize, setFamilySize] = useState<'couple' | 'nuclear' | 'joint'>('nuclear')
+  const [budgetTier, setBudgetTier] = useState<'under_20L' | '20_40L' | '40_70L' | 'above_70L'>('20_40L')
+  const [vastuMode, setVastuMode] = useState<'full' | 'partial' | 'skip'>('full')
+  const [lifestyleTags, setLifestyleTags] = useState<string[]>([
+    '🛕 Dedicated Mandir',
+    '🌿 Terrace Garden',
+    '👴 Parents Room (GF)',
+  ])
+
+  // Shared Configuration State (Steps)
   const [floors, setFloors] = useState<string>('G+1 (Two Floors)')
   const [masterBedrooms, setMasterBedrooms] = useState<string>('2')
   const [marriedCouples, setMarriedCouples] = useState<string>('1')
@@ -69,12 +101,6 @@ export default function NivaasAiStudio({
   const [lift, setLift] = useState<'Yes' | 'No'>('No')
   const [bathroomChoice, setBathroomChoice] = useState<'Big' | 'Standard' | 'Small'>('Standard')
   const [plotDirection, setPlotDirection] = useState<string>('East')
-  const [siteDetails, setSiteDetails] = useState({
-    front: 'Road',
-    back: "Others Property",
-    right: "Others Property",
-    left: "Others Property",
-  })
   const [elevationStyle, setElevationStyle] = useState<string>('Modern Indian Duplex')
   const [materialGrade, setMaterialGrade] = useState<string>('Premium Executive (~₹2,350/sq.ft)')
 
@@ -89,12 +115,76 @@ export default function NivaasAiStudio({
   const [copiedLink, setCopiedLink] = useState(false)
 
   // -----------------------------------------------------------
+  // Dynamic Total Steps & Explicit Step Naming
+  // -----------------------------------------------------------
+  const isRegular = plotShape === 'regular'
+  const totalWizardSteps = isRegular ? 20 : 23
+  const synthesisStep = totalWizardSteps + 1 // 21 for regular, 24 for irregular
+  const leadStep = totalWizardSteps + 2      // 22 for regular, 25 for irregular
+  const resultsStep = totalWizardSteps + 3   // 23 for regular, 26 for irregular
+
+  // Map step number to step name
+  const getStepKey = (s: number): string => {
+    if (s === 1) return 'shape'
+    if (isRegular) {
+      if (s === 2) return 'width'
+      if (s === 3) return 'depth'
+      if (s === 4) return 'floors'
+      if (s === 5) return 'master_bedrooms'
+      if (s === 6) return 'married_couples'
+      if (s === 7) return 'kids_count'
+      if (s === 8) return 'kids_bedroom'
+      if (s === 9) return 'kitchen_floor'
+      if (s === 10) return 'kitchen_style'
+      if (s === 11) return 'pooja_room'
+      if (s === 12) return 'balconies'
+      if (s === 13) return 'office_space'
+      if (s === 14) return 'parking'
+      if (s === 15) return 'garden'
+      if (s === 16) return 'lift'
+      if (s === 17) return 'bathroom'
+      if (s === 18) return 'vastu'
+      if (s === 19) return 'elevation'
+      if (s === 20) return 'material'
+    } else {
+      if (s === 2) return 'irregular_upload'
+      if (s === 3) return 'irregular_dimensions'
+      if (s === 4) return 'irregular_suggestions'
+      if (s === 5) return 'floors'
+      if (s === 6) return 'master_bedrooms'
+      if (s === 7) return 'married_couples'
+      if (s === 8) return 'kids_count'
+      if (s === 9) return 'kids_bedroom'
+      if (s === 10) return 'kitchen_floor'
+      if (s === 11) return 'kitchen_style'
+      if (s === 12) return 'pooja_room'
+      if (s === 13) return 'balconies'
+      if (s === 14) return 'office_space'
+      if (s === 15) return 'parking'
+      if (s === 16) return 'garden'
+      if (s === 17) return 'lift'
+      if (s === 18) return 'bathroom'
+      if (s === 19) return 'vastu'
+      if (s === 20) return 'elevation'
+      if (s === 21) return 'material'
+      if (s === 22) return 'irregular_review'
+      if (s === 23) return 'final_confirm'
+    }
+    if (s === synthesisStep) return 'synthesis'
+    if (s === leadStep) return 'lead'
+    if (s === resultsStep) return 'results'
+    return ''
+  }
+
+  const currentStepKey = getStepKey(step)
+
+  // -----------------------------------------------------------
   // Chat State
   // -----------------------------------------------------------
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       from: 'bot',
-      text: 'Namaste! 🙏 I am your NIVAAS AI Architecture Assistant. Ask me anything about floor plans, municipal bylaws, Vastu directions, 3D elevation styles, or construction estimates.',
+      text: 'Namaste! 🙏 I am your NIVAAS AI Architecture Assistant. Ask me anything about floor plans, irregular plot layouts, municipal bylaws, Vastu directions, 3D elevation styles, or construction estimates.',
       time: 'Just now',
     },
   ])
@@ -126,12 +216,12 @@ export default function NivaasAiStudio({
     }
   }, [chatMessages, chatTyping, activeTab])
 
-  // Process simulation timer when reaching step 21
+  // Process simulation timer when reaching synthesis step
   useEffect(() => {
-    if (step === 21) {
+    if (step === synthesisStep) {
       setProcessingProgress(0)
       const milestones = [
-        { pct: 15, msg: 'Evaluating municipal setbacks (GHMC/BBMP/DDA) for plot dimensions...' },
+        { pct: 15, msg: isRegular ? 'Evaluating rectangular municipal setbacks (GHMC/BBMP/DDA)...' : 'Calculating irregular boundary setbacks and angle optimizations...' },
         { pct: 35, msg: 'Validating Vastu Shastra grid: Kitchen in Agneya (SE), Mandir in Ishanya (NE)...' },
         { pct: 60, msg: 'Optimizing structural column grid, daylight shafts and ventilation...' },
         { pct: 85, msg: 'Synthesizing 2D CAD floor plans and ultra-realistic 3D facade concepts...' },
@@ -143,7 +233,7 @@ export default function NivaasAiStudio({
         setProcessingProgress((prev) => {
           if (prev >= 100) {
             clearInterval(interval)
-            setTimeout(() => setStep(22), 600) // Go to lead capture
+            setTimeout(() => setStep(leadStep), 600) // Go to lead capture
             return 100
           }
           const next = prev + 5
@@ -157,20 +247,73 @@ export default function NivaasAiStudio({
 
       return () => clearInterval(interval)
     }
-  }, [step])
+  }, [step, synthesisStep, leadStep, isRegular])
 
   if (!open) return null
 
-  // Calculations
-  const plotAreaSqFt = (plotWidth || 0) * (plotDepth || 0)
-  const plotAreaSqYards = Math.round(plotAreaSqFt / 9)
-  const floorMultiplier = floors.includes('Single') ? 1 : floors.includes('Two') ? 1.85 : floors.includes('Three') ? 2.7 : 3.5
-  const builtUpArea = Math.round(plotAreaSqFt * floorMultiplier * 0.82)
+  // -----------------------------------------------------------
+  // Calculations (Regular vs Irregular Buildable Area)
+  // -----------------------------------------------------------
+  let rawPlotAreaSqFt = (plotWidth || 0) * (plotDepth || 0)
+  if (!isRegular) {
+    if (sidesCount === 3) {
+      const a = sideLengths.A || 30
+      const b = sideLengths.B || 40
+      const c = sideLengths.C || 35
+      const s = (a + b + c) / 2
+      rawPlotAreaSqFt = Math.round(Math.sqrt(Math.max(10, s * (s - a) * (s - b) * (s - c))))
+    } else if (sidesCount === 4) {
+      const a = sideLengths.A || 30
+      const b = sideLengths.B || 45
+      const c = sideLengths.C || 22
+      const d = sideLengths.D || 38
+      const s = (a + b + c + d) / 2
+      rawPlotAreaSqFt = Math.round(Math.sqrt(Math.max(10, (s - a) * (s - b) * (s - c) * (s - d))))
+    } else {
+      const avgWidth = ((sideLengths.A || 30) + (sideLengths.C || 30)) / 2
+      const avgLength = ((sideLengths.B || 45) + (sideLengths.D || 45)) / 2
+      rawPlotAreaSqFt = Math.round(avgWidth * avgLength * 0.95)
+    }
+  }
+
+  // Buildable Area (Flat 18% Setback & Odd-Corner Buffer Deduction)
+  const buildableAreaSqFt = Math.round(rawPlotAreaSqFt * 0.82)
+  const plotAreaSqYards = Math.round(rawPlotAreaSqFt / 9)
+
+  // Multiplier & Rate
+  const floorMultiplier =
+    floors.includes('Ground') || floors.includes('Single')
+      ? 1
+      : floors.includes('Two') || floors.includes('G+1')
+      ? 1.85
+      : floors.includes('Three') || floors.includes('G+2')
+      ? 2.7
+      : 3.5
+  const builtUpArea = Math.round(buildableAreaSqFt * floorMultiplier)
   const carpetArea = Math.round(builtUpArea * 0.76)
 
-  // Rate estimation based on selected finish grade
-  const ratePerSqFt = materialGrade.includes('1,800') ? 1800 : materialGrade.includes('3,200') ? 3250 : 2350
-  const estimatedCostLakhs = ((builtUpArea * ratePerSqFt) / 100000).toFixed(1)
+  // Rate estimation (+6% complexity premium for irregular plots)
+  const baseRate = materialGrade.includes('1,800') ? 1800 : materialGrade.includes('3,200') ? 3250 : 2350
+  const finalRatePerSqFt = isRegular ? baseRate : Math.round(baseRate * 1.06)
+  const estimatedCostLakhs = ((builtUpArea * finalRatePerSqFt) / 100000).toFixed(1)
+
+  // AI Smart Suggestion Values
+  const getSmartSuggestedBHK = (): number => {
+    if (budgetTier === 'under_20L') return 1
+    if (buildableAreaSqFt < 700) return 1
+    if (buildableAreaSqFt <= 1100) return familySize === 'joint' ? 3 : 2
+    if (buildableAreaSqFt <= 1800) return familySize === 'joint' ? 4 : 3
+    if (buildableAreaSqFt <= 2600) return familySize === 'joint' ? 5 : 4
+    return 5
+  }
+  const suggestedBHK = getSmartSuggestedBHK()
+
+  const getSmartSuggestedFloors = (): string => {
+    if (buildableAreaSqFt < 850) return 'G+1 (Two Floors)'
+    if (familySize === 'joint' || lifestyleTags.includes('🏦 Rental Floor Unit')) return 'G+2 (Three Floors)'
+    return 'G+1 (Two Floors)'
+  }
+  const suggestedFloors = getSmartSuggestedFloors()
 
   // Vastu compass angles & directions
   const directions = [
@@ -186,25 +329,41 @@ export default function NivaasAiStudio({
 
   const activeCompassDir = directions.find((d) => d.name === plotDirection || d.label === plotDirection) || directions[2]
 
+  // Handle Mock File Upload & Auto-Detect
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setUploadedFile({ name: file.name, size: `${(file.size / 1024).toFixed(0)} KB` })
+      setIsDetectingShape(true)
+      setTimeout(() => {
+        setIsDetectingShape(false)
+        if (plotShape === 'not_sure') {
+          setPlotShape('irregular')
+        }
+      }, 800)
+    }
+  }
+
+  // Navigation Logic
   const handleNext = () => {
-    if (step < 20) {
+    if (step < totalWizardSteps) {
       setStep((prev) => prev + 1)
-    } else if (step === 20) {
-      setStep(21) // Trigger AI synthesis
+    } else if (step === totalWizardSteps) {
+      setStep(synthesisStep) // Trigger AI synthesis
     }
   }
 
   const handleBack = () => {
-    if (step > 1 && step <= 20) {
+    if (step > 1 && step <= totalWizardSteps) {
       setStep((prev) => prev - 1)
-    } else if (step === 23) {
-      setStep(20)
+    } else if (step === resultsStep) {
+      setStep(totalWizardSteps)
     }
   }
 
   const handleSubmitLead = (e: React.FormEvent) => {
     e.preventDefault()
-    setStep(23) // Results page
+    setStep(resultsStep) // Results page
   }
 
   // Chat message submission
@@ -223,7 +382,9 @@ export default function NivaasAiStudio({
       let reply = 'I can help you customize floor plans, calculate setbacks, review Vastu directions, or recommend 3D front elevations. You can also generate your complete plan in 30 seconds using the "AI Plan Generator" tab!'
 
       if (/(price|cost|budget|rate|lakh)/i.test(qLower)) {
-        reply = `For your ${plotWidth}x${plotDepth} ft plot (~${builtUpArea} sq.ft built-up), the estimated construction budget is ₹${estimatedCostLakhs} Lakhs at ${materialGrade.split(' ')[0]} grade. NIVAAS design packages start at ₹4,999 for full 2D CAD working drawings.`
+        reply = `For your ${isRegular ? `${plotWidth}x${plotDepth} ft` : 'irregular'} plot (~${builtUpArea} sq.ft built-up), the estimated construction budget is ₹${estimatedCostLakhs} Lakhs at ${materialGrade.split(' ')[0]} grade${!isRegular ? ' (including irregular geometry framing adjustments)' : ''}. NIVAAS design packages start at ₹4,999 for full 2D CAD working drawings.`
+      } else if (/(irregular|asymmetric|cut|shape|l-shape|corner|trap)/i.test(qLower)) {
+        reply = `For irregular plots, NIVAAS AI calculates an 18% standard setback buffer and suggests placing utility or landscaping buffers in non-90° corner cuts. This ensures 100% Vastu compliance and optimal room proportions!`
       } else if (/(vastu|vaastu|direction|mandir|pooja|kitchen)/i.test(qLower)) {
         reply = `For ${plotDirection} facing plots, Vastu recommends placing the Pooja Mandir in the North-East (Ishan), Kitchen in South-East (Agneya), and the Master Bedroom in South-West (Nairutya). Our AI engine auto-aligns all these zones!`
       } else if (/(3d|elevation|facade|exterior|render)/i.test(qLower)) {
@@ -258,6 +419,28 @@ export default function NivaasAiStudio({
     return ASSETS.modernDuplexDay
   }
 
+  // Helper for step category title
+  const getStepCategoryTitle = () => {
+    if (step === 1) return 'Plot Geometry & Shape'
+    if (isRegular) {
+      if (step <= 3) return 'Plot Dimensions'
+      if (step <= 8) return 'Family & Bedroom Requirements'
+      if (step <= 11) return 'Kitchen & Vastu Pooja'
+      if (step <= 17) return 'Lifestyle & Interior Spaces'
+      if (step <= 19) return 'Plot Direction & Surroundings'
+      return 'Elevation Style & Finishes'
+    } else {
+      if (step === 2) return 'Survey Map / Plot Upload'
+      if (step === 3) return 'Irregular Side Dimensions'
+      if (step === 4) return 'AI Smart Suggestions'
+      if (step <= 9) return 'Family & Bedroom Spaces'
+      if (step <= 12) return 'Kitchen & Vastu Alignment'
+      if (step <= 18) return 'Lifestyle & Interior Amenities'
+      if (step <= 21) return 'Orientation & 3D Elevation'
+      return 'Site Review & Plan Verification'
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1A1815]/75 backdrop-blur-sm p-2 sm:p-4 animate-fadeIn">
       <div className="relative w-full max-w-4xl h-[92vh] max-h-[850px] bg-white rounded-2xl shadow-2xl border border-[#E7E0D7] flex flex-col overflow-hidden text-[#292826]">
@@ -272,12 +455,12 @@ export default function NivaasAiStudio({
                 <span className="font-display font-extrabold text-base tracking-tight text-[#292826]">
                   NIVAAS <span className="text-[#E76F2E]">AI Architect</span> Studio
                 </span>
-                <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#FFF6E8] text-[#C65320] border border-[#E76F2E]/20 rounded-full">
-                  Instant CAD &amp; 3D Engine
+                <span className="hidden sm:inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#FFF6E8] text-[#C65320] border border-[#E76F2E]/20 rounded-full">
+                  {isRegular ? '20-Step Regular Flow' : '23-Step Asymmetric Engine'}
                 </span>
               </div>
               <p className="text-[11px] text-[#74706A]">
-                India's Most Precise Residential AI Planning &amp; Vastu Engine
+                India's First AI Engine for Regular &amp; Asymmetric Plots with 100% Vastu
               </p>
             </div>
           </div>
@@ -318,18 +501,18 @@ export default function NivaasAiStudio({
               className="p-2 rounded-xl text-[#74706A] hover:text-[#292826] hover:bg-[#F4EFEA] transition"
               aria-label="Close Nivaas AI Studio"
             >
-              <Icons.Close size={20} />
+              <Icons.Close size={18} />
             </button>
           </div>
         </header>
 
         {/* ========================================================= */}
-        {/* TAB 1: AI PLAN GENERATOR (MakeMyHouse 20-Step Guided Flow) */}
+        {/* TAB 1: AI PLAN GENERATOR (Dynamic Branching Guided Flow) */}
         {/* ========================================================= */}
         {activeTab === 'generator' && (
           <div className="flex-1 flex flex-col min-h-0 bg-[#FDFCF9]">
-            {/* Step Progress Bar (Shown during Steps 1 to 20) */}
-            {step <= 20 && (
+            {/* Dynamic Step Progress Bar */}
+            {step <= totalWizardSteps && (
               <div className="shrink-0 bg-white border-b border-[#EEE9E3] px-6 py-2.5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-bold text-[#E76F2E]">
@@ -337,37 +520,151 @@ export default function NivaasAiStudio({
                   </span>
                   <span className="hidden sm:inline-block text-xs text-[#74706A]">|</span>
                   <span className="hidden sm:inline-block text-xs text-[#74706A] font-medium">
-                    {step <= 2
-                      ? 'Plot Measurements'
-                      : step <= 7
-                      ? 'Family & Bedroom Requirements'
-                      : step <= 10
-                      ? 'Kitchen & Vastu Pooja'
-                      : step <= 16
-                      ? 'Lifestyle & Interior Spaces'
-                      : step <= 18
-                      ? 'Plot Direction & Surroundings'
-                      : 'Elevation Style & Finishes'}
+                    {getStepCategoryTitle()}
                   </span>
                 </div>
-                <div className="w-36 sm:w-56 h-2 bg-[#F1ECE5] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#E76F2E] to-[#C94F36] rounded-full transition-all duration-300"
-                    style={{ width: `${(step / totalWizardSteps) * 100}%` }}
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="w-28 sm:w-48 h-2 bg-[#F1ECE5] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#E76F2E] to-[#C94F36] rounded-full transition-all duration-300"
+                      style={{ width: `${(step / totalWizardSteps) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-bold text-[#74706A] hidden sm:inline-block">
+                    {Math.round((step / totalWizardSteps) * 100)}%
+                  </span>
                 </div>
               </div>
             )}
 
             {/* Main Interactive Wizard Stage */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex items-center justify-center">
+            <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-8 flex justify-center items-start">
               <div className="w-full max-w-xl">
-                {/* STEP 1: PLOT FRONTAGE / WIDTH */}
-                {step === 1 && (
+                {/* ------------------------------------------------------------- */}
+                {/* STEP 1: PLOT SHAPE SELECTION */}
+                {/* ------------------------------------------------------------- */}
+                {currentStepKey === 'shape' && (
                   <div className="space-y-6 animate-fadeIn">
                     <div className="text-center sm:text-left">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Plot Dimensions
+                        Step 1 of {totalWizardSteps}: Plot Geometry
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        What shape is your plot / land?
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Choose your plot geometry so our AI can configure accurate setbacks, column alignments, and Vastu grids.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Regular Card */}
+                      <button
+                        type="button"
+                        onClick={() => setPlotShape('regular')}
+                        className={`p-5 rounded-2xl border-2 text-left transition relative overflow-hidden group ${
+                          plotShape === 'regular'
+                            ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
+                            : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-lg shadow-2xs">
+                              🟦
+                            </div>
+                            <span className="px-2.5 py-1 rounded-md bg-blue-100/80 text-blue-800 text-[11px] font-bold tracking-wide uppercase border border-blue-200">
+                              Regular
+                            </span>
+                          </div>
+                          {plotShape === 'regular' && (
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E76F2E] text-white shadow-xs">
+                              <Icons.Check size={13} />
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-bold text-base text-[#292826]">Rectangle / Square Plot</h4>
+                        <p className="text-xs text-[#74706A] mt-1">
+                          Standard 4-side rectangular plot with standard 90° corners (e.g. 30x50, 40x60).
+                        </p>
+                        <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-semibold text-[#E76F2E]">
+                          <span>⚡ 20-Step Rapid Guided Flow</span>
+                        </div>
+                      </button>
+
+                      {/* Irregular Card */}
+                      <button
+                        type="button"
+                        onClick={() => setPlotShape('irregular')}
+                        className={`p-5 rounded-2xl border-2 text-left transition relative overflow-hidden group ${
+                          plotShape === 'irregular'
+                            ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
+                            : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-lg shadow-2xs">
+                              🔷
+                            </div>
+                            <span className="px-2.5 py-1 rounded-md bg-amber-100/80 text-amber-800 text-[11px] font-bold tracking-wide uppercase border border-amber-200">
+                              Irregular
+                            </span>
+                          </div>
+                          {plotShape === 'irregular' && (
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E76F2E] text-white shadow-xs">
+                              <Icons.Check size={13} />
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-bold text-base text-[#292826]">Asymmetric / Odd Shape</h4>
+                        <p className="text-xs text-[#74706A] mt-1">
+                          L-shape, Triangle, Trapezoid, Corner cut, or curved odd-shaped plot boundary.
+                        </p>
+                        <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-semibold text-[#E76F2E]">
+                          <span>📐 Upload Plan + Smart AI Suggestions (23 Steps)</span>
+                        </div>
+                      </button>
+                    </div>
+
+                    {/* Not Sure Banner */}
+                    <button
+                      type="button"
+                      onClick={() => setPlotShape('not_sure')}
+                      className={`w-full p-4 rounded-2xl border text-left transition flex items-center justify-between ${
+                        plotShape === 'not_sure'
+                          ? 'border-[#E76F2E] bg-[#FFF6E8] ring-2 ring-[#E76F2E]'
+                          : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-[#F4EFEA] flex items-center justify-center text-base">
+                          ❓
+                        </div>
+                        <div>
+                          <div className="font-bold text-xs sm:text-sm text-[#292826]">
+                            Not Sure? Upload Photo &amp; AI Will Detect
+                          </div>
+                          <div className="text-[11px] text-[#74706A]">
+                            Upload your plot photo or registry map — our AI will automatically analyze the boundaries.
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-[#E76F2E] shrink-0 ml-2">
+                        Auto-Detect →
+                      </span>
+                    </button>
+                  </div>
+                )}
+
+                {/* ------------------------------------------------------------- */}
+                {/* REGULAR PATH: STEP 2 (WIDTH) & STEP 3 (DEPTH) */}
+                {/* ------------------------------------------------------------- */}
+                {currentStepKey === 'width' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Plot Frontage
                       </span>
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         What is your Plot Width (Frontage)?
@@ -395,7 +692,6 @@ export default function NivaasAiStudio({
                         </div>
                       </div>
 
-                      {/* Quick Preset Chips */}
                       <div>
                         <span className="text-xs text-[#74706A] font-semibold block mb-2">
                           Popular Indian Plot Widths:
@@ -408,7 +704,7 @@ export default function NivaasAiStudio({
                               onClick={() => setPlotWidth(w)}
                               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition ${
                                 plotWidth === w
-                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
                                   : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E] hover:bg-[#FFF6E8]'
                               }`}
                             >
@@ -421,12 +717,11 @@ export default function NivaasAiStudio({
                   </div>
                 )}
 
-                {/* STEP 2: PLOT DEPTH / LENGTH */}
-                {step === 2 && (
+                {currentStepKey === 'depth' && (
                   <div className="space-y-6 animate-fadeIn">
                     <div className="text-center sm:text-left">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Plot Dimensions
+                        Step {step} of {totalWizardSteps}: Plot Depth
                       </span>
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         What is your Plot Depth (Length)?
@@ -452,10 +747,9 @@ export default function NivaasAiStudio({
                         </span>
                       </div>
 
-                      {/* Quick Presets */}
                       <div>
                         <span className="text-xs text-[#74706A] font-semibold block mb-2">
-                          Popular Indian Plot Depths:
+                          Popular Indian Plot Lengths:
                         </span>
                         <div className="flex flex-wrap gap-2">
                           {[30, 40, 45, 50, 60, 70].map((d) => (
@@ -465,7 +759,7 @@ export default function NivaasAiStudio({
                               onClick={() => setPlotDepth(d)}
                               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition ${
                                 plotDepth === d
-                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
                                   : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E] hover:bg-[#FFF6E8]'
                               }`}
                             >
@@ -475,561 +769,810 @@ export default function NivaasAiStudio({
                         </div>
                       </div>
 
-                      {/* Calculated Area Callout */}
                       <div className="p-3 bg-[#FFF6E8] rounded-xl border border-[#E76F2E]/20 flex items-center justify-between text-xs">
-                        <span className="text-[#74706A] font-semibold">Total Land Area:</span>
-                        <span className="font-bold text-[#C65320]">
-                          {plotAreaSqFt} sq.ft · {plotAreaSqYards} Sq. Yards
+                        <span className="font-semibold text-[#74706A]">Total Plot Area:</span>
+                        <span className="font-extrabold text-[#C65320]">
+                          {rawPlotAreaSqFt} sq.ft (~{plotAreaSqYards} sq.yards)
                         </span>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* STEP 3: NUMBER OF FLOORS */}
-                {step === 3 && (
-                  <div className="space-y-6 animate-fadeIn">
+                {/* ------------------------------------------------------------- */}
+                {/* IRREGULAR PATH: STEP 2 (UPLOAD SURVEY / PHOTO) */}
+                {/* ------------------------------------------------------------- */}
+                {currentStepKey === 'irregular_upload' && (
+                  <div className="space-y-5 animate-fadeIn">
                     <div className="text-center sm:text-left">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Configuration
+                        Step {step} of {totalWizardSteps}: Upload Plot Reference
                       </span>
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Number of Floors to Construct?
+                        Upload Plot Survey Map or Photo
                       </h3>
                       <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Select how many levels you are planning to build.
+                        Upload an image or document of your plot so our AI engine can map the boundary angles accurately.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                      {[
-                        { label: 'One Floor', desc: 'Ground Floor only' },
-                        { label: 'G+1 (Two Floors)', desc: 'Modern Duplex' },
-                        { label: 'G+2 (Three Floors)', desc: 'Triplex / Rental Unit' },
-                        { label: 'G+3 (Multi Floors)', desc: 'Multi-Family Mansion' },
-                      ].map((item) => (
-                        <button
-                          key={item.label}
-                          type="button"
-                          onClick={() => setFloors(item.label)}
-                          className={`p-4 rounded-xl text-left border transition-all ${
-                            floors === item.label
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-md scale-[1.02]'
-                              : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E] hover:bg-[#FFF6E8]'
-                          }`}
-                        >
-                          <div className="font-bold text-sm sm:text-base">{item.label}</div>
-                          <div className={`text-xs mt-1 ${floors === item.label ? 'text-white/80' : 'text-[#74706A]'}`}>
-                            {item.desc}
+                    <div className="bg-white p-6 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-4">
+                      <label className="border-2 border-dashed border-[#E76F2E]/40 hover:border-[#E76F2E] bg-[#FFF6E8]/30 hover:bg-[#FFF6E8]/60 transition rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer text-center group">
+                        <input
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.pdf"
+                          onChange={handleFileUpload}
+                          className="hidden"
+                        />
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-[#E76F2E]/30 flex items-center justify-center text-[#E76F2E] shadow-sm group-hover:scale-110 transition">
+                          <Icons.Upload size={22} />
+                        </div>
+                        <span className="font-bold text-sm text-[#292826] mt-3">
+                          {uploadedFile ? uploadedFile.name : 'Click to Browse or Drag & Drop File'}
+                        </span>
+                        <span className="text-xs text-[#74706A] mt-1">
+                          Supported: JPG, PNG, PDF (Government survey, registry map, or hand-drawn sketch)
+                        </span>
+                      </label>
+
+                      {isDetectingShape && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-2.5 text-xs text-blue-800 animate-pulse">
+                          <Icons.Sparkles size={16} className="text-blue-600 animate-spin" />
+                          <span>AI is analyzing plot boundaries, vertex angles and setback guidelines...</span>
+                        </div>
+                      )}
+
+                      {uploadedFile && !isDetectingShape && (
+                        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-800">
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                            <span className="font-bold">✓ Boundary Verified: Asymmetric Polygon with Corner Buffer</span>
                           </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 4: MASTER BEDROOMS */}
-                {step === 4 && (
-                  <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Bedrooms
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        How many Master Bedrooms?
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Spacious bedrooms with attached en-suite bathrooms and dressing areas.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-4 gap-3">
-                      {['1', '2', '3', '4+'].map((cnt) => (
-                        <button
-                          key={cnt}
-                          type="button"
-                          onClick={() => setMasterBedrooms(cnt)}
-                          className={`py-4 rounded-xl font-bold text-center border text-base sm:text-lg transition ${
-                            masterBedrooms === cnt
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-md'
-                              : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          {cnt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 5: MARRIED COUPLES */}
-                {step === 5 && (
-                  <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Family Setup
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        How many Married Couples in Family?
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Helps our AI design private acoustic zones and master suites.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-4 gap-3">
-                      {['1', '2', '3', '4+'].map((cnt) => (
-                        <button
-                          key={cnt}
-                          type="button"
-                          onClick={() => setMarriedCouples(cnt)}
-                          className={`py-4 rounded-xl font-bold text-center border text-base sm:text-lg transition ${
-                            marriedCouples === cnt
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-md'
-                              : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          {cnt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 6: KIDS COUNT */}
-                {step === 6 && (
-                  <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Children
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        How many Kids in Family?
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        We configure study desks, bunk beds, and dedicated storage.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-4 gap-3">
-                      {['None', '1', '2', '3+'].map((cnt) => (
-                        <button
-                          key={cnt}
-                          type="button"
-                          onClick={() => setKidsCount(cnt)}
-                          className={`py-4 rounded-xl font-bold text-center border text-base sm:text-lg transition ${
-                            kidsCount === cnt
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-md'
-                              : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          {cnt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 7: KIDS DEDICATED BEDROOM */}
-                {step === 7 && (
-                  <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Kids Room
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Require Dedicated Bedroom for Kids?
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Configured with dual study stations and playful interior niches.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {['Yes', 'No'].map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setKidsBedroom(opt as 'Yes' | 'No')}
-                          className={`py-5 rounded-xl font-bold text-center border text-lg transition ${
-                            kidsBedroom === opt
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-md'
-                              : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 8: KITCHEN FLOOR PLACEMENT */}
-                {step === 8 && (
-                  <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Kitchen Layout
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Kitchen should be on?
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Ground floor dining access or independent pantry on upper floors.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3">
-                      {['Ground Floor', 'First Floor', 'All Floors'].map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setKitchenFloor(opt)}
-                          className={`py-4 px-2 rounded-xl font-bold text-center border text-xs sm:text-sm transition ${
-                            kitchenFloor === opt
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-md'
-                              : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 9: KITCHEN STYLE (VISUAL CARDS) */}
-                {step === 9 && (
-                  <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Kitchen Aesthetics
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Type of Kitchen required?
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Select between an open-concept island kitchen or traditional partitioned kitchen.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Open Kitchen */}
-                      <button
-                        type="button"
-                        onClick={() => setKitchenType('Open')}
-                        className={`group relative overflow-hidden rounded-2xl border-2 transition-all p-2 bg-white text-left ${
-                          kitchenType === 'Open'
-                            ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E]/20'
-                            : 'border-[#E7E0D7] hover:border-[#E76F2E]'
-                        }`}
-                      >
-                        <div className="h-32 sm:h-40 w-full overflow-hidden rounded-xl bg-gray-100">
-                          <img
-                            src={ASSETS.kitchenOpen}
-                            alt="Open Kitchen"
-                            className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
-                          />
+                          <span className="text-[11px] text-emerald-600 font-semibold">{uploadedFile.size}</span>
                         </div>
-                        <div className="p-2 text-center">
-                          <div className="font-bold text-sm sm:text-base text-[#292826]">Open Kitchen</div>
-                          <p className="text-[11px] text-[#74706A]">Contemporary breakfast counter &amp; dining connect</p>
-                        </div>
-                      </button>
+                      )}
 
-                      {/* Closed Kitchen */}
-                      <button
-                        type="button"
-                        onClick={() => setKitchenType('Close')}
-                        className={`group relative overflow-hidden rounded-2xl border-2 transition-all p-2 bg-white text-left ${
-                          kitchenType === 'Close'
-                            ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E]/20'
-                            : 'border-[#E7E0D7] hover:border-[#E76F2E]'
-                        }`}
-                      >
-                        <div className="h-32 sm:h-40 w-full overflow-hidden rounded-xl bg-gray-100">
-                          <img
-                            src={ASSETS.kitchenClosed}
-                            alt="Closed Kitchen"
-                            className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
-                          />
+                      <div className="pt-2 border-t border-[#EEE9E3] flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Icons.MapPin size={16} className="text-[#E76F2E]" />
+                          <span className="text-xs font-semibold text-[#292826]">
+                            Optional: Pin Plot on Google Maps
+                          </span>
                         </div>
-                        <div className="p-2 text-center">
-                          <div className="font-bold text-sm sm:text-base text-[#292826]">Closed Kitchen</div>
-                          <p className="text-[11px] text-[#74706A]">Separate spice cooking &amp; enclosed utility area</p>
-                        </div>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => setHasMapPin(!hasMapPin)}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold border transition ${
+                            hasMapPin
+                              ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                              : 'bg-[#FDFCF9] text-[#74706A] border-[#E7E0D7]'
+                          }`}
+                        >
+                          {hasMapPin ? '📍 Pin Dropped' : '+ Drop Pin'}
+                        </button>
+                      </div>
+
+                      <div className="p-3 bg-[#F4EFEA] rounded-xl border border-[#E7E0D7] text-[11px] text-[#74706A] leading-relaxed">
+                        ⚠️ <strong className="text-[#292826]">Disclaimer:</strong> Preliminary layout only — a physical site survey is recommended before construction begins.
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* STEP 10: POOJA ROOM / MANDIR (HIGH RELEVANCE) */}
-                {step === 10 && (
-                  <div className="space-y-6 animate-fadeIn">
+                {/* ------------------------------------------------------------- */}
+                {/* IRREGULAR PATH: STEP 3 (ENTER SIDE MEASUREMENTS) */}
+                {/* ------------------------------------------------------------- */}
+                {currentStepKey === 'irregular_dimensions' && (
+                  <div className="space-y-5 animate-fadeIn">
                     <div className="text-center sm:text-left">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Vastu Sacred Space
+                        Step {step} of {totalWizardSteps}: Side Dimensions &amp; Access
                       </span>
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Pooja Room / Mandir Preference?
+                        Enter Plot Side Dimensions
                       </h3>
                       <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Critical for North-East (Ishan) Vastu compliance in Indian homes.
+                        Specify the length of each boundary side and mark which side faces the road.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {[
-                        {
-                          id: 'Dedicated NE Pooja Room',
-                          title: 'Dedicated Mandir',
-                          desc: 'Full standalone room in Ishan (NE)',
-                          img: ASSETS.mandirDedicated,
-                        },
-                        {
-                          id: 'Compact Pooja Niche',
-                          title: 'Pooja Niche / Cabinet',
-                          desc: 'Sleek wall-mounted teakwood cabinet',
-                          img: ASSETS.mandirNiche,
-                        },
-                        {
-                          id: 'Not Required',
-                          title: 'Not Required',
-                          desc: 'Utilize space for storage or foyer',
-                          img: null,
-                        },
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setMandirPreference(item.id)}
-                          className={`p-3 rounded-2xl border-2 text-left bg-white transition flex flex-col justify-between ${
-                            mandirPreference === item.id
-                              ? 'border-[#E76F2E] shadow-md ring-2 ring-[#E76F2E]/20'
-                              : 'border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          {item.img && (
-                            <div className="h-24 w-full rounded-xl overflow-hidden mb-2 bg-gray-100">
-                              <img src={item.img} alt={item.title} className="w-full h-full object-cover" />
+                    <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-[#74706A] uppercase tracking-wider mb-2">
+                          Number of Boundary Sides:
+                        </label>
+                        <div className="grid grid-cols-4 gap-2">
+                          {[3, 4, 5, 6].map((count) => (
+                            <button
+                              key={count}
+                              type="button"
+                              onClick={() => setSidesCount(count)}
+                              className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                                sidesCount === count
+                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
+                                  : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
+                              }`}
+                            >
+                              {count === 3 ? '3 (Triangle)' : count === 4 ? '4 (Quad)' : count === 5 ? '5 (Pentagon)' : '6+ (Polygon)'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        {['A', 'B', 'C', 'D', 'E', 'F'].slice(0, sidesCount).map((sideLetter, idx) => (
+                          <div key={sideLetter} className="space-y-1">
+                            <label className="text-xs font-bold text-[#292826] flex items-center justify-between">
+                              <span>Side {sideLetter} ({idx === 0 ? 'Front' : idx === 1 ? 'Right' : idx === 2 ? 'Back' : 'Left'})</span>
+                              {roadFacingSide === sideLetter && (
+                                <span className="text-[10px] text-[#E76F2E] font-bold">🛣️ Road</span>
+                              )}
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min={5}
+                                max={300}
+                                value={sideLengths[sideLetter] || ''}
+                                onChange={(e) =>
+                                  setSideLengths({ ...sideLengths, [sideLetter]: Number(e.target.value) })
+                                }
+                                placeholder={`Side ${sideLetter}`}
+                                className="w-full px-3 py-2.5 rounded-xl border border-[#E7E0D7] text-sm font-bold focus:ring-2 focus:ring-[#E76F2E] outline-none bg-[#FDFCF9]"
+                              />
+                              <span className="absolute right-3 top-2.5 text-xs font-bold text-[#74706A]">ft</span>
                             </div>
-                          )}
-                          <div>
-                            <div className="font-bold text-sm text-[#292826]">{item.title}</div>
-                            <div className="text-[11px] text-[#74706A] mt-0.5">{item.desc}</div>
                           </div>
-                        </button>
-                      ))}
+                        ))}
+                      </div>
+
+                      <div className="p-3.5 bg-gradient-to-r from-[#FFF6E8] to-[#F7ECE1] rounded-xl border border-[#E76F2E]/30 grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-[#74706A] block text-[11px]">Raw Plot Area:</span>
+                          <span className="font-extrabold text-sm text-[#292826]">
+                            ~{rawPlotAreaSqFt} sq.ft
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[#74706A] block text-[11px]">Est. Buildable Area (18% Setback):</span>
+                          <span className="font-extrabold text-sm text-[#C65320]">
+                            ~{buildableAreaSqFt} sq.ft
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <label className="block text-xs font-bold text-[#292826] mb-1">
+                            Which side faces the main road?
+                          </label>
+                          <div className="flex gap-1.5">
+                            {['A', 'B', 'C', 'D', 'E', 'F'].slice(0, sidesCount).map((sideLetter) => (
+                              <button
+                                key={sideLetter}
+                                type="button"
+                                onClick={() => setRoadFacingSide(sideLetter)}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold border transition ${
+                                  roadFacingSide === sideLetter
+                                    ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                    : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7]'
+                                }`}
+                              >
+                                Side {sideLetter}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-[#292826] mb-1">
+                            Road Width in Feet
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min={8}
+                              max={120}
+                              value={roadWidth || ''}
+                              onChange={(e) => setRoadWidth(Number(e.target.value))}
+                              className="w-full px-3 py-2 rounded-xl border border-[#E7E0D7] text-xs font-bold focus:ring-2 focus:ring-[#E76F2E] outline-none"
+                            />
+                            <span className="absolute right-3 top-2 text-xs font-bold text-[#74706A]">ft road</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-[#74706A] uppercase tracking-wider mb-1.5">
+                          Existing Structures on Site (if any):
+                        </label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['Boundary wall', 'Old Structure', 'Trees / Well', 'Electric Pole', 'Drainage / Nala', 'None'].map((item) => (
+                            <button
+                              key={item}
+                              type="button"
+                              onClick={() => {
+                                if (existingStructures.includes(item)) {
+                                  setExistingStructures(existingStructures.filter((x) => x !== item))
+                                } else {
+                                  setExistingStructures([...existingStructures, item])
+                                }
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition ${
+                                existingStructures.includes(item)
+                                  ? 'bg-[#292826] text-white border-[#292826]'
+                                  : 'bg-[#FDFCF9] text-[#74706A] border-[#E7E0D7] hover:border-[#292826]'
+                              }`}
+                            >
+                              {item}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-[#F4EFEA] rounded-xl border border-[#E7E0D7] text-[11px] text-[#74706A] leading-relaxed">
+                        ⚠️ <strong className="text-[#292826]">Municipal Note:</strong> Approximate estimate based on general norms — please verify exact setback/FSI limits with your local municipal authority before finalizing.
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* STEP 11: BEDROOM BALCONIES */}
-                {step === 11 && (
-                  <div className="space-y-6 animate-fadeIn">
+                {/* ------------------------------------------------------------- */}
+                {/* IRREGULAR PATH: STEP 4 (AI SMART SUGGESTIONS) */}
+                {/* ------------------------------------------------------------- */}
+                {currentStepKey === 'irregular_suggestions' && (
+                  <div className="space-y-5 animate-fadeIn">
                     <div className="text-center sm:text-left">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Ventilation &amp; Views
+                        Step {step} of {totalWizardSteps}: AI Smart Recommendations
                       </span>
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Require Balcony in Bedrooms?
+                        Smart Blueprint Setup for Your Plot
                       </h3>
                       <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Attached sit-out balconies with toughened glass railings and planter boxes.
+                        Based on your ~{buildableAreaSqFt} sq.ft buildable area and {plotDirection}-facing irregular plot, our AI has pre-configured optimal recommendations.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      {['Yes', 'No'].map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setBalconies(opt as 'Yes' | 'No')}
-                          className={`py-5 rounded-xl font-bold text-center border text-lg transition ${
-                            balconies === opt
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-md'
-                              : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
+                    <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-4">
+                      {/* Family Size & Budget Chips */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-[#FDFCF9] rounded-xl border border-[#E7E0D7]">
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#74706A] uppercase mb-1">
+                            👨‍👩‍👧‍👦 Family Living Group:
+                          </label>
+                          <div className="flex gap-1.5">
+                            {[
+                              { id: 'couple', label: 'Couple (2-3)' },
+                              { id: 'nuclear', label: 'Nuclear (4-5)' },
+                              { id: 'joint', label: 'Joint (6+)' },
+                            ].map((f) => (
+                              <button
+                                key={f.id}
+                                type="button"
+                                onClick={() => setFamilySize(f.id as any)}
+                                className={`flex-1 py-1 px-1.5 rounded-lg text-[11px] font-bold border transition ${
+                                  familySize === f.id
+                                    ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                    : 'bg-white text-[#292826] border-[#E7E0D7]'
+                                }`}
+                              >
+                                {f.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#74706A] uppercase mb-1">
+                            💰 Estimated Budget Tier:
+                          </label>
+                          <div className="flex gap-1.5">
+                            {[
+                              { id: '20_40L', label: '₹20-40L' },
+                              { id: '40_70L', label: '₹40-70L' },
+                              { id: 'above_70L', label: '₹70L+' },
+                            ].map((b) => (
+                              <button
+                                key={b.id}
+                                type="button"
+                                onClick={() => setBudgetTier(b.id as any)}
+                                className={`flex-1 py-1 px-1.5 rounded-lg text-[11px] font-bold border transition ${
+                                  budgetTier === b.id
+                                    ? 'bg-[#292826] text-white border-[#292826]'
+                                    : 'bg-white text-[#292826] border-[#E7E0D7]'
+                                }`}
+                              >
+                                {b.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 1. BHK Suggestion Box */}
+                      <div className="p-3.5 bg-[#FFF6E8] rounded-xl border border-[#E76F2E]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-[#C65320]">
+                            <Icons.Home size={14} />
+                            <span>Recommended: {suggestedBHK} BHK Duplex Layout</span>
+                          </div>
+                          <p className="text-[11px] text-[#74706A] mt-0.5">
+                            Optimizes your {buildableAreaSqFt} sq.ft buildable footprint with spacious living &amp; natural daylight.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setMasterBedrooms(String(suggestedBHK))}
+                            className="px-3 py-1.5 rounded-lg bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] transition shadow-xs"
+                          >
+                            Use {suggestedBHK} BHK ✓
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 2. Floors Suggestion Box */}
+                      <div className="p-3.5 bg-white rounded-xl border border-[#E7E0D7] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-[#292826]">
+                            <Icons.Building size={14} className="text-[#E76F2E]" />
+                            <span>Suggested Floors: {suggestedFloors}</span>
+                          </div>
+                          <p className="text-[11px] text-[#74706A] mt-0.5">
+                            G+1 maintains ~65% ground coverage. (Approximate estimate — verify setback limits with municipal authority).
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setFloors(suggestedFloors)}
+                            className="px-3 py-1.5 rounded-lg bg-[#292826] text-white text-xs font-bold hover:bg-black transition"
+                          >
+                            Apply Floors ✓
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 3. Vastu Alignment & Corner Cut Remedies */}
+                      <div className="p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200/80 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                            <Icons.Compass size={14} className="text-emerald-600" />
+                            <span>Vastu Shastra Strategy ({plotDirection} Entry)</span>
+                          </span>
+                          <div className="flex gap-1">
+                            {(['full', 'partial', 'skip'] as const).map((m) => (
+                              <button
+                                key={m}
+                                type="button"
+                                onClick={() => setVastuMode(m)}
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition ${
+                                  vastuMode === m
+                                    ? 'bg-emerald-700 text-white'
+                                    : 'bg-white text-emerald-800 border border-emerald-300'
+                                }`}
+                              >
+                                {m}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-emerald-800 leading-relaxed">
+                          • Mandir in NE (Ishan) · Kitchen in SE (Agneya) · Master in SW (Nairutya).<br />
+                          • <strong>Irregular plot remedy:</strong> Non-90° corner cut buffered with open utility courtyard &amp; vertical green planter shaft to neutralize missing zone energy.
+                        </p>
+                      </div>
+
+                      {/* 4. Parking Feasibility */}
+                      <div className="p-3 bg-[#FDFCF9] rounded-xl border border-[#E7E0D7] space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#292826]">
+                            🚗 Parking Recommendation ({roadWidth} ft road)
+                          </span>
+                          <span className="text-[11px] font-bold text-[#C65320]">
+                            {roadWidth < 15 ? '⚠️ Narrow Access' : 'Covered Porch'}
+                          </span>
+                        </div>
+                        {roadWidth < 15 ? (
+                          <p className="text-[11px] text-amber-900 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+                            ⚠️ <strong>Disclaimer:</strong> Your plot's road-facing width is under 15 ft — standard car parking may not be feasible. Our design team will assess tandem or alternative parking options during detailed planning.
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-[#74706A]">
+                            Your {roadWidth} ft road allows covered 1-car porch + 2-wheeler. Note: May require angled parking layout — final design to be confirmed by our design team.
+                          </p>
+                        )}
+                      </div>
+
+                      {/* 5. Lifestyle Feature Chips */}
+                      <div>
+                        <label className="block text-xs font-bold text-[#74706A] uppercase tracking-wider mb-2">
+                          Select What Matters Most to You:
+                        </label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {[
+                            '🛕 Dedicated Mandir',
+                            '🍳 Big Modular Kitchen',
+                            '🌿 Terrace Garden',
+                            '👴 Parents Room (GF)',
+                            '🏋️ Home Gym',
+                            '🚗 Double Car Parking',
+                            '📺 Home Theatre',
+                            '🏦 Rental Floor Unit',
+                            '🏢 Home Office',
+                          ].map((tag) => (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => {
+                                if (lifestyleTags.includes(tag)) {
+                                  setLifestyleTags(lifestyleTags.filter((t) => t !== tag))
+                                } else {
+                                  setLifestyleTags([...lifestyleTags, tag])
+                                }
+                              }}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                                lifestyleTags.includes(tag)
+                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-xs'
+                                  : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
+                              }`}
+                            >
+                              {tag}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* STEP 12: SMALL OFFICE / STUDY SPACE */}
-                {step === 12 && (
+                {/* ------------------------------------------------------------- */}
+                {/* FLOORS STEP (Regular: Step 4, Irregular: Step 5) */}
+                {/* ------------------------------------------------------------- */}
+                {currentStepKey === 'floors' && (
                   <div className="space-y-6 animate-fadeIn">
                     <div className="text-center sm:text-left">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Work From Home
+                        Step {step} of {totalWizardSteps}: Number of Floors
                       </span>
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Require Small Office / Study Space?
+                        How many floors are you planning?
                       </h3>
                       <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Quiet workspace with high-speed cabling, bookshelves, and video conference background.
+                        Select the total number of storeys for your residential design.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      {['Yes', 'No'].map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setOfficeSpace(opt as 'Yes' | 'No')}
-                          className={`py-5 rounded-xl font-bold text-center border text-lg transition ${
-                            officeSpace === opt
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-md'
-                              : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 13: PARKING FACILITY */}
-                {step === 13 && (
-                  <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Vehicles
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Parking Facility in the House?
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Covered car porch, stilt parking, or bike bays.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {['2 Wheeler Parking', '4 Wheeler Parking', 'Both (Car & Bike)', 'No Parking'].map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setParking(opt)}
-                          className={`p-4 rounded-xl font-bold text-center border text-xs sm:text-sm transition ${
-                            parking === opt
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-md'
-                              : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 14: GARDEN PROVISION */}
-                {step === 14 && (
-                  <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Landscaping
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Garden Provision in the House?
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Front lawn setback, central courtyard Brahmasthan, or terrace garden.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {['Yes', 'No'].map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setGarden(opt as 'Yes' | 'No')}
-                          className={`py-5 rounded-xl font-bold text-center border text-lg transition ${
-                            garden === opt
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-md'
-                              : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 15: LIFT PROVISION */}
-                {step === 15 && (
-                  <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Accessibility
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Lift Provision in the House?
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Hydraulic or gearless elevator shaft for multi-storey duplex/triplex living.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {['Yes', 'No'].map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setLift(opt as 'Yes' | 'No')}
-                          className={`py-5 rounded-xl font-bold text-center border text-lg transition ${
-                            lift === opt
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-md'
-                              : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 16: BATHROOM SPACE CHOICE (VISUAL CARDS) */}
-                {step === 16 && (
-                  <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Bathrooms
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Bathroom Space Choice?
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Select bathroom dimensions and fixtures allocation.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       {[
-                        { id: 'Big', label: 'Big / Luxury', desc: 'Glass shower enclosure & vanity', img: ASSETS.bathBig },
-                        { id: 'Standard', label: 'Standard', desc: 'Comfortable 5x7 ft with dry/wet area', img: ASSETS.bathStandard },
-                        { id: 'Small', label: 'Compact / Small', desc: 'Space-saving powder toilet layout', img: ASSETS.bathSmall },
+                        {
+                          id: 'Ground Floor Only',
+                          label: 'Ground Floor Only',
+                          emoji: '🏡',
+                          desc: 'Single storey bungalow with private garden lawn',
+                          tag: 'Single Storey',
+                        },
+                        {
+                          id: 'G+1 (Two Floors)',
+                          label: 'G+1 (Two Floors)',
+                          emoji: '🏢',
+                          desc: 'Most popular Indian duplex (Ground living + First bedrooms)',
+                          tag: '⭐ Most Popular',
+                        },
+                        {
+                          id: 'G+2 (Three Floors)',
+                          label: 'G+2 (Three Floors)',
+                          emoji: '🏬',
+                          desc: 'Independent rental floors or joint family residence',
+                          tag: 'Rental Income Ready',
+                        },
+                        {
+                          id: 'G+3 (Four Floors)',
+                          label: 'G+3 (Four Floors)',
+                          emoji: '🏙️',
+                          desc: 'Multi-family residential floors with stilt parking & lift',
+                          tag: 'Max FSI Utilization',
+                        },
+                      ].map((item) => {
+                        const isSelected = floors === item.id
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setFloors(item.id)}
+                            className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 relative flex flex-col justify-between cursor-pointer ${
+                              isSelected
+                                ? 'border-[#E76F2E] bg-gradient-to-br from-[#FFF8F0] via-[#FFEDD5] to-[#FED7AA] shadow-xl ring-2 ring-[#E76F2E] scale-[1.02]'
+                                : 'border-gray-300 bg-white hover:border-[#E76F2E] hover:bg-orange-50/30 shadow-sm'
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between w-full mb-2">
+                                <div className="flex items-center gap-2.5">
+                                  <span className="text-2xl p-1.5 rounded-xl bg-white/90 border border-gray-200 shadow-2xs">
+                                    {item.emoji}
+                                  </span>
+                                  <span
+                                    className={`text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md border ${
+                                      isSelected
+                                        ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                        : 'bg-gray-100 text-gray-700 border-gray-200'
+                                    }`}
+                                  >
+                                    {item.tag}
+                                  </span>
+                                </div>
+                                <span
+                                  className={`flex h-6 w-6 items-center justify-center rounded-full transition shadow-xs ${
+                                    isSelected
+                                      ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
+                                      : 'border-2 border-gray-400 bg-gray-50'
+                                  }`}
+                                >
+                                  {isSelected ? <Icons.Check size={14} className="stroke-[3]" /> : null}
+                                </span>
+                              </div>
+                              <div
+                                className={`text-base font-black tracking-tight ${
+                                  isSelected ? 'text-[#9A3412]' : 'text-gray-900'
+                                }`}
+                              >
+                                {item.label}
+                              </div>
+                              <div
+                                className={`text-xs mt-1 leading-relaxed ${
+                                  isSelected ? 'text-[#7C2D12] font-semibold' : 'text-gray-600'
+                                }`}
+                              >
+                                {item.desc}
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* MASTER BEDROOMS */}
+                {currentStepKey === 'master_bedrooms' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Master Bedrooms
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Number of Master Bedrooms?
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Spacious bedrooms with attached toilets and dressing wardrobes.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-3">
+                      {['1', '2', '3', '4'].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setMasterBedrooms(num)}
+                          className={`py-5 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
+                            masterBedrooms === num
+                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* MARRIED COUPLES */}
+                {currentStepKey === 'married_couples' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Married Couples
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        How many Married Couples in the house?
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Helps AI configure privacy zones and master bedroom separation.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-3">
+                      {['1', '2', '3', '4+'].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setMarriedCouples(num)}
+                          className={`py-5 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
+                            marriedCouples === num
+                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* KIDS COUNT */}
+                {currentStepKey === 'kids_count' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Kids &amp; Study
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        How many Children / Kids?
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Determines study desk allocations and kids bedroom sizes.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-3">
+                      {['0', '1', '2', '3+'].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setKidsCount(num)}
+                          className={`py-5 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
+                            kidsCount === num
+                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* KIDS DEDICATED BEDROOM */}
+                {currentStepKey === 'kids_bedroom' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Kids Room
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Need a Dedicated Kids Bedroom?
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Includes custom bunk bed or twin single bed space with study tables.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {['Yes', 'No'].map((choice) => (
+                        <button
+                          key={choice}
+                          type="button"
+                          onClick={() => setKidsBedroom(choice as 'Yes' | 'No')}
+                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
+                            kidsBedroom === choice
+                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                          }`}
+                        >
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* KITCHEN FLOOR */}
+                {currentStepKey === 'kitchen_floor' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Kitchen Floor
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Which Floor for Main Kitchen?
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Ground floor is standard for Indian households; first floor for stilt parking.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {[
+                        { id: 'Ground Floor', label: 'Ground Floor Kitchen', emoji: '🍳', desc: 'Standard Indian layout with utility wash area access' },
+                        { id: 'First Floor', label: 'First Floor Kitchen', emoji: '🍽️', desc: 'Ideal for stilt parking or upper floor family living' },
+                        { id: 'Both Floors (Dual Kitchen)', label: 'Both Floors (Dual Kitchen)', emoji: '🥘', desc: 'Main family kitchen + 1st floor dry kitchenette' },
+                      ].map((item) => {
+                        const isSelected = kitchenFloor === item.id
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setKitchenFloor(item.id)}
+                            className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 relative flex items-center justify-between cursor-pointer ${
+                              isSelected
+                                ? 'border-[#E76F2E] bg-gradient-to-br from-[#FFF8F0] via-[#FFEDD5] to-[#FED7AA] shadow-lg ring-2 ring-[#E76F2E] scale-[1.01]'
+                                : 'border-gray-300 bg-white hover:border-[#E76F2E] hover:bg-orange-50/30 shadow-sm'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl p-1.5 rounded-xl bg-white/90 border border-gray-200 shadow-2xs">
+                                {item.emoji}
+                              </span>
+                              <div>
+                                <div className={`text-sm font-black ${isSelected ? 'text-[#9A3412]' : 'text-gray-900'}`}>
+                                  {item.label}
+                                </div>
+                                <div className={`text-xs mt-0.5 ${isSelected ? 'text-[#7C2D12] font-semibold' : 'text-gray-600'}`}>
+                                  {item.desc}
+                                </div>
+                              </div>
+                            </div>
+                            <span
+                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition shadow-xs ml-3 ${
+                                isSelected
+                                  ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
+                                  : 'border-2 border-gray-400 bg-gray-50'
+                              }`}
+                            >
+                              {isSelected ? <Icons.Check size={14} className="stroke-[3]" /> : null}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* KITCHEN STYLE */}
+                {currentStepKey === 'kitchen_style' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Kitchen Style
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Kitchen Layout Style
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Choose between open breakfast counter or traditional closed Indian cooking space.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {[
+                        { id: 'Open', label: 'Open Modular Kitchen', img: ASSETS.kitchenOpen, desc: 'Breakfast bar counter' },
+                        { id: 'Close', label: 'Traditional Closed Kitchen', img: ASSETS.kitchenClosed, desc: 'Heavy spices & chimney isolation' },
                       ].map((item) => (
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => setBathroomChoice(item.id as 'Big' | 'Standard' | 'Small')}
-                          className={`group overflow-hidden rounded-2xl border-2 text-left bg-white transition p-2 ${
-                            bathroomChoice === item.id
-                              ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E]/20'
-                              : 'border-[#E7E0D7] hover:border-[#E76F2E]'
+                          onClick={() => setKitchenType(item.id as 'Open' | 'Close')}
+                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2.5 relative ${
+                            kitchenType === item.id
+                              ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
+                              : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
                           }`}
                         >
-                          <div className="h-28 sm:h-36 w-full rounded-xl overflow-hidden bg-gray-100">
+                          <div className="h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-gray-100 relative">
                             <img src={item.img} alt={item.label} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                            {kitchenType === item.id && (
+                              <div className="absolute top-2 right-2 bg-[#E76F2E] text-white p-1 rounded-full shadow-md">
+                                <Icons.Check size={12} />
+                              </div>
+                            )}
                           </div>
-                          <div className="p-2 text-center">
-                            <div className="font-bold text-xs sm:text-sm text-[#292826]">{item.label}</div>
+                          <div className="p-2">
+                            <div className={`font-bold text-xs sm:text-sm ${kitchenType === item.id ? 'text-[#C65320]' : 'text-[#292826]'}`}>{item.label}</div>
                             <div className="text-[10px] text-[#74706A] mt-0.5">{item.desc}</div>
                           </div>
                         </button>
@@ -1038,128 +1581,370 @@ export default function NivaasAiStudio({
                   </div>
                 )}
 
-                {/* STEP 17: PLOT DIRECTION (INTERACTIVE VASTU COMPASS) */}
-                {step === 17 && (
+                {/* POOJA ROOM / MANDIR */}
+                {currentStepKey === 'pooja_room' && (
                   <div className="space-y-6 animate-fadeIn">
                     <div className="text-center sm:text-left">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Vastu Shastra
+                        Step {step} of {totalWizardSteps}: Pooja Mandir
                       </span>
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Plot Facing Direction
+                        Pooja / Mandir Preference
                       </h3>
                       <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Select the direction of your entrance road to calibrate Vastu zoning.
+                        Strictly placed in North-East (Ishanya corner) for maximum prosperity.
                       </p>
                     </div>
 
-                    <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm flex flex-col items-center">
-                      {/* Animated Interactive Compass */}
-                      <div className="relative w-44 h-44 sm:w-48 sm:h-48 my-2 flex items-center justify-center">
-                        {/* Outer Compass Dial */}
-                        <div
-                          className="absolute inset-0 rounded-full border-4 border-[#292826] bg-[#FDFCF9] shadow-inner flex items-center justify-center transition-transform duration-700 ease-out"
-                          style={{ transform: `rotate(${-activeCompassDir.angle}deg)` }}
+                    <div className="grid grid-cols-2 gap-4">
+                      {[
+                        { id: 'Dedicated NE Pooja Room', label: 'Dedicated Pooja Room', img: ASSETS.mandirDedicated, desc: 'Separate sacred room (Ishanya)' },
+                        { id: 'Pooja Niche / Wall Mandir', label: 'Integrated Wall Mandir', img: ASSETS.mandirNiche, desc: 'Compact carved niche unit' },
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setMandirPreference(item.id)}
+                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2.5 relative ${
+                            mandirPreference === item.id
+                              ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
+                              : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
+                          }`}
                         >
-                          {/* Radial markings */}
-                          <div className="absolute top-2 font-display text-xs font-extrabold text-[#C94F36]">N</div>
-                          <div className="absolute right-2.5 font-display text-xs font-bold text-[#292826]">E</div>
-                          <div className="absolute bottom-2 font-display text-xs font-bold text-[#292826]">S</div>
-                          <div className="absolute left-2.5 font-display text-xs font-bold text-[#292826]">W</div>
-
-                          {/* Compass Crosshair */}
-                          <div className="w-full h-[1px] bg-[#E7E0D7] absolute" />
-                          <div className="h-full w-[1px] bg-[#E7E0D7] absolute" />
-                        </div>
-
-                        {/* Center Needle (Always Points North with red arrow) */}
-                        <div className="relative z-10 w-8 h-8 rounded-full bg-[#292826] flex items-center justify-center shadow-md border-2 border-white">
-                          <div className="w-2.5 h-2.5 rounded-full bg-[#E76F2E]" />
-                        </div>
-
-                        {/* Top Indicator Arrow */}
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[#E76F2E] font-bold text-sm">
-                          ▼
-                        </div>
-                      </div>
-
-                      {/* Direction Selection Buttons (N, E, S, W, NE, SE, SW, NW) */}
-                      <div className="grid grid-cols-4 gap-2 w-full mt-4">
-                        {directions.map((dir) => (
-                          <button
-                            key={dir.label}
-                            type="button"
-                            onClick={() => setPlotDirection(dir.name)}
-                            className={`py-2 px-1 rounded-xl text-center font-bold text-xs sm:text-sm border transition ${
-                              plotDirection === dir.name || plotDirection === dir.label
-                                ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
-                                : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                            }`}
-                          >
-                            <div>{dir.label}</div>
-                            <div className="text-[9px] opacity-80 font-normal">{dir.name}</div>
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Vastu Note */}
-                      <div className="mt-3 text-center text-xs text-[#74706A]">
-                        Selected: <strong className="text-[#C65320]">{plotDirection} Facing</strong> ({activeCompassDir.tag})
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 18: SITE DETAILS / SURROUNDINGS */}
-                {step === 18 && (
-                  <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Site Boundaries
-                      </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Site Surroundings &amp; Road Access
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Tell us what surrounds your 4 plot boundaries to determine light, ventilation, and setback bylaws.
-                      </p>
-                    </div>
-
-                    <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-4">
-                      {/* Interactive Boundary Table */}
-                      {(['front', 'back', 'left', 'right'] as const).map((side) => (
-                        <div key={side} className="flex items-center justify-between border-b border-[#EEE9E3] pb-3 last:border-b-0 last:pb-0">
-                          <span className="text-sm font-bold capitalize text-[#292826]">
-                            {side === 'front' ? 'Front Side (Facing Road)' : `${side} Boundary`}:
-                          </span>
-                          <div className="flex items-center gap-2">
-                            {['Road', "Others Property"].map((opt) => (
-                              <button
-                                key={opt}
-                                type="button"
-                                onClick={() => setSiteDetails((prev) => ({ ...prev, [side]: opt }))}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${
-                                  siteDetails[side] === opt
-                                    ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
-                                    : 'bg-[#FDFCF9] text-[#74706A] border-[#E7E0D7] hover:border-[#E76F2E]'
-                                }`}
-                              >
-                                {opt}
-                              </button>
-                            ))}
+                          <div className="h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-gray-100 relative">
+                            <img src={item.img} alt={item.label} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                            {mandirPreference === item.id && (
+                              <div className="absolute top-2 right-2 bg-[#E76F2E] text-white p-1 rounded-full shadow-md">
+                                <Icons.Check size={12} />
+                              </div>
+                            )}
                           </div>
-                        </div>
+                          <div className="p-2">
+                            <div className={`font-bold text-xs sm:text-sm ${mandirPreference === item.id ? 'text-[#C65320]' : 'text-[#292826]'}`}>{item.label}</div>
+                            <div className="text-[10px] text-[#74706A] mt-0.5">{item.desc}</div>
+                          </div>
+                        </button>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* STEP 19: ARCHITECTURAL ELEVATION STYLE (ULTRA-REALISTIC) */}
-                {step === 19 && (
+                {/* BALCONIES */}
+                {currentStepKey === 'balconies' && (
                   <div className="space-y-6 animate-fadeIn">
                     <div className="text-center sm:text-left">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Exterior Design
+                        Step {step} of {totalWizardSteps}: Balconies
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Balconies for Bedrooms?
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Front sit-outs with glass or louver railings for cross ventilation.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {['Yes', 'No'].map((choice) => (
+                        <button
+                          key={choice}
+                          type="button"
+                          onClick={() => setBalconies(choice as 'Yes' | 'No')}
+                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
+                            balconies === choice
+                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                          }`}
+                        >
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* OFFICE / STUDY */}
+                {currentStepKey === 'office_space' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Home Office / Study
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Need a Home Office / Study Space?
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Quiet workspace setup with ethernet connectivity and bookshelf walls.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {['Yes', 'No'].map((choice) => (
+                        <button
+                          key={choice}
+                          type="button"
+                          onClick={() => setOfficeSpace(choice as 'Yes' | 'No')}
+                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
+                            officeSpace === choice
+                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                          }`}
+                        >
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* PARKING TYPE */}
+                {currentStepKey === 'parking' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Parking Space
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Parking Requirements
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Configured based on plot width, gate entry radius and road accessibility.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {[
+                        { id: '1 Car Parking', label: '1 Car Covered Porch', emoji: '🚗', tag: 'Standard Porch', desc: 'Covered parking with direct foyer entrance' },
+                        { id: '2 Cars Parking', label: '2 Cars (Side-by-Side)', emoji: '🚙', tag: 'Dual Parking', desc: 'Spacious 18ft driveway / stilt floor space' },
+                        { id: 'Both (Car & Bike)', label: '1 Car + 2-Wheeler Space', emoji: '🛵', tag: '⭐ Most Popular', desc: 'Dedicated sedan bay with 2 bike slots' },
+                        { id: 'Bike Only (No Car)', label: 'Only Two-Wheelers', emoji: '🏍️', tag: 'Compact Space', desc: 'Maximum plot area allocated for living rooms' },
+                      ].map((item) => {
+                        const isSelected = parking === item.id
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setParking(item.id)}
+                            className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 relative flex flex-col justify-between cursor-pointer ${
+                              isSelected
+                                ? 'border-[#E76F2E] bg-gradient-to-br from-[#FFF8F0] via-[#FFEDD5] to-[#FED7AA] shadow-xl ring-2 ring-[#E76F2E] scale-[1.02]'
+                                : 'border-gray-300 bg-white hover:border-[#E76F2E] hover:bg-orange-50/30 shadow-sm'
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between w-full mb-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-2xl p-1.5 rounded-xl bg-white/90 border border-gray-200 shadow-2xs">
+                                    {item.emoji}
+                                  </span>
+                                  <span
+                                    className={`text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md border ${
+                                      isSelected
+                                        ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                        : 'bg-gray-100 text-gray-700 border-gray-200'
+                                    }`}
+                                  >
+                                    {item.tag}
+                                  </span>
+                                </div>
+                                <span
+                                  className={`flex h-6 w-6 items-center justify-center rounded-full transition shadow-xs ${
+                                    isSelected
+                                      ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
+                                      : 'border-2 border-gray-400 bg-gray-50'
+                                  }`}
+                                >
+                                  {isSelected ? <Icons.Check size={14} className="stroke-[3]" /> : null}
+                                </span>
+                              </div>
+                              <div className={`text-base font-black tracking-tight ${isSelected ? 'text-[#9A3412]' : 'text-gray-900'}`}>
+                                {item.label}
+                              </div>
+                              <div className={`text-xs mt-1 leading-relaxed ${isSelected ? 'text-[#7C2D12] font-semibold' : 'text-gray-600'}`}>
+                                {item.desc}
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* GARDEN */}
+                {currentStepKey === 'garden' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Landscape &amp; Garden
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Garden or Courtyard Area?
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Front lawn garden, central Brahmasthan courtyard (OTS), or terrace lawn.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {['Yes', 'No'].map((choice) => (
+                        <button
+                          key={choice}
+                          type="button"
+                          onClick={() => setGarden(choice as 'Yes' | 'No')}
+                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
+                            garden === choice
+                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                          }`}
+                        >
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ELEVATOR / LIFT */}
+                {currentStepKey === 'lift' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Home Lift
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Provision for Home Elevator / Lift?
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Civil shaft allocation for senior citizen friendly vertical access.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {['Yes', 'No'].map((choice) => (
+                        <button
+                          key={choice}
+                          type="button"
+                          onClick={() => setLift(choice as 'Yes' | 'No')}
+                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
+                            lift === choice
+                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                          }`}
+                        >
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* BATHROOM SIZES */}
+                {currentStepKey === 'bathroom' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Bathroom Proportions
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Bathroom Size Preference
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Dry/wet partition separation with wall-hung WC fittings.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { id: 'Big', label: 'Big / Luxury', img: ASSETS.bathBig, desc: '8x6 ft with glass shower cubicle' },
+                        { id: 'Standard', label: 'Standard', img: ASSETS.bathStandard, desc: '7x5 ft optimal Indian standard' },
+                        { id: 'Small', label: 'Compact', img: ASSETS.bathSmall, desc: '6x4 ft space saving layout' },
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setBathroomChoice(item.id as any)}
+                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2 relative ${
+                            bathroomChoice === item.id
+                              ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
+                              : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
+                          }`}
+                        >
+                          <div className="h-20 sm:h-24 w-full rounded-xl overflow-hidden bg-gray-100 relative">
+                            <img src={item.img} alt={item.label} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                            {bathroomChoice === item.id && (
+                              <div className="absolute top-1.5 right-1.5 bg-[#E76F2E] text-white p-1 rounded-full shadow-md">
+                                <Icons.Check size={10} />
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-1.5">
+                            <div className={`font-bold text-xs ${bathroomChoice === item.id ? 'text-[#C65320]' : 'text-[#292826]'}`}>{item.label}</div>
+                            <div className="text-[9px] text-[#74706A] mt-0.5">{item.desc}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* VASTU COMPASS */}
+                {currentStepKey === 'vastu' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: Vastu Alignment
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Main Road Facing Direction
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Rotate the Vastu compass dial to align your plot's main entrance.
+                      </p>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl border border-[#E7E0D7] shadow-sm flex flex-col items-center">
+                      <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center">
+                        <div
+                          className="absolute inset-0 rounded-full border-4 border-dashed border-[#E76F2E]/40 transition-transform duration-500"
+                          style={{ transform: `rotate(${activeCompassDir.angle}deg)` }}
+                        />
+                        <div className="text-center z-10">
+                          <span className="text-3xl sm:text-4xl font-black font-display text-[#E76F2E]">
+                            {plotDirection}
+                          </span>
+                          <span className="text-xs font-bold text-[#74706A] block mt-0.5">
+                            {activeCompassDir.tag}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-2 w-full mt-6">
+                        {directions.map((d) => (
+                          <button
+                            key={d.name}
+                            type="button"
+                            onClick={() => setPlotDirection(d.name)}
+                            className={`py-2 px-1 rounded-xl text-xs font-bold border transition ${
+                              plotDirection === d.name
+                                ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
+                                : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
+                            }`}
+                          >
+                            {d.label} ({d.name})
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3D ELEVATION */}
+                {currentStepKey === 'elevation' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step {step} of {totalWizardSteps}: 3D Facade Style
                       </span>
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Choose 3D Front Facade Style
@@ -1196,17 +1981,22 @@ export default function NivaasAiStudio({
                           key={item.id}
                           type="button"
                           onClick={() => setElevationStyle(item.id)}
-                          className={`group overflow-hidden rounded-2xl border-2 text-left bg-white transition p-2.5 ${
+                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2.5 relative ${
                             elevationStyle === item.id
-                              ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E]/20'
-                              : 'border-[#E7E0D7] hover:border-[#E76F2E]'
+                              ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
+                              : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
                           }`}
                         >
-                          <div className="h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-gray-100">
+                          <div className="h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-gray-100 relative">
                             <img src={item.img} alt={item.id} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                            {elevationStyle === item.id && (
+                              <div className="absolute top-2 right-2 bg-[#E76F2E] text-white p-1 rounded-full shadow-md">
+                                <Icons.Check size={12} />
+                              </div>
+                            )}
                           </div>
                           <div className="p-2">
-                            <div className="font-bold text-xs sm:text-sm text-[#292826]">{item.id}</div>
+                            <div className={`font-bold text-xs sm:text-sm ${elevationStyle === item.id ? 'text-[#C65320]' : 'text-[#292826]'}`}>{item.id}</div>
                             <div className="text-[10px] text-[#74706A] mt-0.5 line-clamp-2">{item.desc}</div>
                           </div>
                         </button>
@@ -1215,15 +2005,15 @@ export default function NivaasAiStudio({
                   </div>
                 )}
 
-                {/* STEP 20: CONSTRUCTION FINISH & MATERIAL GRADE */}
-                {step === 20 && (
+                {/* MATERIAL & FINISH GRADE */}
+                {currentStepKey === 'material' && (
                   <div className="space-y-6 animate-fadeIn">
                     <div className="text-center sm:text-left">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
-                        Construction Grade
+                        Step {step} of {totalWizardSteps}: Material &amp; Construction Grade
                       </span>
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
-                        Construction Quality &amp; Budget Grade
+                        Select Material Quality &amp; Budget Grade
                       </h3>
                       <p className="text-xs sm:text-sm text-[#74706A] mt-1">
                         Specifies structure materials, sanitaryware, electricals, and flooring.
@@ -1235,47 +2025,182 @@ export default function NivaasAiStudio({
                         {
                           id: 'Standard Solid Build (~₹1,800/sq.ft)',
                           title: 'Standard Solid Build',
+                          emoji: '🧱',
                           rate: '₹1,800 / sq.ft',
+                          tag: 'Budget Efficient',
                           desc: 'Red clay bricks, Kajaria vitrified tiles, Cera sanitaryware, Anchor switches',
                         },
                         {
                           id: 'Premium Executive (~₹2,350/sq.ft)',
                           title: 'Premium Executive (Most Popular)',
+                          emoji: '💎',
                           rate: '₹2,350 / sq.ft',
+                          tag: '⭐ Highest Rated',
                           desc: 'AAC blockwork, 4x2 GVT tiles, Kohler/Jaquar fittings, Teak main door, Legrand switches',
                         },
                         {
                           id: 'Ultra-Luxury Villa Grade (~₹3,200+/sq.ft)',
                           title: 'Ultra-Luxury Villa Grade',
+                          emoji: '👑',
                           rate: '₹3,200+ / sq.ft',
+                          tag: 'Luxury Bespoke',
                           desc: 'Italian marble, Grohe/Toto automation, double-glazed soundproof glass, VRV AC ready',
                         },
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setMaterialGrade(item.id)}
-                          className={`w-full p-4 rounded-2xl border-2 text-left bg-white transition flex items-center justify-between ${
-                            materialGrade === item.id
-                              ? 'border-[#E76F2E] shadow-md ring-2 ring-[#E76F2E]/20 bg-[#FFF6E8]/30'
-                              : 'border-[#E7E0D7] hover:border-[#E76F2E]'
-                          }`}
-                        >
-                          <div>
-                            <div className="font-bold text-sm sm:text-base text-[#292826]">{item.title}</div>
-                            <div className="text-xs text-[#74706A] mt-0.5">{item.desc}</div>
-                          </div>
-                          <div className="text-right shrink-0 ml-3">
-                            <span className="text-xs sm:text-sm font-extrabold text-[#C65320]">{item.rate}</span>
-                          </div>
-                        </button>
-                      ))}
+                      ].map((item) => {
+                        const isSelected = materialGrade === item.id
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setMaterialGrade(item.id)}
+                            className={`w-full p-4 rounded-2xl border-2 text-left transition-all duration-200 flex items-center justify-between cursor-pointer ${
+                              isSelected
+                                ? 'border-[#E76F2E] bg-gradient-to-br from-[#FFF8F0] via-[#FFEDD5] to-[#FED7AA] shadow-lg ring-2 ring-[#E76F2E] scale-[1.01]'
+                                : 'border-gray-300 bg-white hover:border-[#E76F2E] hover:bg-orange-50/30 shadow-sm'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl p-2 rounded-xl bg-white/90 border border-gray-200 shadow-2xs">
+                                {item.emoji}
+                              </span>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-sm sm:text-base font-black ${isSelected ? 'text-[#9A3412]' : 'text-gray-900'}`}>
+                                    {item.title}
+                                  </span>
+                                  <span
+                                    className={`text-[9px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded border ${
+                                      isSelected
+                                        ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                        : 'bg-gray-100 text-gray-700 border-gray-200'
+                                    }`}
+                                  >
+                                    {item.tag}
+                                  </span>
+                                </div>
+                                <div className={`text-xs mt-0.5 ${isSelected ? 'text-[#7C2D12] font-semibold' : 'text-gray-600'}`}>
+                                  {item.desc}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0 ml-3">
+                              <span
+                                className={`text-xs sm:text-sm font-black px-2.5 py-1 rounded-lg border ${
+                                  isSelected
+                                    ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                    : 'bg-orange-50 text-[#C65320] border-orange-200'
+                                }`}
+                              >
+                                {item.rate}
+                              </span>
+                              <span
+                                className={`flex h-6 w-6 items-center justify-center rounded-full transition shadow-xs ${
+                                  isSelected
+                                    ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
+                                    : 'border-2 border-gray-400 bg-gray-50'
+                                }`}
+                              >
+                                {isSelected ? <Icons.Check size={14} className="stroke-[3]" /> : null}
+                              </span>
+                            </div>
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 )}
 
-                {/* STEP 21: ANIMATED AI SYNTHESIS ENGINE */}
-                {step === 21 && (
+                {/* IRREGULAR ONLY: STEP 22 */}
+                {currentStepKey === 'irregular_review' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step 22 of {totalWizardSteps}: Site Geometry Review
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Asymmetric Boundary Alignment
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Our AI structural grid algorithm will auto-compensate for non-perpendicular walls.
+                      </p>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-[#FDFCF9] rounded-xl border border-[#E7E0D7]">
+                          <span className="text-[11px] text-[#74706A] block font-bold">Irregular Sides</span>
+                          <span className="font-extrabold text-sm text-[#292826]">{sidesCount} Distinct Sides</span>
+                        </div>
+                        <div className="p-3 bg-[#FDFCF9] rounded-xl border border-[#E7E0D7]">
+                          <span className="text-[11px] text-[#74706A] block font-bold">Road Access Side</span>
+                          <span className="font-extrabold text-sm text-[#E76F2E]">Side {roadFacingSide} ({roadWidth} ft)</span>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-800 space-y-1">
+                        <div className="font-bold flex items-center gap-1.5">
+                          <span>✓</span> Structural Optimization Active
+                        </div>
+                        <p className="text-[11px] text-emerald-700">
+                          Non-square corner buffers have been mapped to utility risers, HVAC ducts, and vertical light shafts to deliver 100% rectangular usable bedroom zones.
+                        </p>
+                      </div>
+
+                      <div className="p-3 bg-[#F4EFEA] rounded-xl border border-[#E7E0D7] text-[11px] text-[#74706A]">
+                        ⚠️ <strong>Reminder:</strong> Detailed CAD structural drawings (IS-456 load calculations) will be prepared based on these exact measurements.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* IRREGULAR ONLY: STEP 23 */}
+                {currentStepKey === 'final_confirm' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="text-center sm:text-left">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                        Step 23 of {totalWizardSteps}: Final Specification Review
+                      </span>
+                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                        Ready to Synthesize Your Custom Blueprint
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                        Review your configured parameters below before triggering the NIVAAS AI Architecture Synthesis Engine.
+                      </p>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-3 text-xs">
+                      <div className="flex justify-between py-2 border-b border-[#EEE9E3]">
+                        <span className="text-[#74706A]">Plot Type:</span>
+                        <span className="font-bold text-[#292826]">Irregular (~{rawPlotAreaSqFt} sq.ft)</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-[#EEE9E3]">
+                        <span className="text-[#74706A]">Buildable Base Area:</span>
+                        <span className="font-bold text-[#C65320]">~{buildableAreaSqFt} sq.ft</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-[#EEE9E3]">
+                        <span className="text-[#74706A]">Configuration:</span>
+                        <span className="font-bold text-[#292826]">{masterBedrooms} BHK · {floors}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-[#EEE9E3]">
+                        <span className="text-[#74706A]">Orientation:</span>
+                        <span className="font-bold text-[#292826]">{plotDirection} Facing (100% Vastu)</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-[#EEE9E3]">
+                        <span className="text-[#74706A]">3D Facade Style:</span>
+                        <span className="font-bold text-[#292826]">{elevationStyle}</span>
+                      </div>
+                      <div className="flex justify-between py-2">
+                        <span className="text-[#74706A]">Material Grade:</span>
+                        <span className="font-bold text-[#292826]">{materialGrade.split(' ')[0]}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ------------------------------------------------------------- */}
+                {/* SYNTHESIS STAGE */}
+                {/* ------------------------------------------------------------- */}
+                {currentStepKey === 'synthesis' && (
                   <div className="text-center py-10 space-y-6 animate-fadeIn">
                     <div className="relative w-36 h-36 mx-auto flex items-center justify-center">
                       <svg className="w-full h-full transform -rotate-90">
@@ -1326,8 +2251,10 @@ export default function NivaasAiStudio({
                   </div>
                 )}
 
-                {/* STEP 22: LEAD CAPTURE & DELIVERY */}
-                {step === 22 && (
+                {/* ------------------------------------------------------------- */}
+                {/* LEAD CAPTURE STAGE */}
+                {/* ------------------------------------------------------------- */}
+                {currentStepKey === 'lead' && (
                   <div className="space-y-6 animate-fadeIn">
                     <div className="text-center">
                       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
@@ -1399,8 +2326,10 @@ export default function NivaasAiStudio({
                   </div>
                 )}
 
-                {/* STEP 23: AI GENERATED RESULTS & SHOWCASE */}
-                {step === 23 && (
+                {/* ------------------------------------------------------------- */}
+                {/* RESULTS SHOWCASE STAGE */}
+                {/* ------------------------------------------------------------- */}
+                {currentStepKey === 'results' && (
                   <div className="space-y-6 animate-fadeIn pb-6">
                     {/* Top Result Banner */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-[#FFF6E8] to-[#F7ECE1] p-4 rounded-2xl border border-[#E76F2E]/30">
@@ -1410,14 +2339,14 @@ export default function NivaasAiStudio({
                             96% AI Matched
                           </span>
                           <span className="text-xs font-bold text-[#292826]">
-                            Custom House Blueprint Generated
+                            {isRegular ? 'Rectangular Vastu Blueprint' : 'Asymmetric Optimized Blueprint'}
                           </span>
                         </div>
                         <h4 className="font-display font-extrabold text-lg sm:text-xl text-[#292826] mt-1">
-                          {plotWidth}x{plotDepth} ft {plotDirection} Facing {floors.split(' ')[0]} Residence
+                          {isRegular ? `${plotWidth}x${plotDepth} ft` : `~${rawPlotAreaSqFt} sq.ft Asymmetric`} {plotDirection} Facing {floors.split(' ')[0]} Residence
                         </h4>
                         <p className="text-xs text-[#74706A]">
-                          Engineered for {leadName || 'You'} ({leadCity || 'India'}) · 100% Vastu &amp; Setback Compliant
+                          Engineered for {leadName || 'You'} ({leadCity || 'India'}) · {isRegular ? '100% Vastu & Setback Compliant' : 'Asymmetric Corner Remedy Applied'}
                         </p>
                       </div>
 
@@ -1428,42 +2357,124 @@ export default function NivaasAiStudio({
                           className="px-3 py-2 rounded-xl bg-white border border-[#E7E0D7] text-xs font-bold text-[#292826] hover:bg-[#FDFCF9] transition flex items-center gap-1.5"
                         >
                           <Icons.Share size={13} />
-                          <span>{copiedLink ? 'Link Copied!' : 'Share'}</span>
+                          <span>{copiedLink ? 'Copied Link!' : 'Share'}</span>
                         </button>
                         <button
                           type="button"
-                          onClick={() => onOpenConsult?.(`${plotWidth}x${plotDepth} ${plotDirection} AI Plan`)}
-                          className="px-4 py-2 rounded-xl bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] transition shadow-sm"
+                          onClick={() => onOpenConsult?.(`AI Generated Plan for ${plotWidth}x${plotDepth} ft ${plotDirection} Facing Plot`)}
+                          className="px-4 py-2 rounded-xl bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] transition shadow-sm flex items-center gap-1.5"
                         >
-                          Talk to Architect
+                          <span>Talk to Architect</span>
+                          <Icons.ChevronRight size={13} />
                         </button>
                       </div>
                     </div>
 
-                    {/* View Switcher: 2D Floor Plan vs Ultra-Realistic 3D Elevation */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* 2D INTERACTIVE BLUEPRINT VIEWER */}
-                      <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm flex flex-col">
-                        <div className="flex items-center justify-between pb-3 border-b border-[#EEE9E3]">
+                    {/* Key Technical Specs Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
+                        <span className="text-[10px] font-bold uppercase text-[#74706A] block">Total Plot Area</span>
+                        <span className="font-display font-extrabold text-base text-[#292826]">
+                          {rawPlotAreaSqFt} sq.ft
+                        </span>
+                        <span className="text-[10px] text-[#74706A] block">~{plotAreaSqYards} sq.yards</span>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
+                        <span className="text-[10px] font-bold uppercase text-[#74706A] block">
+                          {isRegular ? 'Super Built-Up' : 'Buildable Base'}
+                        </span>
+                        <span className="font-display font-extrabold text-base text-[#C65320]">
+                          {builtUpArea} sq.ft
+                        </span>
+                        <span className="text-[10px] text-[#74706A] block">Carpet: ~{carpetArea} sq.ft</span>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
+                        <span className="text-[10px] font-bold uppercase text-[#74706A] block">Est. Cost Range</span>
+                        <span className="font-display font-extrabold text-base text-emerald-700">
+                          ₹{estimatedCostLakhs} L
+                        </span>
+                        <span className="text-[10px] text-[#74706A] block">@ ₹{finalRatePerSqFt}/sq.ft</span>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
+                        <span className="text-[10px] font-bold uppercase text-[#74706A] block">Vastu Score</span>
+                        <span className="font-display font-extrabold text-base text-[#E76F2E]">
+                          98 / 100
+                        </span>
+                        <span className="text-[10px] text-[#74706A] block">Ishan + Agneya Align</span>
+                      </div>
+                    </div>
+
+                    {/* Interactive 3D Render & 2D CAD Blueprint Display */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {/* 3D Photorealistic Exterior */}
+                      <div className="bg-white rounded-2xl border border-[#E7E0D7] overflow-hidden shadow-sm flex flex-col">
+                        <div className="p-3.5 border-b border-[#EEE9E3] flex items-center justify-between bg-[#FDFCF9]">
                           <div className="flex items-center gap-2">
-                            <Icons.Blueprint size={16} className="text-[#E76F2E]" />
-                            <h5 className="font-bold text-sm text-[#292826]">2D Architectural Blueprint</h5>
+                            <span className="h-2 w-2 rounded-full bg-[#E76F2E]" />
+                            <span className="font-bold text-xs text-[#292826]">
+                              3D Facade: {elevationStyle}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-1 bg-[#F4EFEA] p-0.5 rounded-lg border border-[#E7E0D7] text-[11px] font-bold">
+                          <div className="flex items-center gap-1 bg-[#EEE9E3] p-0.5 rounded-lg text-[10px] font-bold">
+                            <button
+                              type="button"
+                              onClick={() => setIsNightLighting(false)}
+                              className={`px-2 py-0.5 rounded transition ${
+                                !isNightLighting ? 'bg-white text-[#292826] shadow-xs' : 'text-[#74706A]'
+                              }`}
+                            >
+                              ☀️ Day
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setIsNightLighting(true)}
+                              className={`px-2 py-0.5 rounded transition ${
+                                isNightLighting ? 'bg-[#292826] text-white shadow-xs' : 'text-[#74706A]'
+                              }`}
+                            >
+                              🌙 Twilight
+                            </button>
+                          </div>
+                        </div>
+                        <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden group">
+                          <img
+                            src={getElevationImage()}
+                            alt="3D Elevation Render"
+                            className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
+                          />
+                          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-white text-[10px] font-bold">
+                            Ultra-Realistic Indian Weather Materials
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2D Architectural CAD Floor Plan */}
+                      <div className="bg-white rounded-2xl border border-[#E7E0D7] overflow-hidden shadow-sm flex flex-col">
+                        <div className="p-3.5 border-b border-[#EEE9E3] flex items-center justify-between bg-[#FDFCF9]">
+                          <div className="flex items-center gap-2">
+                            <Icons.Blueprint size={14} className="text-[#E76F2E]" />
+                            <span className="font-bold text-xs text-[#292826]">
+                              2D Working CAD Layout
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 bg-[#EEE9E3] p-0.5 rounded-lg text-[10px] font-bold">
                             <button
                               type="button"
                               onClick={() => setActiveFloorView('ground')}
-                              className={`px-2.5 py-1 rounded-md transition ${
-                                activeFloorView === 'ground' ? 'bg-white text-[#E76F2E] shadow-xs' : 'text-[#74706A]'
+                              className={`px-2 py-0.5 rounded transition ${
+                                activeFloorView === 'ground' ? 'bg-white text-[#292826] shadow-xs' : 'text-[#74706A]'
                               }`}
                             >
-                              Ground Floor
+                              Ground Plan
                             </button>
                             <button
                               type="button"
                               onClick={() => setActiveFloorView('first')}
-                              className={`px-2.5 py-1 rounded-md transition ${
-                                activeFloorView === 'first' ? 'bg-white text-[#E76F2E] shadow-xs' : 'text-[#74706A]'
+                              className={`px-2 py-0.5 rounded transition ${
+                                activeFloorView === 'first' ? 'bg-white text-[#292826] shadow-xs' : 'text-[#74706A]'
                               }`}
                             >
                               First Floor
@@ -1471,201 +2482,78 @@ export default function NivaasAiStudio({
                           </div>
                         </div>
 
-                        {/* Interactive CAD Blueprint Visualizer */}
-                        <div className="relative my-4 flex-1 min-h-[300px] bg-[#16212F] rounded-xl border border-[#2D3F54] p-4 text-cyan-200 overflow-hidden flex flex-col justify-between font-mono text-[11px]">
-                          {/* Grid Background */}
-                          <div
-                            className="absolute inset-0 opacity-15 pointer-events-none"
-                            style={{
-                              backgroundImage: 'linear-gradient(to right, #38bdf8 1px, transparent 1px), linear-gradient(to bottom, #38bdf8 1px, transparent 1px)',
-                              backgroundSize: '24px 24px',
-                            }}
-                          />
-
-                          {/* Dimensions Header */}
-                          <div className="relative z-10 flex justify-between items-center text-[10px] text-cyan-400 font-bold border-b border-cyan-800/50 pb-1">
-                            <span>◄ {plotWidth}' 0" WIDTH ►</span>
-                            <span>SCALE 1:100 (CAD VERIFIED)</span>
-                            <span>{plotDirection.toUpperCase()} FACING</span>
+                        {/* Interactive Blueprint Vector Mockup */}
+                        <div className="p-4 bg-[#1E293B] flex-1 flex flex-col justify-between text-white font-mono text-[11px] select-none">
+                          <div className="flex justify-between items-center text-slate-400 text-[10px] border-b border-slate-700 pb-2">
+                            <span>SCALE 1:100 CAD WORKING DWG</span>
+                            <span>VASTU GRID: {plotDirection} ENTRY</span>
                           </div>
 
-                          {/* Room Layout Map */}
-                          <div className="relative z-10 grid grid-cols-3 gap-2 my-2 flex-1">
-                            {/* Room 1: Car Porch / Verandah */}
-                            <div className="border border-dashed border-cyan-500/60 rounded p-2 bg-cyan-950/40 flex flex-col justify-between">
-                              <span className="font-bold text-white text-xs">
-                                {activeFloorView === 'ground' ? 'CAR PORCH' : 'BALCONY'}
+                          <div className="my-3 grid grid-cols-2 gap-2 border-2 border-dashed border-cyan-400/50 p-3 rounded-lg bg-slate-900/60">
+                            <div className="border border-slate-700 p-2 rounded bg-slate-800/80">
+                              <span className="text-cyan-400 font-bold block text-[10px]">
+                                {activeFloorView === 'ground' ? 'LIVING & FOYER' : 'MASTER BED 01'}
                               </span>
-                              <span className="text-[10px] text-cyan-300">
-                                {activeFloorView === 'ground' ? '12\'0" x 15\'0"' : '12\'0" x 6\'6"'}
+                              <span className="text-slate-300 text-[10px]">
+                                {isRegular ? '14\'-6" x 18\'-0"' : 'Shape-Tuned 13\'x17\''}
                               </span>
-                              <span className="text-[9px] text-emerald-400">Vayavya (NW)</span>
+                              <span className="text-[9px] text-emerald-400 block mt-0.5">✓ North-East Light</span>
                             </div>
 
-                            {/* Room 2: Living & Dining */}
-                            <div className="col-span-2 border border-cyan-500/60 rounded p-2 bg-cyan-900/30 flex flex-col justify-between">
-                              <div className="flex justify-between items-start">
-                                <span className="font-bold text-white text-xs">LIVING &amp; DINING HALL</span>
-                                <span className="text-[9px] bg-cyan-800/60 text-cyan-200 px-1 rounded">Main Entry</span>
-                              </div>
-                              <span className="text-[10px] text-cyan-300">18\'6" x 14\'0"</span>
-                              <span className="text-[9px] text-emerald-400">Brahmasthan Center Clean</span>
+                            <div className="border border-slate-700 p-2 rounded bg-slate-800/80">
+                              <span className="text-amber-400 font-bold block text-[10px]">
+                                {activeFloorView === 'ground' ? 'KITCHEN (AGNI)' : 'BEDROOM 02'}
+                              </span>
+                              <span className="text-slate-300 text-[10px]">10'-0" x 12'-6"</span>
+                              <span className="text-[9px] text-amber-300 block mt-0.5">✓ South-East Corner</span>
                             </div>
 
-                            {/* Room 3: Modular Kitchen */}
-                            <div className="border border-cyan-500/60 rounded p-2 bg-amber-950/30 flex flex-col justify-between">
-                              <span className="font-bold text-white text-xs">{kitchenType.toUpperCase()} KITCHEN</span>
-                              <span className="text-[10px] text-amber-300">10\'0" x 11\'6"</span>
-                              <span className="text-[9px] text-amber-400">Agneya (SE) Vastu ✓</span>
+                            <div className="border border-slate-700 p-2 rounded bg-slate-800/80">
+                              <span className="text-indigo-400 font-bold block text-[10px]">
+                                {activeFloorView === 'ground' ? 'PARKING & PORCH' : 'BALCONY SITOUT'}
+                              </span>
+                              <span className="text-slate-300 text-[10px]">11'-0" x 16'-0"</span>
+                              <span className="text-[9px] text-cyan-300 block mt-0.5">✓ Gate Front Access</span>
                             </div>
 
-                            {/* Room 4: Pooja Room */}
-                            <div className="border border-cyan-500/60 rounded p-2 bg-yellow-950/30 flex flex-col justify-between">
-                              <span className="font-bold text-white text-xs">POOJA ROOM</span>
-                              <span className="text-[10px] text-yellow-300">6\'0" x 6\'0"</span>
-                              <span className="text-[9px] text-yellow-400">Ishan (NE) Vastu ✓</span>
-                            </div>
-
-                            {/* Room 5: Master Bedroom with Ensuite */}
-                            <div className="border border-cyan-500/60 rounded p-2 bg-emerald-950/30 flex flex-col justify-between">
-                              <div className="flex justify-between items-start">
-                                <span className="font-bold text-white text-xs">MASTER BED</span>
-                                <span className="text-[9px] bg-emerald-800/60 text-white px-1 rounded">Ensuite</span>
-                              </div>
-                              <span className="text-[10px] text-emerald-300">14\'0" x 15\'0"</span>
-                              <span className="text-[9px] text-emerald-400">Nairutya (SW) Master ✓</span>
+                            <div className="border border-slate-700 p-2 rounded bg-slate-800/80">
+                              <span className="text-emerald-400 font-bold block text-[10px]">
+                                {mandirPreference.includes('Dedicated') ? 'POOJA MANDIR' : 'UTILITY / OTS'}
+                              </span>
+                              <span className="text-slate-300 text-[10px]">6'-0" x 6'-6"</span>
+                              <span className="text-[9px] text-emerald-400 block mt-0.5">✓ Ishanya Sacred Zone</span>
                             </div>
                           </div>
 
-                          {/* Dimensions Footer */}
-                          <div className="relative z-10 flex justify-between items-center text-[10px] text-cyan-400 font-bold border-t border-cyan-800/50 pt-1">
-                            <span>◄ {plotDepth}' 0" DEPTH ►</span>
-                            <span>MUNICIPAL FILE COMPLIANT</span>
+                          <div className="flex justify-between items-center text-[10px] text-slate-400 pt-2 border-t border-slate-700">
+                            <span>AUTOCAD .DWG &amp; REVIT COMPATIBLE</span>
+                            <span className="text-emerald-400 font-bold">● READY FOR DOWNLOAD</span>
                           </div>
-                        </div>
-
-                        <div className="text-xs text-[#74706A] flex items-center justify-between">
-                          <span>Includes door swings, window ventilation and CAD grid.</span>
-                          <span className="font-bold text-[#292826]">Ground Area: ~{Math.round(builtUpArea / 2)} sq.ft</span>
-                        </div>
-                      </div>
-
-                      {/* ULTRA-REALISTIC 3D ELEVATION CONCEPT SHOWCASE */}
-                      <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm flex flex-col">
-                        <div className="flex items-center justify-between pb-3 border-b border-[#EEE9E3]">
-                          <div>
-                            <span className="text-[10px] font-bold text-[#E76F2E] uppercase">4K Photorealistic Facade</span>
-                            <h5 className="font-bold text-sm text-[#292826]">Ultra-Realistic 3D Elevation</h5>
-                          </div>
-                          {/* Day / Twilight Lighting Toggle */}
-                          <button
-                            type="button"
-                            onClick={() => setIsNightLighting(!isNightLighting)}
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-[#E7E0D7] bg-[#FDFCF9] hover:bg-[#FFF6E8] text-[#292826] transition"
-                          >
-                            <span>{isNightLighting ? '🌙 Twilight Warm LED' : '☀️ Natural Day Sun'}</span>
-                          </button>
-                        </div>
-
-                        {/* Facade Image with Callouts */}
-                        <div className="relative my-4 flex-1 min-h-[300px] rounded-xl overflow-hidden group bg-gray-900">
-                          <img
-                            src={getElevationImage()}
-                            alt="3D Elevation Concept"
-                            className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
-                          />
-
-                          {/* Architectural Material Callout Overlays */}
-                          <div className="absolute top-3 left-3 bg-[#1A1815]/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20 text-white text-[10px] font-semibold flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#E76F2E]" />
-                            Exterior HPL Wooden Louvers
-                          </div>
-
-                          <div className="absolute bottom-12 right-3 bg-[#1A1815]/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20 text-white text-[10px] font-semibold flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                            Warm 3000K Ambient Lighting
-                          </div>
-
-                          <div className="absolute bottom-3 left-3 bg-[#1A1815]/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20 text-white text-[10px] font-semibold flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-                            Toughened Frameless Glass Balconies
-                          </div>
-                        </div>
-
-                        <div className="text-xs text-[#74706A] flex items-center justify-between">
-                          <span>Style: <strong className="text-[#292826]">{elevationStyle}</strong></span>
-                          <span className="font-bold text-[#E76F2E]">Material Specs Included</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* SPECIFICATIONS & COST BREAKDOWN TABLE */}
-                    <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm">
-                      <h5 className="font-bold text-sm text-[#292826] mb-3 flex items-center gap-2">
-                        <Icons.Calculator size={15} className="text-[#E76F2E]" />
-                        Project Specifications &amp; Live Material Budget
-                      </h5>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                        <div className="p-3 bg-[#FDFCF9] rounded-xl border border-[#EEE9E3]">
-                          <span className="text-[#74706A] block">Total Built-Up Area</span>
-                          <span className="font-display font-extrabold text-base text-[#292826] mt-0.5 block">
-                            {builtUpArea.toLocaleString()} sq.ft
-                          </span>
-                        </div>
-
-                        <div className="p-3 bg-[#FDFCF9] rounded-xl border border-[#EEE9E3]">
-                          <span className="text-[#74706A] block">Usable Carpet Area</span>
-                          <span className="font-display font-extrabold text-base text-[#292826] mt-0.5 block">
-                            {carpetArea.toLocaleString()} sq.ft
-                          </span>
-                        </div>
-
-                        <div className="p-3 bg-[#FDFCF9] rounded-xl border border-[#EEE9E3]">
-                          <span className="text-[#74706A] block">Vastu Compliance Score</span>
-                          <span className="font-display font-extrabold text-base text-emerald-600 mt-0.5 block">
-                            98 / 100 ✓
-                          </span>
-                        </div>
-
-                        <div className="p-3 bg-[#FFF6E8] rounded-xl border border-[#E76F2E]/30">
-                          <span className="text-[#C65320] block font-semibold">Est. Construction Cost</span>
-                          <span className="font-display font-extrabold text-base text-[#C65320] mt-0.5 block">
-                            ₹{estimatedCostLakhs} Lakhs
-                          </span>
-                        </div>
+                    {/* Action Buttons */}
+                    <div className="p-4 bg-white rounded-2xl border border-[#E7E0D7] flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-xs text-[#74706A]">
+                        <Icons.Check size={16} className="text-emerald-600" />
+                        <span>High-Resolution CAD Softcopy Sent to WhatsApp ({leadPhone || '+91 98765 43210'})</span>
                       </div>
-                    </div>
-
-                    {/* BOTTOM ACTIONS BAR */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setStep(1)}
-                        className="w-full sm:w-auto px-5 py-3 rounded-xl border border-[#E7E0D7] bg-white text-[#292826] text-xs font-bold hover:bg-[#FDFCF9] transition"
-                      >
-                        ← Modify Plot Dimensions
-                      </button>
-
-                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                      <div className="flex gap-2 w-full sm:w-auto">
                         <button
                           type="button"
-                          onClick={() => {
-                            window.print()
-                          }}
-                          className="flex-1 sm:flex-none px-5 py-3 rounded-xl border border-[#E76F2E] text-[#E76F2E] text-xs font-bold hover:bg-[#FFF6E8] transition flex items-center justify-center gap-2"
+                          onClick={() => setStep(1)}
+                          className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-[#E7E0D7] text-xs font-bold text-[#292826] hover:bg-[#FDFCF9]"
                         >
-                          <Icons.FileText size={15} />
-                          <span>Download PDF Summary</span>
+                          Modify Parameters
                         </button>
-
                         <button
                           type="button"
-                          onClick={() => onOpenConsult?.(`Complete CAD Set for ${plotWidth}x${plotDepth} AI Plan`)}
-                          className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] text-white text-xs font-bold hover:opacity-95 transition shadow-md flex items-center justify-center gap-2"
+                          onClick={() => onOpenConsult?.(`Consultation regarding generated plan for ${leadName || 'client'}`)}
+                          className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] shadow-md flex items-center justify-center gap-1.5"
                         >
-                          <Icons.Phone size={15} />
-                          <span>Book Architect Consultation</span>
+                          <Icons.Phone size={14} />
+                          <span>Book Free Architect Review</span>
                         </button>
                       </div>
                     </div>
@@ -1674,46 +2562,46 @@ export default function NivaasAiStudio({
               </div>
             </div>
 
-            {/* Bottom Navigation Controller (During steps 1 to 20) */}
-            {step <= 20 && (
-              <footer className="shrink-0 bg-white border-t border-[#EEE9E3] px-6 py-4 flex items-center justify-between">
+            {/* Bottom Action Footer Navigation Bar */}
+            {step <= totalWizardSteps && (
+              <footer className="shrink-0 bg-white border-t border-[#EEE9E3] px-6 py-3.5 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={handleBack}
                   disabled={step === 1}
-                  className={`px-5 py-2.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 ${
+                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${
                     step === 1
-                      ? 'opacity-40 cursor-not-allowed border-gray-200 text-gray-400'
-                      : 'border-[#E7E0D7] text-[#292826] hover:bg-[#FDFCF9] active:scale-95'
+                      ? 'opacity-40 border-[#E7E0D7] text-[#74706A] cursor-not-allowed'
+                      : 'border-[#E7E0D7] text-[#292826] hover:border-[#292826] bg-white'
                   }`}
                 >
                   <Icons.ChevronLeft size={16} />
                   <span>Back</span>
                 </button>
 
-                <div className="text-xs text-[#74706A] hidden sm:block">
-                  Press <strong>Next</strong> to proceed or select option
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-[#74706A] hidden sm:inline-block">
+                    {step === totalWizardSteps ? 'Ready to Synthesize' : `Next: Step ${step + 1} of ${totalWizardSteps}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="px-7 py-2.5 rounded-xl bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] transition shadow-md active:scale-95 flex items-center gap-1.5"
+                  >
+                    <span>{step === totalWizardSteps ? 'Generate AI Plan ✨' : 'Next'}</span>
+                    <Icons.ChevronRight size={16} />
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="px-7 py-2.5 rounded-xl bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] transition shadow-md active:scale-95 flex items-center gap-1.5"
-                >
-                  <span>{step === 20 ? 'Generate AI Plan ✨' : 'Next'}</span>
-                  <Icons.ChevronRight size={16} />
-                </button>
               </footer>
             )}
           </div>
         )}
 
         {/* ========================================================= */}
-        {/* TAB 2: ASK AI ASSISTANT (Lightweight Chat Companion) */}
+        {/* TAB 2: ASK AI ASSISTANT */}
         {/* ========================================================= */}
         {activeTab === 'chat' && (
           <div className="flex-1 flex flex-col min-h-0 bg-[#FDFCF9]">
-            {/* Messages Area */}
             <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 text-xs sm:text-sm">
               {chatMessages.map((msg, idx) => (
                 <div
@@ -1754,13 +2642,12 @@ export default function NivaasAiStudio({
               <div ref={chatBottomRef} />
             </div>
 
-            {/* Quick Suggestion Chips */}
             <div className="px-4 py-2 bg-white border-t border-[#EEE9E3] flex flex-wrap gap-1.5">
               {[
-                `Cost to build a ${plotWidth}x${plotDepth} house?`,
-                `Vastu tips for ${plotDirection} facing plot`,
-                'Can I customize 3D elevation?',
-                'I want to talk to an architect',
+                `Cost to build on irregular plot?`,
+                `Vastu remedies for corner-cut plot`,
+                `Can I upload a survey map?`,
+                `Talk to Chief Architect`,
               ].map((s) => (
                 <button
                   key={s}
@@ -1773,7 +2660,6 @@ export default function NivaasAiStudio({
               ))}
             </div>
 
-            {/* Chat Input Bar */}
             <form
               onSubmit={(e) => {
                 e.preventDefault()
@@ -1785,7 +2671,7 @@ export default function NivaasAiStudio({
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask about floor plans, municipal setbacks, Vastu rules or construction rates..."
+                placeholder="Ask about irregular plots, setback rules, Vastu remedies or rates..."
                 className="flex-1 px-4 py-3 rounded-xl border border-[#E7E0D7] text-xs sm:text-sm outline-none focus:ring-2 focus:ring-[#E76F2E] bg-[#FDFCF9]"
               />
               <button

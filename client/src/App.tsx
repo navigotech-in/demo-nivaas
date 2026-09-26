@@ -4,24 +4,21 @@ import Hero from './components/Hero'
 import MediaSpotlight from './components/MediaSpotlight'
 import StatsCounter from './components/StatsCounter'
 import AboutNivaas from './components/AboutNivaas'
-import Projects from './components/Projects'
-import Elevations from './components/Elevations'
-import TrendingPlans from './components/TrendingPlans'
-import Interiors from './components/Interiors'
+import DesignStudio from './components/DesignStudio'
 import CommercialDesigns from './components/CommercialDesigns'
+import HowItWorks from './components/HowItWorks'
 import Services from './components/Services'
 import OneStop from './components/OneStop'
 import CostCalculator from './components/CostCalculator'
 import ContractorGrid from './components/ContractorGrid'
 import Reviews from './components/Reviews'
+import ProjectCompleted from './components/ProjectCompleted'
 import Blogs from './components/Blogs'
-import HowItWorks from './components/HowItWorks'
 import QuickAnswers from './components/QuickAnswers'
 import FAQ from './components/FAQ'
 import Contact from './components/Contact'
 import AppCta from './components/AppCta'
 import Achievements from './components/Achievements'
-import ProjectCompleted from './components/ProjectCompleted'
 import Footer from './components/Footer'
 import ConsultModal from './components/ConsultModal'
 import LoginModal from './components/LoginModal'
@@ -70,7 +67,7 @@ function App() {
   return (
     <div className="min-h-screen bg-base text-ink font-body selection:bg-[#292826] selection:text-white">
       <a
-        href="#plans"
+        href="#design-studio"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-[#292826] focus:px-4 focus:py-2 focus:text-white"
       >
         Skip to content
@@ -84,74 +81,63 @@ function App() {
 
       {/* Main Content Sections */}
       <main>
-        {/* Hero Section with Interactive Calculator */}
+        {/* 1. Hero Section with Quick Instant Calculator */}
         <Hero onCalculate={handleCalculateEstimate} />
 
-        {/* Approach / Split-layout section */}
-        <AboutNivaas />
-
-        {/* Media Coverage & Credibility Spotlight */}
+        {/* 2. Media Coverage & Credibility Spotlight */}
         <MediaSpotlight />
 
-        {/* Trusted Numbers */}
+        {/* 3. Trusted Numbers & Scale */}
         <StatsCounter />
 
-        {/* House Plans Catalog */}
-        <Projects onOpenConsult={handleOpenConsult} />
+        {/* 4. Value Proposition & Comparison */}
+        <AboutNivaas />
 
-        {/* 3D Elevations Facade Showcase */}
-        <Elevations onOpenConsult={handleOpenConsult} />
+        {/* 5. Interactive Design Studio (House Plans | 3D Elevations | Interiors) */}
+        <DesignStudio onOpenConsult={handleOpenConsult} />
 
-        {/* Trending Categories (By Area, BHK, Direction, Location) */}
-        <TrendingPlans onOpenConsult={handleOpenConsult} />
-
-        {/* Interior Design by Room */}
-        <Interiors onOpenConsult={handleOpenConsult} />
-
-        {/* Commercial & Mixed-Use Designs */}
+        {/* 6. Commercial & Mixed-Use Designs (Standalone Section) */}
         <CommercialDesigns onOpenConsult={handleOpenConsult} />
 
-        {/* Architectural, Structural & PMC Services */}
-        <Services onOpenConsult={handleOpenConsult} />
-
-        {/* One-Stop: PMC, Turnkey, Contractors, Loans */}
-        <OneStop onOpenConsult={handleOpenConsult} />
-
-        {/* Interactive Construction Cost Estimator */}
-        <CostCalculator onOpenConsult={handleOpenConsult} />
-
-        {/* Verified Contractors & Skilled Trades */}
-        <ContractorGrid />
-
-        {/* Client Reviews & Video Testimonials */}
-        <Reviews />
-
-        {/* Architecture & Vastu Guides */}
-        <Blogs onOpenConsult={handleOpenConsult} />
-
-        {/* How NIVAAS Works */}
+        {/* 7. How NIVAAS Works (Pattern Breaker: 4-Step Journey) */}
         <HowItWorks onOpenConsult={handleOpenConsult} />
 
-        {/* Quick Answers */}
-        <QuickAnswers onOpenConsult={handleOpenConsult} />
+        {/* 8. Architectural, Structural, MEP & PMC Services */}
+        <Services onOpenConsult={handleOpenConsult} />
 
-        {/* Frequently Asked Questions */}
-        <FAQ onOpenConsult={() => handleOpenConsult('FAQ Architect Consultation')} />
+        {/* 9. One-Stop Turnkey Construction & Financial Ecosystem */}
+        <OneStop onOpenConsult={handleOpenConsult} />
 
-        {/* Pan-India Projects Completed */}
+        {/* 10. Interactive Detailed Cost Estimator */}
+        <CostCalculator onOpenConsult={handleOpenConsult} />
+
+        {/* 11. Verified Contractors & Trades Grid */}
+        <ContractorGrid />
+
+        {/* 12. Client Reviews & Video Testimonials */}
+        <Reviews />
+
+        {/* 13. Pan-India Completed Projects Proof */}
         <ProjectCompleted />
 
-        {/* Contact & Enquiry Form */}
+        {/* 14. Architecture & Vastu Guides */}
+        <Blogs onOpenConsult={handleOpenConsult} />
+
+        {/* 15. Quick Answers & Frequently Asked Questions */}
+        <QuickAnswers onOpenConsult={handleOpenConsult} />
+        <FAQ onOpenConsult={() => handleOpenConsult('FAQ Architect Consultation')} />
+
+        {/* 16. Contact & Enquiry Form */}
         <Contact />
 
-        {/* Mobile App CTA */}
+        {/* 17. Mobile App CTA */}
         <AppCta />
 
-        {/* Achievements & Ventures */}
+        {/* 18. Achievements & Ventures */}
         <Achievements />
       </main>
 
-      {/* Global Footer */}
+      {/* Global Footer with Newsletter */}
       <Footer />
 
       {/* Floating WhatsApp & Help Widget */}
