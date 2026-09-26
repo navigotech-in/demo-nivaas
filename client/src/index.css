@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --accent: #E76F2E;
+    --accent-hover: #C65320;
+  }
+
   html {
     scroll-behavior: smooth;
   }

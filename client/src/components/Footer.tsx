@@ -1,7 +1,127 @@
+import { useState } from 'react'
 import { site, paymentPartners } from '../lib/data'
 import { Icons } from './Icons'
 
+const AI_PROMPT = `Using the official NIVAAS website at https://nivaas.in and its verified services, explain its house plans, 3D elevations, interior-design services, construction-cost estimator, 3D walkthroughs and consultation options. Summarise the services and tell me how to get started. Use only information available on the official website.`
+
+interface AiPlatform {
+  name: string
+  icon: keyof typeof Icons
+  getUrl: (prompt: string) => string
+}
+
+const aiPlatforms: AiPlatform[] = [
+  {
+    name: 'ChatGPT',
+    icon: 'ChatGPT',
+    getUrl: (p) => `https://chatgpt.com/?q=${encodeURIComponent(p)}`,
+  },
+  {
+    name: 'Gemini',
+    icon: 'Gemini',
+    getUrl: () => `https://gemini.google.com/app`,
+  },
+  {
+    name: 'Claude',
+    icon: 'Claude',
+    getUrl: (p) => `https://claude.ai/new?q=${encodeURIComponent(p)}`,
+  },
+  {
+    name: 'Perplexity',
+    icon: 'Perplexity',
+    getUrl: (p) => `https://www.perplexity.ai/search?q=${encodeURIComponent(p)}`,
+  },
+  {
+    name: 'Copilot',
+    icon: 'Copilot',
+    getUrl: (p) => `https://copilot.microsoft.com/?q=${encodeURIComponent(p)}`,
+  },
+  {
+    name: 'Grok',
+    icon: 'Grok',
+    getUrl: (p) => `https://x.com/i/grok?text=${encodeURIComponent(p)}`,
+  },
+]
+
+interface SocialPlatform {
+  name: string
+  icon: keyof typeof Icons
+  color: string
+  url: string
+}
+
+const rawSocialPlatforms: SocialPlatform[] = [
+  {
+    name: 'Instagram',
+    icon: 'Instagram',
+    color: '#E1306C',
+    url: 'https://instagram.com/nivaas.official',
+  },
+  {
+    name: 'Facebook',
+    icon: 'Facebook',
+    color: '#1877F2',
+    url: 'https://facebook.com/nivaas.official',
+  },
+  {
+    name: 'YouTube',
+    icon: 'YouTube',
+    color: '#FF0000',
+    url: 'https://youtube.com/@nivaas.official',
+  },
+  {
+    name: 'Pinterest',
+    icon: 'Pinterest',
+    color: '#E60023',
+    url: 'https://pinterest.com/nivaas_official',
+  },
+  {
+    name: 'LinkedIn',
+    icon: 'LinkedIn',
+    color: '#0A66C2',
+    url: 'https://linkedin.com/company/nivaas-official',
+  },
+  {
+    name: 'Telegram',
+    icon: 'Telegram',
+    color: '#24A1DE',
+    url: 'https://t.me/nivaas_official',
+  },
+  {
+    name: 'X (Twitter)',
+    icon: 'XTwitter',
+    color: '#F8FAFC',
+    url: 'https://x.com/nivaas_official',
+  },
+  {
+    name: 'WhatsApp',
+    icon: 'WhatsApp',
+    color: '#25D366',
+    url: `https://wa.me/${site.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hi NIVAAS, I would like to know more about your house design and architectural services.')}`,
+  },
+]
+
+const socialPlatforms: SocialPlatform[] = rawSocialPlatforms.filter((s) => Boolean(s.url && s.url !== '#'))
+
 export default function Footer() {
+  const [copiedStatus, setCopiedStatus] = useState<string | null>(null)
+
+  const handleAiClick = async (platform: AiPlatform) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(AI_PROMPT)
+      }
+    } catch {
+      // Fallback
+    }
+    setCopiedStatus(`Question copied for ${platform.name} — opening...`)
+    const targetUrl = platform.getUrl(AI_PROMPT)
+    window.open(targetUrl, '_blank', 'noopener,noreferrer')
+    setTimeout(() => {
+      setCopiedStatus(null)
+    }, 3500)
+  }
+
   return (
     <footer className="bg-[#292826] text-white border-t border-[#E7E0D7]">
       {/* Top Banner / Newsletter */}
@@ -149,11 +269,81 @@ export default function Footer() {
         </div>
       </div>
 
+      {/* Ask AI & Social Channels Strip (Sleek Single-Line Format with Partition) */}
+      <div className="border-t border-white/10 py-6 bg-white/[0.02]">
+        <div className="container-content flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-8">
+          {/* Ask AI About Us */}
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-white/90 flex items-center gap-1.5 shrink-0">
+              <Icons.Sparkles size={14} className="text-[#E76F2E]" /> Ask AI About Us:
+            </span>
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              {aiPlatforms.map((ai) => {
+                const IconComponent = Icons[ai.icon]
+                return (
+                  <button
+                    key={ai.name}
+                    type="button"
+                    onClick={() => handleAiClick(ai)}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white/80 hover:text-white transition-all hover:scale-110 hover:border-white/30 hover:bg-white/10 active:scale-95 cursor-pointer group shadow-sm"
+                    title={`Ask ${ai.name} about NIVAAS (Auto-copies prompt)`}
+                    aria-label={`Ask ${ai.name} about NIVAAS`}
+                  >
+                    <div className="w-[22px] h-[22px] flex items-center justify-center transition-transform group-hover:scale-105">
+                      {IconComponent && <IconComponent size={22} />}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+            {copiedStatus && (
+              <span
+                aria-live="polite"
+                className="text-[10px] text-[#E76F2E] font-medium flex items-center gap-1 bg-[#E76F2E]/10 border border-[#E76F2E]/30 px-2.5 py-1 rounded ml-1 animate-pulse"
+              >
+                <Icons.Check size={11} /> {copiedStatus}
+              </span>
+            )}
+          </div>
+
+          {/* Central Partition Divider */}
+          <div className="hidden lg:block w-px h-7 bg-white/15 shrink-0" aria-hidden="true" />
+          <div className="block lg:hidden w-full h-px bg-white/10" aria-hidden="true" />
+
+          {/* Connect With Us */}
+          <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 sm:gap-4">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-white/90 flex items-center gap-1.5 shrink-0">
+              <Icons.Share size={14} className="text-[#E76F2E]" /> Connect With Us:
+            </span>
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              {socialPlatforms.map((soc) => {
+                const IconComponent = Icons[soc.icon]
+                return (
+                  <a
+                    key={soc.name}
+                    href={soc.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-white/5 transition-all hover:scale-110 hover:border-white/30 hover:bg-white/10 active:scale-95 cursor-pointer group shadow-sm"
+                    title={`Follow NIVAAS on ${soc.name}`}
+                    aria-label={`Follow NIVAAS on ${soc.name}`}
+                  >
+                    <span style={{ color: soc.color }} className="transition-transform group-hover:scale-110 flex items-center justify-center">
+                      {IconComponent && <IconComponent size={17} />}
+                    </span>
+                  </a>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Payment Partners */}
-      <div className="border-t border-white/10 py-5">
-        <div className="container-content flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="border-t border-white/10 py-6">
+        <div className="container-content flex flex-col md:flex-row items-center justify-between gap-4">
           <span className="text-[11px] font-bold uppercase tracking-widest text-white flex items-center gap-1.5">
-            <Icons.ShieldCheck size={13} className="text-[#E76F2E]" /> Secure Payments via
+            <Icons.ShieldCheck size={14} className="text-[#E76F2E]" /> Secure Payments via
           </span>
           <div className="flex flex-wrap items-center justify-center gap-2.5">
             {paymentPartners.map((p) => (

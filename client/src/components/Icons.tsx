@@ -278,4 +278,120 @@ export const Icons = {
       <line x1="12" y1="3" x2="12" y2="15" />
     </svg>
   ),
+
+  // AI Brand Icons (Exact match and official brand colors)
+  ChatGPT: ({ size = 22, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="#FFFFFF" className={className} {...props}>
+      <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.896zm16.597 3.855l-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zM8.307 10.74l2.458-1.42 2.459 1.42v2.84l-2.459 1.42-2.458-1.42z" />
+    </svg>
+  ),
+  Gemini: ({ size = 22, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} {...props}>
+      <defs>
+        <linearGradient id="gemini-official-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#EA4335" />
+          <stop offset="35%" stopColor="#FBBC05" />
+          <stop offset="70%" stopColor="#4285F4" />
+          <stop offset="100%" stopColor="#34A853" />
+        </linearGradient>
+      </defs>
+      <path d="M12 1.5C12 7.3 7.3 12 1.5 12c5.8 0 10.5 4.7 10.5 10.5 0-5.8 4.7-10.5 10.5-10.5-5.8 0-10.5-4.7-10.5-10.5z" fill="url(#gemini-official-grad)" />
+    </svg>
+  ),
+  Claude: ({ size = 22, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="#D97757" className={className} {...props}>
+      <g transform="translate(12,12)">
+        <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" />
+        <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" transform="rotate(36)" />
+        <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" transform="rotate(72)" />
+        <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" transform="rotate(108)" />
+        <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" transform="rotate(144)" />
+        <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" transform="rotate(180)" />
+        <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" transform="rotate(216)" />
+        <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" transform="rotate(252)" />
+        <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" transform="rotate(288)" />
+        <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" transform="rotate(324)" />
+      </g>
+    </svg>
+  ),
+  Perplexity: ({ size = 22, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#20B8CD" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <line x1="12" y1="2" x2="12" y2="22" />
+      <path d="M6 4.5L12 10.5L18 4.5" />
+      <path d="M6 19.5L12 13.5L18 19.5" />
+      <path d="M3.5 8.5H9.5V15.5H3.5Z" />
+      <path d="M14.5 8.5H20.5V15.5H14.5Z" />
+    </svg>
+  ),
+  Copilot: ({ size = 22, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} {...props}>
+      <defs>
+        <linearGradient id="copilot-grad-top" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#00BCF2" />
+          <stop offset="60%" stopColor="#2563EB" />
+          <stop offset="100%" stopColor="#7C3AED" />
+        </linearGradient>
+        <linearGradient id="copilot-grad-bottom" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#EAB308" />
+          <stop offset="40%" stopColor="#F97316" />
+          <stop offset="80%" stopColor="#EC4899" />
+          <stop offset="100%" stopColor="#8B5CF6" />
+        </linearGradient>
+      </defs>
+      <path d="M19.2 9.2a4.9 4.9 0 0 0-5.1-3.7c-.9 0-1.8.3-2.6.8-.9.5-1.6 1.3-2 2.2a4.8 4.8 0 0 0-.4 2.5c.1 1 .5 2 1.2 2.8l2.7-2.7a2.9 2.9 0 0 1 .3-1.5 3 3 0 0 1 1.2-1.3c.5-.3 1.1-.5 1.6-.5.7 0 1.4.3 1.9.7.5.5.9 1.1 1 1.8a3.2 3.2 0 0 1-.6 2.1 3.1 3.1 0 0 1-1.7 1.1 3.1 3.1 0 0 1-2.3-.2l-2.7 2.7c1.3.1 2.5 0 3.7-.9a5.2 5.2 0 0 0 1.9-3.5 4.9 4.9 0 0 0-1.9-4.4z" fill="url(#copilot-grad-top)" />
+      <path d="M4.8 14.8a4.9 4.9 0 0 0 5.1 3.7c.9 0 1.8-.3 2.6-.8.9-.5 1.6-1.3 2-2.2a4.8 4.8 0 0 0 .4-2.5c-.1-1-.5-2-1.2-2.8l-2.7 2.7a2.9 2.9 0 0 1-.3 1.5 3 3 0 0 1-1.2 1.3c-.5.3-1.1.5-1.6.5-.7 0-1.4-.3-1.9-.7-.5-.5-.9-1.1-1-1.8a3.2 3.2 0 0 1 .6-2.1 3.1 3.1 0 0 1 1.7-1.1 3.1 3.1 0 0 1 2.3.2l2.7-2.7c-1.3-.1-2.5 0-3.7.9a5.2 5.2 0 0 0-1.9 3.5 4.9 4.9 0 0 0 1.9 4.4z" fill="url(#copilot-grad-bottom)" />
+    </svg>
+  ),
+  Grok: ({ size = 22, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="#FFFFFF" className={className} {...props}>
+      <path d="M22.5 1.5 15.8 8.2a7.5 7.5 0 0 0-4-.8c-4.4 0-8 3.6-8 8a7.5 7.5 0 0 0 .8 4L1.5 22.5l3.1-3.1a7.5 7.5 0 0 0 4 .8c4.4 0 8-3.6 8-8a7.5 7.5 0 0 0-.8-4l6.7-6.7zM11.8 18.2c-3.1 0-5.7-2.6-5.7-5.7 0-3.1 2.6-5.7 5.7-5.7 3.1 0 5.7 2.6 5.7 5.7 0 3.1-2.6 5.7-5.7 5.7z" />
+    </svg>
+  ),
+
+  // Social Media Brand Icons
+  Instagram: ({ size = 18, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  ),
+  Facebook: ({ size = 18, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} {...props}>
+      <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.704 0-1.428.149-1.83.476-.573.471-.664 1.137-.664 2.42v1.084h4.482l-.572 3.667h-3.91v7.98c4.675-.972 8.169-5.11 8.169-10.05 0-5.696-4.617-10.313-10.313-10.313S1.688 7.945 1.688 13.641c0 4.94 3.494 9.078 8.169 10.05z" />
+    </svg>
+  ),
+  YouTube: ({ size = 18, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} {...props}>
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  ),
+  Pinterest: ({ size = 18, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} {...props}>
+      <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146 1.124.347 2.317.535 3.554.535 6.607 0 11.985-5.365 11.985-11.987C23.97 5.39 18.592.026 11.985.026L12.017 0z" />
+    </svg>
+  ),
+  LinkedIn: ({ size = 18, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} {...props}>
+      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+    </svg>
+  ),
+  Telegram: ({ size = 18, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} {...props}>
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+    </svg>
+  ),
+  XTwitter: ({ size = 18, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} {...props}>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  ),
+  Info: ({ size = 16, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
+    </svg>
+  ),
 }
+
