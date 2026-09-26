@@ -629,7 +629,7 @@ export default function NivaasAiStudio({
 
                     {/* Not Sure Banner with Direct File Upload & Auto-Detect */}
                     <div className="pt-1">
-                      <label className={`w-full p-4 sm:p-4.5 rounded-2xl border-2 border-dashed transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cursor-pointer group shadow-sm ${
+                      <label className={`w-full p-4 sm:p-5 rounded-2xl border-2 border-dashed transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer group shadow-sm ${
                         plotShape === 'not_sure'
                           ? 'border-[#E76F2E] bg-[#FFF6E8] ring-2 ring-[#E76F2E]'
                           : 'border-[#E76F2E]/40 bg-[#FFF6E8]/40 hover:bg-[#FFF6E8] hover:border-[#E76F2E]'
@@ -644,23 +644,23 @@ export default function NivaasAiStudio({
                           }}
                           className="hidden"
                         />
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-xl bg-white border border-[#E76F2E]/30 flex items-center justify-center text-lg text-[#E76F2E] shadow-2xs group-hover:scale-105 transition shrink-0">
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-12 h-12 rounded-xl bg-white border border-[#E76F2E]/30 flex items-center justify-center text-xl text-[#E76F2E] shadow-2xs group-hover:scale-105 transition shrink-0">
                             <Icons.Upload size={22} />
                           </div>
                           <div>
-                            <div className="font-extrabold text-sm text-[#292826] flex items-center gap-2">
-                              <span>Not Sure? Upload Photo &amp; AI Will Detect</span>
-                              <span className="px-2 py-0.5 rounded-full bg-[#E76F2E] text-white text-[10px] font-black uppercase tracking-wider">
-                                Auto-Detect
-                              </span>
+                            <div className="font-extrabold text-sm sm:text-base text-[#292826]">
+                              Not Sure? Upload Photo &amp; AI Will Detect
                             </div>
                             <div className="text-xs text-[#74706A] mt-0.5 leading-relaxed">
-                              Upload your plot photo or registry map — our AI will automatically analyze the boundaries &amp; angles.
+                              Upload your plot photo or registry map — our AI will automatically analyze boundaries &amp; angles.
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                        <div className="flex flex-col items-end justify-center gap-1.5 shrink-0 self-end sm:self-auto">
+                          <span className="px-2.5 py-0.5 rounded-md bg-orange-100/90 text-[#C65320] border border-orange-200 text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                            ⚡ Auto-Detect
+                          </span>
                           <span
                             onClick={(e) => {
                               e.preventDefault()
