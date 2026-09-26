@@ -627,33 +627,54 @@ export default function NivaasAiStudio({
                       </button>
                     </div>
 
-                    {/* Not Sure Banner */}
-                    <button
-                      type="button"
-                      onClick={() => setPlotShape('not_sure')}
-                      className={`w-full p-4 rounded-2xl border text-left transition flex items-center justify-between ${
+                    {/* Not Sure Banner with Direct File Upload & Auto-Detect */}
+                    <div className="pt-1">
+                      <label className={`w-full p-4 sm:p-4.5 rounded-2xl border-2 border-dashed transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cursor-pointer group shadow-sm ${
                         plotShape === 'not_sure'
                           ? 'border-[#E76F2E] bg-[#FFF6E8] ring-2 ring-[#E76F2E]'
-                          : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#F4EFEA] flex items-center justify-center text-base">
-                          ❓
-                        </div>
-                        <div>
-                          <div className="font-bold text-xs sm:text-sm text-[#292826]">
-                            Not Sure? Upload Photo &amp; AI Will Detect
+                          : 'border-[#E76F2E]/40 bg-[#FFF6E8]/40 hover:bg-[#FFF6E8] hover:border-[#E76F2E]'
+                      }`}>
+                        <input
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.pdf"
+                          onChange={(e) => {
+                            setPlotShape('irregular')
+                            handleFileUpload(e)
+                            setStep(2) // Directly navigate to Step 2: Upload & AI Shape Detection
+                          }}
+                          className="hidden"
+                        />
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-xl bg-white border border-[#E76F2E]/30 flex items-center justify-center text-lg text-[#E76F2E] shadow-2xs group-hover:scale-105 transition shrink-0">
+                            <Icons.Upload size={22} />
                           </div>
-                          <div className="text-[11px] text-[#74706A]">
-                            Upload your plot photo or registry map — our AI will automatically analyze the boundaries.
+                          <div>
+                            <div className="font-extrabold text-sm text-[#292826] flex items-center gap-2">
+                              <span>Not Sure? Upload Photo &amp; AI Will Detect</span>
+                              <span className="px-2 py-0.5 rounded-full bg-[#E76F2E] text-white text-[10px] font-black uppercase tracking-wider">
+                                Auto-Detect
+                              </span>
+                            </div>
+                            <div className="text-xs text-[#74706A] mt-0.5 leading-relaxed">
+                              Upload your plot photo or registry map — our AI will automatically analyze the boundaries &amp; angles.
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <span className="text-xs font-bold text-[#E76F2E] shrink-0 ml-2">
-                        Auto-Detect →
-                      </span>
-                    </button>
+                        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                          <span
+                            onClick={(e) => {
+                              e.preventDefault()
+                              setPlotShape('irregular')
+                              setStep(2)
+                            }}
+                            className="px-4 py-2 rounded-xl bg-[#E76F2E] text-white text-xs font-bold shadow-xs hover:bg-[#C65320] transition flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <span>Upload &amp; Detect</span>
+                            <Icons.ChevronRight size={14} />
+                          </span>
+                        </div>
+                      </label>
+                    </div>
                   </div>
                 )}
 
