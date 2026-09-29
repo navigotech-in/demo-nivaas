@@ -12,10 +12,10 @@ export default function StatsCounter() {
                 {stat.value}
               </div>
               <div className="mt-1.5 h-1 w-10 mx-auto rounded-full bg-[#E76F2E]" />
-              <div className="mt-2 text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#A39E96]">
+              <div className="mt-2 text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#E7E0D7]">
                 {stat.label}
               </div>
-              <div className="mt-0.5 text-[10px] sm:text-[11px] text-[#A6A098]">{stat.suffix}</div>
+              <div className="mt-0.5 text-[10px] sm:text-[11px] text-white/80">{stat.suffix}</div>
             </div>
           ))}
         </div>

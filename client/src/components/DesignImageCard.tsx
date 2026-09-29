@@ -11,10 +11,10 @@ interface DesignImageBadgeProps {
 
 export function DesignImageBadge({ children, icon, variant = 'dark', className = '' }: DesignImageBadgeProps) {
   const variants = {
-    dark: 'border border-white/15 bg-black/60 text-white',
-    accent: 'bg-[#E76F2E]/90 text-white',
-    light: 'bg-white/90 text-[#292826]',
-    amber: 'bg-amber-500/90 text-white',
+    dark: 'border border-white/20 bg-black/80 text-white',
+    accent: 'bg-[#B84718] text-white',
+    light: 'bg-white text-[#292826] border border-[#E7E0D7]',
+    amber: 'bg-[#9A3412] text-white',
   }
 
   return (
@@ -30,7 +30,7 @@ interface DesignImageCardProps {
   alt: string
   title: string
   description: string
-  leftBadges: ReactNode
+  leftBadges?: ReactNode
   rightBadge?: ReactNode
   meta?: ReactNode
   actionLabel: string
@@ -77,10 +77,12 @@ export function DesignImageCard({
         )}
       </div>
 
-      <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-4">
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5">{leftBadges}</div>
-        {rightBadge}
-      </div>
+      {(leftBadges || rightBadge) && (
+        <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-4">
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">{leftBadges}</div>
+          {rightBadge}
+        </div>
+      )}
 
       <div className="absolute inset-x-0 bottom-0 z-10 p-4 text-white">
         {meta && <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-white/80">{meta}</div>}
@@ -112,7 +114,7 @@ interface DesignEmptyStateProps {
 export function DesignEmptyState({ message, onClear }: DesignEmptyStateProps) {
   return (
     <div className="mt-6 rounded-xl border border-dashed border-[#E7E0D7] bg-white px-5 py-9 text-center">
-      <Icons.Search size={20} className="mx-auto text-[#74706A]" />
+      <Icons.Search size={20} className="mx-auto text-[#54504A]" />
       <p className="mt-2 text-sm font-bold text-[#292826]">{message}</p>
       <button
         type="button"

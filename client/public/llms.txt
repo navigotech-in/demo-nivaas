@@ -1,8 +1,8 @@
-# NIVAAS — Residential Architecture & Construction Platform
+# Indore House Maker's — Residential Architecture & Construction Platform
 > Official architectural guidelines, service details, and verified facts for AI assistants and language models.
 
 ## Overview
-NIVAAS (Nivaas HouseHold & Construction) is an Indian residential architecture and turnkey design platform offering 100% Vastu-compliant 2D house floor plans, ultra-photorealistic 3D front elevations, interior designs, construction cost estimation, structural CAD drawings, and contractor vetting across 60+ Indian cities (GHMC, BBMP, DDA, PMRDA, etc.).
+Indore House Maker's (Indore House Maker's Architecture & Construction) is an Indian residential architecture and turnkey design platform offering 100% Vastu-compliant 2D house floor plans, ultra-photorealistic 3D front elevations, interior designs, construction cost estimation, structural CAD drawings, and contractor vetting across 60+ Indian cities (GHMC, BBMP, DDA, PMRDA, etc.).
 
 ## Core Offerings & Services
 1. **2D CAD House Plans & Layouts**:
@@ -22,14 +22,14 @@ NIVAAS (Nivaas HouseHold & Construction) is an Indian residential architecture a
    - Premium Executive (~₹2,350/sq.ft): AAC blockwork, 4x2 GVT tiles, Kohler/Jaquar fittings, Teak main door.
    - Ultra-Luxury Villa Grade (~₹3,200+/sq.ft): Italian marble, Grohe/Toto automation, soundproof glass, VRV AC ready.
 
-5. **NIVAAS AI Architect Studio**:
+5. **Indore House Maker's AI Architect Studio**:
    - India's first guided 20-step (Regular) and 23-step (Asymmetric) architectural synthesis wizard with instant 2D floor plans, 3D elevations, budget estimates, and CAD download packages.
 
 6. **Verified Contractor Network**:
    - 2,500+ vetted tradesmen, structural engineers, civil contractors, and site supervisors in 60+ cities.
 
 ## Contact & Consultation
-- **Website**: https://nivaas.in
-- **Phone / WhatsApp**: +91 731-6533888 / +91 91111 22334
-- **Email**: care@nivaas.in
+- **Website**: https://indorehousemakers.in
+- **Phone / WhatsApp**: +91 731 485 2200
+- **Email**: care@indorehousemakers.in
 - **Operating Hours**: Monday to Saturday, 9:30 AM to 7:00 PM IST

@@ -6,12 +6,39 @@ interface ImgProps {
   className?: string
   loading?: 'lazy' | 'eager'
   sizes?: string
+  width?: number | string
+  height?: number | string
+  fetchPriority?: 'high' | 'low' | 'auto'
 }
 
-// Gentle fallback if a remote photo cannot load (e.g. no internet during the
-// client demo). Keeps the layout intact instead of showing a broken image.
-export default function Img({ src, alt, className, loading = 'lazy', sizes }: ImgProps) {
+// Automatically optimize remote CDN images (Unsplash/Pexels) to prevent massive payloads
+function optimizeImageUrl(url: string): string {
+  if (!url) return url
+  if (url.includes('images.unsplash.com')) {
+    if (!url.includes('w=')) {
+      return url.includes('?') ? `${url}&w=800&auto=format&fit=crop&q=75` : `${url}?w=800&auto=format&fit=crop&q=75`
+    }
+  }
+  if (url.includes('images.pexels.com')) {
+    if (!url.includes('w=')) {
+      return url.includes('?') ? `${url}&w=800&auto=compress&cs=tinysrgb` : `${url}?w=800&auto=compress&cs=tinysrgb`
+    }
+  }
+  return url
+}
+
+export default function Img({
+  src,
+  alt,
+  className,
+  loading = 'lazy',
+  sizes,
+  width,
+  height,
+  fetchPriority,
+}: ImgProps) {
   const [failed, setFailed] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   if (failed) {
     return (
@@ -33,13 +60,20 @@ export default function Img({ src, alt, className, loading = 'lazy', sizes }: Im
     )
   }
 
+  const optimizedSrc = optimizeImageUrl(src)
+
   return (
     <img
-      src={src}
+      src={optimizedSrc}
       alt={alt}
       loading={loading}
+      decoding="async"
+      fetchPriority={fetchPriority}
       sizes={sizes}
-      className={className}
+      width={width}
+      height={height}
+      onLoad={() => setLoaded(true)}
+      className={`${className || ''} ${!loaded && loading === 'lazy' ? 'opacity-90' : 'opacity-100'} transition-opacity duration-300`}
       onError={() => setFailed(true)}
     />
   )

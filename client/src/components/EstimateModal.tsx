@@ -55,12 +55,12 @@ export default function EstimateModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A1815]/70 p-4 ">
-      <div className="relative w-full max-w-xl overflow-hidden rounded-lg bg-white shadow-sm border border-[#E7E0D7] animate-fadeIn text-[#292826]">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 backdrop-blur-md p-4 animate-fadeIn">
+      <div className="relative w-full max-w-xl overflow-hidden rounded-3xl bg-white/90 backdrop-blur-3xl shadow-[0_30px_70px_rgba(0,0,0,0.45),inset_0_1.5px_2px_rgba(255,255,255,0.9),0_0_0_1px_rgba(255,255,255,0.4)] border border-white/60 animate-scaleUp text-[#292826]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#EEE9E3] bg-[#FFF6E8] px-6 py-4">
+        <div className="flex items-center justify-between border-b border-white/50 bg-gradient-to-r from-[#FFF6E8]/90 via-white/80 to-[#FFF6E8]/90 backdrop-blur-xl px-6 py-4">
           <div>
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#E76F2E] bg-[#F1ECE5] px-2.5 py-0.5 rounded-md">
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#E76F2E] bg-white/80 border border-white/60 px-2.5 py-0.5 rounded-lg shadow-sm">
               <Icons.Calculator size={12} /> Instant Architectural Estimate
             </span>
             <h3 className="mt-1 font-display text-xl font-bold text-[#292826]">
@@ -70,30 +70,31 @@ export default function EstimateModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#74706A] hover:bg-[#F1ECE5] hover:text-[#74706A] transition"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[#54504A] hover:bg-white/80 hover:text-[#292826] transition shadow-sm border border-transparent hover:border-white/50"
+            aria-label="Close estimate breakdown modal"
           >
             <Icons.Close size={18} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-4 bg-white/40 backdrop-blur-md">
           {/* Summary badges */}
-          <div className="grid grid-cols-3 gap-2.5 rounded-lg bg-[#FDFCF9] p-3.5 text-center border border-[#EEE9E3]">
+          <div className="grid grid-cols-3 gap-2.5 rounded-2xl bg-white/75 backdrop-blur-xl p-3.5 text-center border border-white/60 shadow-sm">
             <div>
-              <div className="text-[10px] font-bold text-[#74706A] uppercase flex items-center justify-center gap-1">
+              <div className="text-[10px] font-bold text-[#54504A] uppercase flex items-center justify-center gap-1">
                 <Icons.Ruler size={11} /> Plot Size
               </div>
               <div className="text-sm font-bold text-[#292826] mt-0.5">{plotSize}</div>
             </div>
             <div>
-              <div className="text-[10px] font-bold text-[#74706A] uppercase flex items-center justify-center gap-1">
+              <div className="text-[10px] font-bold text-[#54504A] uppercase flex items-center justify-center gap-1">
                 <Icons.Grid size={11} /> Built-up Area
               </div>
               <div className="text-sm font-bold text-[#292826] mt-0.5">{area.toLocaleString('en-IN')} sq.ft</div>
             </div>
             <div>
-              <div className="text-[10px] font-bold text-[#74706A] uppercase flex items-center justify-center gap-1">
+              <div className="text-[10px] font-bold text-[#54504A] uppercase flex items-center justify-center gap-1">
                 <Icons.Compass size={11} /> Direction
               </div>
               <div className="text-sm font-bold text-[#292826] mt-0.5">{data.direction}</div>
@@ -102,56 +103,56 @@ export default function EstimateModal({
 
           {/* Pricing cards */}
           <div className="space-y-2.5 text-xs">
-            <div className="flex items-center justify-between rounded-lg border border-[#EEE9E3] bg-[#FDFCF9] p-3">
+            <div className="flex items-center justify-between rounded-xl border border-white/60 bg-white/70 backdrop-blur-md p-3 shadow-sm">
               <div>
                 <div className="font-bold text-[#292826] flex items-center gap-1.5">
                   <Icons.Blueprint size={14} className="text-[#E76F2E]" /> Architectural Design Package
                 </div>
-                <div className="text-[11px] text-[#74706A] mt-0.5">Includes 2D Furniture Layout, Room Dimensions & Vastu Map</div>
+                <div className="text-[11px] text-[#54504A] mt-0.5">Includes 2D Furniture Layout, Room Dimensions & Vastu Map</div>
               </div>
               <div className="text-sm font-bold text-[#292826]">₹{planPrice.toLocaleString('en-IN')}</div>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-[#EEE9E3] bg-[#FDFCF9] p-3">
+            <div className="flex items-center justify-between rounded-xl border border-white/60 bg-white/70 backdrop-blur-md p-3 shadow-sm">
               <div>
                 <div className="font-bold text-[#292826] flex items-center gap-1.5">
                   <Icons.Home size={14} className="text-[#E76F2E]" /> 3D Ultra-Realistic Elevations
                 </div>
-                <div className="text-[11px] text-[#74706A] mt-0.5">2 Concept renders + Material & Color specifications</div>
+                <div className="text-[11px] text-[#54504A] mt-0.5">2 Concept renders + Material & Color specifications</div>
               </div>
               <div className="text-sm font-bold text-[#292826]">₹{elevationPrice.toLocaleString('en-IN')}</div>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-[#EEE9E3] bg-[#FDFCF9] p-3">
+            <div className="flex items-center justify-between rounded-xl border border-white/60 bg-white/70 backdrop-blur-md p-3 shadow-sm">
               <div>
                 <div className="font-bold text-[#292826] flex items-center gap-1.5">
                   <Icons.HardHat size={14} className="text-[#E76F2E]" /> Structural & MEP Engineering
                 </div>
-                <div className="text-[11px] text-[#74706A] mt-0.5">Footing, Column CAD, Beam schedules, Plumbing & Electrical</div>
+                <div className="text-[11px] text-[#54504A] mt-0.5">Footing, Column CAD, Beam schedules, Plumbing & Electrical</div>
               </div>
               <div className="text-sm font-bold text-[#292826]">₹{structuralPrice.toLocaleString('en-IN')}</div>
             </div>
 
-            <div className="rounded-lg bg-[#FFF6E8] p-4 border border-[#E7E0D7]">
+            <div className="rounded-2xl bg-gradient-to-r from-[#FFF6E8]/95 to-white/90 backdrop-blur-xl p-4 border border-[#E76F2E]/30 shadow-md">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-bold text-[#292826] flex items-center gap-1.5">
                     <Icons.Sparkles size={14} className="text-[#E76F2E]" /> All-Inclusive Package Offer
                   </div>
-                  <div className="text-xs text-[#292826]">Special online discounted rate with 2 free revisions</div>
+                  <div className="text-xs text-[#54504A] font-medium">Special online discounted rate with 2 free revisions</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xl font-extrabold text-[#292826]">₹{totalEstimate.toLocaleString('en-IN')}</div>
-                  <div className="text-[10px] text-[#292826] line-through">₹{(totalEstimate * 1.4).toFixed(0)}</div>
+                  <div className="text-xl font-black text-[#E76F2E]">₹{totalEstimate.toLocaleString('en-IN')}</div>
+                  <div className="text-[10px] text-[#54504A] line-through">₹{(totalEstimate * 1.4).toFixed(0)}</div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Civil Construction reference */}
-          <div className="rounded-lg bg-[#FFF6E8] p-3.5 text-xs text-[#74706A] border border-[#E7E0D7] flex items-center justify-between">
+          <div className="rounded-xl bg-white/70 backdrop-blur-md p-3 text-xs text-[#54504A] border border-white/60 shadow-sm flex items-center justify-between">
             <span className="flex items-center gap-1.5">
-              <Icons.HardHat size={14} className="text-[#74706A]" /> Estimated Turnkey Construction Budget:
+              <Icons.HardHat size={14} className="text-[#54504A]" /> Estimated Turnkey Construction Budget:
             </span>
             <span className="font-bold text-[#292826]">
               ₹{(approxConstructionCost / 100000).toFixed(2)} Lakhs (~₹1,850/sq.ft)
@@ -163,7 +164,7 @@ export default function EstimateModal({
             <button
               type="button"
               onClick={handleConsult}
-              className="flex-1 rounded-lg bg-[#E76F2E] py-3 text-center text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-[#C65320] transition flex items-center justify-center gap-1.5"
+              className="flex-1 rounded-xl bg-gradient-to-r from-[#E76F2E] via-[#FF7A2F] to-[#FFA366] py-3 text-center text-xs sm:text-sm font-extrabold text-white shadow-[0_8px_20px_rgba(231,111,46,0.5)] hover:brightness-110 transition flex items-center justify-center gap-1.5 border border-white/50 active:scale-[0.98]"
             >
               <Icons.Phone size={14} />
               <span>Consult Architect for this Plan →</span>
@@ -171,7 +172,7 @@ export default function EstimateModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] px-5 py-3 text-xs sm:text-sm font-semibold text-[#74706A] hover:bg-[#FFF6E8] transition"
+              className="rounded-xl border border-white/70 bg-white/80 backdrop-blur-md px-5 py-3 text-xs sm:text-sm font-bold text-[#54504A] hover:bg-white transition shadow-sm"
             >
               Modify Dimensions
             </button>

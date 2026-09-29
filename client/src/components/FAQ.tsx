@@ -23,56 +23,64 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
           <h2 className="section-title mt-2">
             Frequently Asked Questions
           </h2>
-          <p className="mt-2 text-sm text-[#74706A] max-w-xl mx-auto">
+          <p className="mt-2 text-sm text-[#54504A] max-w-xl mx-auto">
             Everything you need to know about purchasing house plans, custom drawings, Vastu compliance and turnkey support.
           </p>
         </div>
 
-        {/* FAQ Accordion (Grey-Slate Palette) */}
+        {/* FAQ Accordion with Preview Line */}
         <div className="mt-[41px] space-y-3">
           {faqList.map((item, idx) => {
             const isOpen = openIndex === idx
             return (
               <div
                 key={idx}
-                className={`overflow-hidden rounded-lg border transition-all ${
+                className={`overflow-hidden rounded-xl border transition-all ${
                   isOpen
-                    ? 'border-[#292826] bg-[#FFF6E8]/40 shadow-sm ring-1 ring-[#74706A]/20'
-                    : 'border-[#E7E0D7] bg-[#FDFCF9] hover:border-[#E7E0D7]'
+                    ? 'border-[#292826] bg-[#FFF6E8]/40 shadow-sm ring-1 ring-[#54504A]/20'
+                    : 'border-[#E7E0D7] bg-[#FDFCF9] hover:border-[#E76F2E]/60'
                 }`}
               >
-                <button
-                  type="button"
-                  onClick={() => toggle(idx)}
-                  className="flex w-full items-center justify-between p-4 sm:p-5 text-left transition"
-                  aria-expanded={isOpen}
-                >
-                  <div className="flex items-center gap-3 pr-4">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#F1ECE5] px-2.5 py-0.5 rounded-md">
-                      {item.tag}
-                    </span>
-                    <span className="font-display text-base sm:text-lg font-bold text-[#E76F2E]">
-                      {item.q}
-                    </span>
-                  </div>
-                  <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base font-bold transition-transform ${
-                      isOpen
-                        ? 'bg-[#E76F2E] text-white rotate-45'
-                        : 'bg-white border border-[#E7E0D7] text-[#74706A]'
-                    }`}
+                <div className="p-4 sm:p-5">
+                  <button
+                    type="button"
+                    onClick={() => toggle(idx)}
+                    className="flex w-full items-center justify-between text-left transition cursor-pointer"
+                    aria-expanded={isOpen}
                   >
-                    +
-                  </div>
-                </button>
+                    <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pr-3">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#F1ECE5] px-2.5 py-0.5 rounded-md shrink-0">
+                        {item.tag}
+                      </span>
+                      <span className="font-display text-base sm:text-lg font-bold text-[#292826]">
+                        {item.q}
+                      </span>
+                    </div>
+                    <div
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base font-bold transition-transform bg-[#E76F2E] text-white shadow-sm border border-[#E76F2E] ${
+                        isOpen ? 'rotate-45' : ''
+                      }`}
+                    >
+                      +
+                    </div>
+                  </button>
 
-                {isOpen && (
-                  <div className="border-t border-[#E7E0D7]/60 px-5 pb-5 pt-3 animate-fadeIn">
-                    <p className="text-sm text-[#74706A] leading-relaxed pl-3.5 border-l-2 border-[#292826]">
+                  {/* Teaser line when closed vs Full Answer when open */}
+                  {!isOpen ? (
+                    <p
+                      onClick={() => toggle(idx)}
+                      className="mt-2 text-xs text-[#54504A]/90 line-clamp-1 cursor-pointer hover:text-[#292826] transition font-medium"
+                    >
                       {item.a}
                     </p>
-                  </div>
-                )}
+                  ) : (
+                    <div className="border-t border-[#E7E0D7]/60 mt-3.5 pt-3.5 animate-fadeIn">
+                      <p className="text-xs sm:text-sm text-[#54504A] leading-relaxed pl-3.5 border-l-2 border-[#E76F2E]">
+                        {item.a}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )
           })}
@@ -86,13 +94,13 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
           <h3 className="font-display text-xl font-bold text-[#292826]">
             Have a specific plot dimension or custom requirement?
           </h3>
-          <p className="text-xs sm:text-sm text-[#74706A] mt-1 max-w-lg mx-auto">
+          <p className="text-xs sm:text-sm text-[#54504A] mt-1 max-w-lg mx-auto">
             Our architectural consultants are available 6 days a week to review your plot layout and municipality bylaws.
           </p>
           <button
             type="button"
             onClick={onOpenConsult}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-7 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-[#C65320] transition active:scale-[0.98]"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-7 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-[#C65320] transition active:scale-[0.98] cursor-pointer"
           >
             <Icons.Phone size={15} />
             <span>Talk to an Architect Now</span>

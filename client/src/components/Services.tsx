@@ -34,7 +34,7 @@ export default function Services({ onOpenConsult }: ServicesProps) {
             <h2 className="section-title mt-2">
               Architectural & Construction Services
             </h2>
-            <p className="mt-2 text-sm text-[#74706A] max-w-2xl">
+            <p className="mt-2 text-sm text-[#54504A] max-w-2xl">
               From the initial 2D layout to licensed structural stability certification and on-site engineering supervision.
             </p>
           </div>
@@ -70,16 +70,16 @@ export default function Services({ onOpenConsult }: ServicesProps) {
                 </h3>
                 <p className="text-xs font-semibold text-[#E76F2E] mt-0.5">{srv.tagline}</p>
 
-                <p className="mt-[7px] text-xs text-[#74706A] leading-[17px]">
+                <p className="mt-[7px] text-xs text-[#54504A] leading-[17px]">
                   {srv.desc}
                 </p>
 
                 <div className="mt-[13px] pt-[11px] border-t border-[#EEE9E3]">
-                  <div className="text-[11px] font-bold uppercase text-[#74706A] tracking-wider mb-[6px] flex items-center gap-1">
+                  <div className="text-[11px] font-bold uppercase text-[#54504A] tracking-wider mb-[6px] flex items-center gap-1">
                     <Icons.Layers size={13} />
                     <span>Key Deliverables:</span>
                   </div>
-                  <ul className="space-y-[5px] text-xs leading-[14px] text-[#74706A]">
+                  <ul className="space-y-[5px] text-xs leading-[14px] text-[#54504A]">
                     {srv.features.map((feat, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <Icons.Check size={13} className="text-[#E76F2E] shrink-0" />

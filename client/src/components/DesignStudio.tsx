@@ -45,19 +45,22 @@ export default function DesignStudio({ onOpenConsult }: DesignStudioProps) {
           <h2 className="text-2xl sm:text-4xl font-extrabold text-[#292826] font-display tracking-tight">
             Explore Curated Architectural Blueprints & Designs
           </h2>
-          <p className="mt-2 text-xs sm:text-sm text-[#74706A]">
+          <p className="mt-2 text-xs sm:text-sm text-[#54504A]">
             Switch between House Floor Plans, 3D Elevations, and Interior Themes — customized for Indian plot dimensions and Vastu norms.
           </p>
         </div>
 
         {/* Tab Navigation Bar (House Plans, Front Elevations, Interiors) */}
-        <div className="flex items-center justify-start sm:justify-center overflow-x-auto pb-2 scrollbar-none gap-2 sm:gap-3 mb-6">
+        <div role="tablist" aria-label="Architecture and design categories" className="flex items-center justify-start sm:justify-center overflow-x-auto pb-2 scrollbar-none gap-2 sm:gap-3 mb-6">
           {studioTabs.map((tab) => {
             const isActive = activeTab === tab.id
             return (
               <button
                 key={tab.id}
                 type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-label={`Switch to ${tab.label}`}
                 onClick={() => setActiveTab(tab.id)}
                 className={`shrink-0 flex items-center gap-2.5 px-4 sm:px-6 py-3 rounded-xl border font-bold text-xs sm:text-sm transition-all duration-300 shadow-xs cursor-pointer ${
                   isActive
@@ -68,7 +71,7 @@ export default function DesignStudio({ onOpenConsult }: DesignStudioProps) {
                 <span className="text-lg">{tab.emoji}</span>
                 <div className="text-left">
                   <div className={isActive ? 'text-white' : 'text-[#292826]'}>{tab.label}</div>
-                  <div className={`text-[10px] font-normal hidden sm:block ${isActive ? 'text-white/70' : 'text-[#74706A]'}`}>
+                  <div className={`text-[10px] font-normal hidden sm:block ${isActive ? 'text-white/70' : 'text-[#54504A]'}`}>
                     {tab.subtitle}
                   </div>
                 </div>

@@ -13,7 +13,7 @@ export default function CommercialDesigns({ onOpenConsult }: CommercialDesignsPr
   return (
     <section className="py-20 bg-white border-t border-[#E7E0D7]">
       <div className="container-content">
-        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-4">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
           <div>
             <span className="eyebrow flex items-center gap-1.5">
               <Icons.Building size={14} /> Commercial & Mixed-Use
@@ -21,20 +21,20 @@ export default function CommercialDesigns({ onOpenConsult }: CommercialDesignsPr
             <h2 className="section-title mt-2">
               Commercial building designs, engineered for business
             </h2>
-            <p className="mt-2 text-sm text-[#74706A] max-w-2xl">
+            <p className="mt-2 text-sm text-[#54504A] max-w-2xl">
               Retail, institutional, hospitality and rental schemes drawn to your city's commercial bye-laws with optimized vehicle access and service zones.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 max-w-full overflow-x-auto pb-1 scrollbar-none shrink-0 -mt-1 lg:-mt-3">
             {commercialTabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition shrink-0 ${
+                className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition shrink-0 whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-[#E76F2E] text-white shadow-sm'
-                    : 'bg-[#FFF6E8] text-[#74706A] hover:bg-[#F1ECE5]'
+                    : 'bg-[#FFF6E8] text-[#54504A] hover:bg-[#F1ECE5]'
                 }`}
               >
                 {tab.label}

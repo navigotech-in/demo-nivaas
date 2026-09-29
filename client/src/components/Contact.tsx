@@ -42,7 +42,7 @@ export default function Contact() {
   }
 
   const inputClass =
-    'w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] px-4 py-3 text-sm text-[#292826] outline-none transition focus:border-[#292826] focus:bg-white focus:ring-1 focus:ring-[#E76F2E] placeholder:text-[#74706A]'
+    'w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] px-4 py-3 text-sm text-[#292826] outline-none transition focus:border-[#292826] focus:bg-white focus:ring-1 focus:ring-[#E76F2E] placeholder:text-[#54504A]'
 
   return (
     <section id="contact" className="border-t border-[#E7E0D7] bg-[#FDFCF9] py-[68px] sm:py-[82px]">
@@ -54,18 +54,18 @@ export default function Contact() {
           <h2 className="section-title mt-2">
             Tell us about your home, and we'll take it from there
           </h2>
-          <p className="mt-3 max-w-lg leading-relaxed text-sm text-[#74706A]">
-            Share your plot size and the kind of home you have in mind. A NIVAAS chief architect gets back to you within two hours with layout concepts and estimates.
+          <p className="mt-3 max-w-lg leading-relaxed text-sm text-[#54504A]">
+            Share your plot size and the kind of home you have in mind. An Indore House Maker's chief architect gets back to you within two hours with layout concepts and estimates.
           </p>
 
-          <dl className="mt-[27px] space-y-[17px] text-sm">
+          <div className="mt-[27px] space-y-[17px] text-sm">
             <div className="flex items-center gap-4 bg-white p-3 rounded-lg border border-[#E7E0D7]/80 shadow-sm">
               <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F1ECE5] text-[#E76F2E]">
                 <Icons.Phone size={20} />
               </span>
               <div>
-                <dt className="text-[11px] font-bold uppercase tracking-wider text-[#74706A]">Call or WhatsApp</dt>
-                <dd className="font-bold text-[#292826] text-base">{site.phone}</dd>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#54504A]">Call or WhatsApp</div>
+                <div className="font-bold text-[#292826] text-base">{site.phone}</div>
               </div>
             </div>
 
@@ -74,8 +74,8 @@ export default function Contact() {
                 <Icons.Mail size={20} />
               </span>
               <div>
-                <dt className="text-[11px] font-bold uppercase tracking-wider text-[#74706A]">Email Design Desk</dt>
-                <dd className="font-bold text-[#292826]">{site.email}</dd>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#54504A]">Email Design Desk</div>
+                <div className="font-bold text-[#292826]">{site.email}</div>
               </div>
             </div>
 
@@ -84,11 +84,11 @@ export default function Contact() {
                 <Icons.MapPin size={20} />
               </span>
               <div>
-                <dt className="text-[11px] font-bold uppercase tracking-wider text-[#74706A]">Studio Locations</dt>
-                <dd className="font-bold text-[#292826]">{site.city} (Serving 60+ Cities)</dd>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#54504A]">Studio Locations</div>
+                <div className="font-bold text-[#292826]">{site.city} (Serving 60+ Cities)</div>
               </div>
             </div>
-          </dl>
+          </div>
         </div>
 
         {/* Contact Form Card */}
@@ -100,7 +100,7 @@ export default function Contact() {
               </div>
               
 <h3 className="mt-5 font-display text-2xl font-bold text-[#292826]">Thank you — we're on it.</h3>
-              <p className="mt-2 max-w-sm text-xs text-[#74706A]">
+              <p className="mt-2 max-w-sm text-xs text-[#54504A]">
                 Your requirement has reached our design desk. Expect a call or WhatsApp message within 2 hours.
               </p>
               <button
@@ -119,7 +119,7 @@ export default function Contact() {
 
               <div className="grid gap-[14px] sm:grid-cols-2">
                 <div>
-                  <label htmlFor="c-name" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                  <label htmlFor="c-name" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                     Your Name *
                   </label>
                   <input
@@ -132,7 +132,7 @@ export default function Contact() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="c-phone" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                  <label htmlFor="c-phone" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                     Phone Number *
                   </label>
                   <input
@@ -151,7 +151,7 @@ export default function Contact() {
 
               <div className="grid gap-[14px] sm:grid-cols-2">
                 <div>
-                  <label htmlFor="c-city" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                  <label htmlFor="c-city" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                     City / Location
                   </label>
                   <input
@@ -163,7 +163,7 @@ export default function Contact() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="c-req" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                  <label htmlFor="c-req" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                     Service Needed
                   </label>
                   <select id="c-req" value={form.requirement} onChange={set('requirement')} className={inputClass}>
@@ -177,7 +177,7 @@ export default function Contact() {
               </div>
 
               <div>
-                <label htmlFor="c-msg" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                <label htmlFor="c-msg" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                   Plot dimensions & specific needs
                 </label>
                 <textarea
@@ -205,7 +205,7 @@ export default function Contact() {
                 )}
               </button>
 
-              <p className="text-center text-[11px] text-[#74706A]">
+              <p className="text-center text-[11px] text-[#54504A]">
                 🔒 Your contact details are secure. Zero spam guarantee.
               </p>
             </form>

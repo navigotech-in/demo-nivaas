@@ -42,7 +42,7 @@ export default function Elevations({ onOpenConsult }: ElevationsProps) {
             <h2 className="section-title mt-2">
               Indian Home 3D Front Elevations & Facades
             </h2>
-            <p className="mt-2 text-sm text-[#74706A] max-w-2xl">
+            <p className="mt-2 text-sm text-[#54504A] max-w-2xl">
               Photorealistic 4K 3D elevation renderings designed for Indian climates — featuring HPL wooden louvers, CNC jali screens, Kerala clay tile roofs, Dholpur sandstone, glass balconies, and warm LED profile lighting.
             </p>
           </div>

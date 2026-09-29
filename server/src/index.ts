@@ -53,6 +53,86 @@ app.post('/api/v1/leads', (req, res) => {
   res.status(201).json({ success: true, data: { id: 'LEAD_DEMO_' + Date.now(), status: 'NEW' } })
 })
 
+// Dynamic XML Sitemaps
+app.get('/sitemap.xml', (_req, res) => {
+  res.header('Content-Type', 'application/xml')
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://nivaas.in/sitemaps/house-plans.xml</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://nivaas.in/sitemaps/elevations.xml</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://nivaas.in/sitemaps/cities.xml</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+  </sitemap>
+</sitemapindex>`
+  res.send(xml)
+})
+
+app.get('/sitemaps/house-plans.xml', (_req, res) => {
+  res.header('Content-Type', 'application/xml')
+  const urls = demoDesigns.map((d) => `  <url>
+    <loc>https://nivaas.in/#plans?id=${d.id}</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>`).join('\n')
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://nivaas.in/#plans</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+${urls}
+</urlset>`
+  res.send(xml)
+})
+
+app.get('/sitemaps/elevations.xml', (_req, res) => {
+  res.header('Content-Type', 'application/xml')
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://nivaas.in/#elevations</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://nivaas.in/#interiors</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>`
+  res.send(xml)
+})
+
+app.get('/sitemaps/cities.xml', (_req, res) => {
+  res.header('Content-Type', 'application/xml')
+  const majorCities = ['mumbai', 'delhi-ncr', 'bengaluru', 'hyderabad', 'pune', 'jaipur', 'indore', 'ahmedabad', 'kochi', 'lucknow', 'chandigarh', 'kolkata']
+  const urls = majorCities.map((c) => `  <url>
+    <loc>https://nivaas.in/#plans?city=${c}</loc>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`).join('\n')
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`
+  res.send(xml)
+})
+
 // Serve the built client (demo/production mode) when it exists. Unknown
 // non-API routes fall through to index.html for the React app; unknown API
 // routes return a real 404 JSON.

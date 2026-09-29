@@ -12,7 +12,7 @@ export default function MediaSpotlight() {
           <h2 className="section-title mt-2">
             In the Spotlight: Media Coverage & Updates
           </h2>
-          <p className="mt-2 text-sm text-[#74706A]">
+          <p className="mt-2 text-sm text-[#54504A]">
             Recognized by India's top business and architectural publications for democratizing house designs and structural engineering.
           </p>
         </div>
@@ -27,11 +27,11 @@ export default function MediaSpotlight() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#E76F2E] bg-[#F1ECE5] px-2 py-0.5 rounded-lg inline-block mb-2">
                   {media.tag}
                 </span>
-                <h4 className="font-display text-base font-bold text-[#292826] group-hover:text-[#292826] transition">
+                <h3 className="font-display text-base font-bold text-[#292826] group-hover:text-[#292826] transition">
                   {media.name}
-                </h4>
+                </h3>
               </div>
-              <p className="mt-3 text-[11px] text-[#74706A] leading-relaxed font-medium">
+              <p className="mt-3 text-[11px] text-[#54504A] leading-relaxed font-medium">
                 "{media.desc}"
               </p>
             </div>

@@ -10,7 +10,7 @@ export default function AboutNivaas() {
           <div className="overflow-hidden rounded-3xl border border-slate-300 shadow-card">
             <Img
               src="https://images.pexels.com/photos/37129015/pexels-photo-37129015.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop"
-              alt="NIVAAS designed modern Indian duplex"
+              alt="Indore House Maker's designed modern Indian duplex"
               className="aspect-[4/3] w-full object-cover"
             />
           </div>

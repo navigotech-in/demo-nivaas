@@ -1,20 +1,23 @@
 import { contractorTrades } from '../lib/data'
 import { Icons } from './Icons'
+import Img from './Img'
 
-const tradeIcons: Record<string, React.ReactNode> = {
-  hardhat: <Icons.HardHat size={20} className="text-[#E76F2E]" />,
-  building: <Icons.Building size={20} className="text-[#E76F2E]" />,
-  shieldcheck: <Icons.ShieldCheck size={20} className="text-[#E76F2E]" />,
-  grid: <Icons.Grid size={20} className="text-[#E76F2E]" />,
-  calculator: <Icons.Calculator size={20} className="text-[#E76F2E]" />,
-  compass: <Icons.Compass size={20} className="text-[#E76F2E]" />,
-  sun: <Icons.Sun size={20} className="text-[#E76F2E]" />,
-  sofa: <Icons.Sofa size={20} className="text-[#E76F2E]" />,
-  home: <Icons.Home size={20} className="text-[#E76F2E]" />,
-  layers: <Icons.Layers size={20} className="text-[#E76F2E]" />,
+interface ContractorGridProps {
+  onOpenConsult?: (req?: string) => void
 }
 
-export default function ContractorGrid() {
+export default function ContractorGrid({ onOpenConsult }: ContractorGridProps) {
+  const handleTradeClick = (tradeTitle: string) => {
+    if (onOpenConsult) {
+      onOpenConsult(`Hire Contractor: ${tradeTitle}`)
+    } else {
+      const contactSection = document.getElementById('contact')
+      if (contactSection) {
+        contactSection.scrollIntoView({ behavior: 'smooth' })
+      }
+    }
+  }
+
   return (
     <section id="contractors" className="py-20 bg-[#FDFCF9] border-t border-[#E7E0D7]">
       <div className="container-content">
@@ -24,34 +27,66 @@ export default function ContractorGrid() {
               <Icons.HardHat size={14} /> Verified Contractor Network
             </span>
             <h2 className="section-title mt-2">
-              Skilled workers & trade contractors, vetted by NIVAAS
+              Skilled workers &amp; trade contractors, vetted by Indore House Maker's
             </h2>
-            <p className="mt-2 text-sm text-[#74706A]">
+            <p className="mt-2 text-sm text-[#54504A]">
               Over 80 partner offices and 2,500+ verified tradesmen ready to execute your drawings — from foundation to finishing.
             </p>
           </div>
-          <a
-            href="#contact"
-            className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-[#E7E0D7] bg-white px-5 py-2.5 text-xs font-bold text-[#E76F2E] shadow-sm hover:bg-[#C65320] hover:text-white hover:border-[#C65320] transition"
+          <button
+            type="button"
+            onClick={() => handleTradeClick('General Contractor Inquiry')}
+            className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-[#E7E0D7] bg-white px-5 py-2.5 text-xs font-bold text-[#E76F2E] shadow-sm hover:bg-[#C65320] hover:text-white hover:border-[#C65320] transition cursor-pointer"
           >
             <Icons.Briefcase size={15} />
             <span>Hire a Contractor</span>
-          </a>
+          </button>
         </div>
 
         <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {contractorTrades.map((trade) => (
             <div
               key={trade.title}
-              className="flex flex-col rounded-lg border border-[#E7E0D7] bg-white px-4 py-6 sm:px-5 sm:py-6 transition-all hover:-translate-y-1 hover:shadow-card-hover hover:border-[#E7E0D7] group"
+              className="text-left flex flex-col rounded-xl border border-[#E7E0D7] bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:border-[#E76F2E] group"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] group-hover:bg-[#292826] group-hover:border-[#C65320] transition-colors">
-                <div className="group-hover:[&>*]:text-white [&>*]:transition-colors">
-                  {tradeIcons[trade.icon]}
+              {/* Image Container with Smooth Zoom */}
+              <div
+                className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 cursor-pointer"
+                onClick={() => handleTradeClick(trade.title)}
+              >
+                <Img
+                  src={trade.image || 'https://images.pexels.com/photos/585419/pexels-photo-585419.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop'}
+                  alt={trade.title}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-108"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 group-hover:opacity-30 transition-opacity" />
+              </div>
+
+              {/* Body */}
+              <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between bg-transparent">
+                <div>
+                  <h3
+                    onClick={() => handleTradeClick(trade.title)}
+                    className="font-display text-xs sm:text-sm font-bold text-[#292826] leading-snug cursor-pointer mb-1.5 truncate"
+                  >
+                    {trade.title}
+                  </h3>
+                  <p className="text-[11px] text-[#54504A] leading-relaxed line-clamp-2">
+                    {trade.desc}
+                  </p>
+                </div>
+
+                <div className="mt-3.5 pt-2.5 border-t border-[#EEE9E3]">
+                  <button
+                    type="button"
+                    onClick={() => handleTradeClick(trade.title)}
+                    className="w-full py-1.5 px-3 rounded-lg bg-[#E76F2E] text-white text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-[#C65320] transition shadow-xs cursor-pointer active:scale-[0.98]"
+                  >
+                    <span>Book Now</span>
+                    <Icons.ChevronRight size={13} className="transform group-hover:translate-x-0.5 transition-transform" />
+                  </button>
                 </div>
               </div>
-              <h3 className="mt-3 font-display text-sm font-bold text-[#292826] leading-snug">{trade.title}</h3>
-              <p className="mt-1 text-[11px] text-[#74706A] leading-relaxed">{trade.desc}</p>
             </div>
           ))}
         </div>

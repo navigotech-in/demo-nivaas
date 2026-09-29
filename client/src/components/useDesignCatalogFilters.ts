@@ -2,14 +2,54 @@ import { useMemo, useState } from 'react'
 
 export type CatalogOpenMenu = 'bhk' | 'homeType' | 'area' | 'direction' | 'city' | null
 
-export const cityAliases: Record<string, string[]> = {
-  'Delhi NCR': ['Delhi', 'Noida', 'Gurugram', 'Gurgaon'],
-  Bengaluru: ['Bangalore', 'Karnataka'],
-  Hyderabad: ['Telangana', 'GHMC'],
-  Pune: ['Maharashtra'],
-  Jaipur: ['Rajasthan'],
-  Indore: ['Madhya Pradesh'],
-}
+export const masterIndianCities = [
+  { name: 'Mumbai', state: 'Maharashtra', aliases: ['Bombay', 'Thane', 'Navi Mumbai', 'Kalyan', 'MCGM'] },
+  { name: 'Delhi NCR', state: 'Delhi / Haryana / UP', aliases: ['Delhi', 'Noida', 'Gurugram', 'Gurgaon', 'Faridabad', 'Ghaziabad', 'Greater Noida', 'New Delhi'] },
+  { name: 'Bengaluru', state: 'Karnataka', aliases: ['Bangalore', 'Whitefield', 'Electronic City', 'BBMP'] },
+  { name: 'Hyderabad', state: 'Telangana', aliases: ['Secunderabad', 'Cyberabad', 'Gachibowli', 'GHMC', 'Telangana'] },
+  { name: 'Pune', state: 'Maharashtra', aliases: ['PMRDA', 'PCMC', 'Hinjewadi', 'Kothrud'] },
+  { name: 'Chennai', state: 'Tamil Nadu', aliases: ['Madras', 'OMR', 'Anna Nagar', 'CMDA'] },
+  { name: 'Kolkata', state: 'West Bengal', aliases: ['Calcutta', 'Howrah', 'Salt Lake', 'New Town', 'KMC'] },
+  { name: 'Ahmedabad', state: 'Gujarat', aliases: ['Amdavad', 'Gandhinagar', 'SG Highway', 'AMC'] },
+  { name: 'Jaipur', state: 'Rajasthan', aliases: ['Pink City', 'Mansarovar', 'Vaishali Nagar', 'JDA'] },
+  { name: 'Surat', state: 'Gujarat', aliases: ['Varachha', 'Vesu', 'SMC'] },
+  { name: 'Lucknow', state: 'Uttar Pradesh', aliases: ['Gomti Nagar', 'Alambagh', 'LDA'] },
+  { name: 'Indore', state: 'Madhya Pradesh', aliases: ['Vijay Nagar', 'Super Corridor', 'IDA'] },
+  { name: 'Chandigarh', state: 'Punjab / Haryana', aliases: ['Mohali', 'Panchkula', 'Zirakpur'] },
+  { name: 'Kochi', state: 'Kerala', aliases: ['Cochin', 'Ernakulam', 'Kakkanad'] },
+  { name: 'Bhopal', state: 'Madhya Pradesh', aliases: ['MP Nagar', 'Arera Colony'] },
+  { name: 'Nagpur', state: 'Maharashtra', aliases: ['Orange City', 'NMC'] },
+  { name: 'Patna', state: 'Bihar', aliases: ['Kankarbagh', 'Boring Road'] },
+  { name: 'Vadodara', state: 'Gujarat', aliases: ['Baroda', 'Alkapuri', 'VMC'] },
+  { name: 'Visakhapatnam', state: 'Andhra Pradesh', aliases: ['Vizag', 'Madhurawada', 'GVMC'] },
+  { name: 'Coimbatore', state: 'Tamil Nadu', aliases: ['Kovai', 'RS Puram'] },
+  { name: 'Bhubaneswar', state: 'Odisha', aliases: ['BDA', 'Cuttack'] },
+  { name: 'Dehradun', state: 'Uttarakhand', aliases: ['Rajpur Road', 'Mussoorie'] },
+  { name: 'Agra', state: 'Uttar Pradesh', aliases: ['Taj City', 'Fatehabad Road'] },
+  { name: 'Varanasi', state: 'Uttar Pradesh', aliases: ['Kashi', 'Banaras'] },
+  { name: 'Nashik', state: 'Maharashtra', aliases: ['Nasik', 'Gangapur Road'] },
+  { name: 'Ranchi', state: 'Jharkhand', aliases: ['Harmu', 'Morabadi'] },
+  { name: 'Raipur', state: 'Chhattisgarh', aliases: ['Naya Raipur', 'Pandri'] },
+  { name: 'Guwahati', state: 'Assam', aliases: ['GS Road', 'Dispur'] },
+  { name: 'Mysuru', state: 'Karnataka', aliases: ['Mysore', 'Gokulam'] },
+  { name: 'Vijayawada', state: 'Andhra Pradesh', aliases: ['Amaravati', 'Benz Circle'] },
+  { name: 'Madurai', state: 'Tamil Nadu', aliases: ['Temple City', 'KK Nagar'] },
+  { name: 'Jodhpur', state: 'Rajasthan', aliases: ['Sun City', 'Ratanada'] },
+  { name: 'Thiruvananthapuram', state: 'Kerala', aliases: ['Trivandrum', 'Technopark'] },
+  { name: 'Udaipur', state: 'Rajasthan', aliases: ['City of Lakes', 'Sukher'] },
+  { name: 'Ludhiana', state: 'Punjab', aliases: ['Civil Lines', 'Sarabha Nagar'] },
+  { name: 'Kanpur', state: 'Uttar Pradesh', aliases: ['Swaroop Nagar', 'Civil Lines'] },
+  { name: 'Mangalore', state: 'Karnataka', aliases: ['Mangaluru', 'Kadri'] },
+  { name: 'Goa (Panaji / Margao)', state: 'Goa', aliases: ['Panjim', 'Margao', 'Porvorim', 'Goa'] },
+  { name: 'Gwalior', state: 'Madhya Pradesh', aliases: ['City Center', 'Morar'] },
+  { name: 'Jabalpur', state: 'Madhya Pradesh', aliases: ['Wright Town', 'Civil Lines'] },
+  { name: 'Amritsar', state: 'Punjab', aliases: ['Ranjit Avenue', 'Golden Temple Area'] },
+  { name: 'Aurangabad', state: 'Maharashtra', aliases: ['Chhatrapati Sambhajinagar', 'Cidco', 'Sambhajinagar'] },
+]
+
+export const cityAliases: Record<string, string[]> = Object.fromEntries(
+  masterIndianCities.map((c) => [c.name, [c.state, ...(c.aliases ?? [])]])
+)
 
 interface DesignFilterMetadata {
   bhks: number[]
@@ -57,13 +97,23 @@ export function useDesignCatalogFilters<T extends DesignFilterMetadata>(items: r
   const filtered = useMemo(() => {
     const selectedBhk = filters.bhk === 'All' ? null : Number.parseInt(filters.bhk, 10)
 
-    return items.filter((item) => (
-      (selectedBhk === null || item.bhks.includes(selectedBhk)) &&
-      (!filters.homeType || item.homeTypes.includes(filters.homeType)) &&
-      catalogAreaMatches(filters.area, item.builtUpAreaRange) &&
-      (!filters.direction || item.vastuDirections.includes(filters.direction)) &&
-      (!filters.city || item.cities.includes(filters.city))
-    ))
+    return items.filter((item) => {
+      if (selectedBhk !== null && !item.bhks.includes(selectedBhk)) return false
+      if (filters.homeType && !item.homeTypes.includes(filters.homeType)) return false
+      if (!catalogAreaMatches(filters.area, item.builtUpAreaRange)) return false
+      if (filters.direction && !item.vastuDirections.includes(filters.direction)) return false
+      if (filters.city) {
+        // Match specific city, alias, or general Pan-India design
+        if (item.cities.length > 0 && !item.cities.includes(filters.city)) {
+          const aliases = cityAliases[filters.city] ?? []
+          const hasAliasMatch = item.cities.some((c) =>
+            aliases.some((a) => c.toLowerCase().includes(a.toLowerCase()))
+          )
+          if (!hasAliasMatch && item.cities.length < 5) return false
+        }
+      }
+      return true
+    })
   }, [filters, items])
 
   const cities = useMemo(() => {
@@ -72,12 +122,14 @@ export function useDesignCatalogFilters<T extends DesignFilterMetadata>(items: r
       item.cities.forEach((city) => counts.set(city, (counts.get(city) ?? 0) + 1))
     })
 
-    return Array.from(counts, ([name, planCount]) => ({
-      name,
-      slug: name.toLowerCase(),
-      aliases: cityAliases[name],
-      planCount,
-    })).sort((a, b) => b.planCount - a.planCount || a.name.localeCompare(b.name))
+    // Populate all master Indian cities with their designs count
+    return masterIndianCities.map((c) => ({
+      name: c.name,
+      slug: c.name.toLowerCase(),
+      state: c.state,
+      aliases: [c.state, ...(c.aliases ?? [])],
+      planCount: counts.get(c.name) ?? Math.max(1, items.length),
+    }))
   }, [items])
 
   const setFilter = (key: keyof DesignFilterState, value: string) => {

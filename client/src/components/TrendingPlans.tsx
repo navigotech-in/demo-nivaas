@@ -41,7 +41,7 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
             <h2 className="section-title mt-2">
               Latest Trends in House Plans and Home Designs
             </h2>
-            <p className="mt-2 text-sm text-[#74706A] max-w-2xl">
+            <p className="mt-2 text-sm text-[#54504A] max-w-2xl">
               Explore thousands of curated residential blueprints filtered by your exact plot specifications, bedroom counts and Vastu orientations.
             </p>
           </div>
@@ -68,7 +68,7 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
               className={`pb-2.5 -mb-px whitespace-nowrap transition border-b-2 ${
                 activeTab === tab.id
                   ? 'border-[#E76F2E] text-[#E76F2E]'
-                  : 'border-transparent text-[#74706A] hover:text-[#292826]'
+                  : 'border-transparent text-[#54504A] hover:text-[#292826]'
               }`}
             >
               {tab.label}
@@ -97,7 +97,7 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
                 >
                   <span
                     className={`text-xs font-bold tracking-[0.2em] transition ${
-                      isActive ? 'text-[#E76F2E]' : 'text-[#74706A] group-hover:text-[#C65320]'
+                      isActive ? 'text-[#E76F2E]' : 'text-[#54504A] group-hover:text-[#C65320]'
                     }`}
                   >
                     {pad(idx)}
@@ -106,7 +106,7 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
                     <span className="block font-display text-lg font-bold text-[#E76F2E] leading-snug">
                       {item.label}
                     </span>
-                    <span className="mt-0.5 block text-xs font-semibold text-[#74706A]">
+                    <span className="mt-0.5 block text-xs font-semibold text-[#54504A]">
                       {item.size} · {item.bhk}
                     </span>
                   </span>
@@ -115,7 +115,7 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
                     className={`shrink-0 transition ${
                       isActive
                         ? 'translate-x-0.5 text-[#E76F2E]'
-                        : 'text-[#74706A] group-hover:translate-x-0.5 group-hover:text-[#74706A]'
+                        : 'text-[#54504A] group-hover:translate-x-0.5 group-hover:text-[#54504A]'
                     }`}
                   />
                 </button>

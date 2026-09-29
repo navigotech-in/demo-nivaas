@@ -42,7 +42,7 @@ export default function Interiors({ onOpenConsult }: InteriorsProps) {
             <h2 className="section-title mt-2">
               Luxury Interior Designs for Indian Homes
             </h2>
-            <p className="mt-2 text-sm text-[#74706A] max-w-2xl">
+            <p className="mt-2 text-sm text-[#54504A] max-w-2xl">
               Explore thoughtfully planned modular kitchens, living room TV units, pooja corners, wardrobes, and space-efficient storage — with photorealistic 3D views and practical solutions for Indian homes.
             </p>
           </div>

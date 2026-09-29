@@ -184,7 +184,7 @@ export default function NivaasAiStudio({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       from: 'bot',
-      text: 'Namaste! 🙏 I am your NIVAAS AI Architecture Assistant. Ask me anything about floor plans, irregular plot layouts, municipal bylaws, Vastu directions, 3D elevation styles, or construction estimates.',
+      text: 'Namaste! 🙏 I am your Indore House Maker\'s AI Architecture Assistant. Ask me anything about floor plans, irregular plot layouts, municipal bylaws, Vastu directions, 3D elevation styles, or construction estimates.',
       time: 'Just now',
     },
   ])
@@ -382,9 +382,9 @@ export default function NivaasAiStudio({
       let reply = 'I can help you customize floor plans, calculate setbacks, review Vastu directions, or recommend 3D front elevations. You can also generate your complete plan in 30 seconds using the "AI Plan Generator" tab!'
 
       if (/(price|cost|budget|rate|lakh)/i.test(qLower)) {
-        reply = `For your ${isRegular ? `${plotWidth}x${plotDepth} ft` : 'irregular'} plot (~${builtUpArea} sq.ft built-up), the estimated construction budget is ₹${estimatedCostLakhs} Lakhs at ${materialGrade.split(' ')[0]} grade${!isRegular ? ' (including irregular geometry framing adjustments)' : ''}. NIVAAS design packages start at ₹4,999 for full 2D CAD working drawings.`
+        reply = `For your ${isRegular ? `${plotWidth}x${plotDepth} ft` : 'irregular'} plot (~${builtUpArea} sq.ft built-up), the estimated construction budget is ₹${estimatedCostLakhs} Lakhs at ${materialGrade.split(' ')[0]} grade${!isRegular ? ' (including irregular geometry framing adjustments)' : ''}. Indore House Maker's design packages start at ₹4,999 for full 2D CAD working drawings.`
       } else if (/(irregular|asymmetric|cut|shape|l-shape|corner|trap)/i.test(qLower)) {
-        reply = `For irregular plots, NIVAAS AI calculates an 18% standard setback buffer and suggests placing utility or landscaping buffers in non-90° corner cuts. This ensures 100% Vastu compliance and optimal room proportions!`
+        reply = `For irregular plots, Indore House Maker's AI calculates an 18% standard setback buffer and suggests placing utility or landscaping buffers in non-90° corner cuts. This ensures 100% Vastu compliance and optimal room proportions!`
       } else if (/(vastu|vaastu|direction|mandir|pooja|kitchen)/i.test(qLower)) {
         reply = `For ${plotDirection} facing plots, Vastu recommends placing the Pooja Mandir in the North-East (Ishan), Kitchen in South-East (Agneya), and the Master Bedroom in South-West (Nairutya). Our AI engine auto-aligns all these zones!`
       } else if (/(3d|elevation|facade|exterior|render)/i.test(qLower)) {
@@ -453,13 +453,13 @@ export default function NivaasAiStudio({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-display font-extrabold text-base tracking-tight text-[#292826]">
-                  NIVAAS <span className="text-[#E76F2E]">AI Architect</span> Studio
+                  Indore House Maker's <span className="text-[#E76F2E]">AI Architect</span> Studio
                 </span>
                 <span className="hidden sm:inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#FFF6E8] text-[#C65320] border border-[#E76F2E]/20 rounded-full">
                   {isRegular ? '20-Step Regular Flow' : '23-Step Asymmetric Engine'}
                 </span>
               </div>
-              <p className="text-[11px] text-[#74706A]">
+              <p className="text-[11px] text-[#54504A]">
                 India's First AI Engine for Regular &amp; Asymmetric Plots with 100% Vastu
               </p>
             </div>
@@ -474,7 +474,7 @@ export default function NivaasAiStudio({
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                   activeTab === 'generator'
                     ? 'bg-white text-[#E76F2E] shadow-sm'
-                    : 'text-[#74706A] hover:text-[#292826]'
+                    : 'text-[#54504A] hover:text-[#292826]'
                 }`}
               >
                 <Icons.Blueprint size={13} />
@@ -486,7 +486,7 @@ export default function NivaasAiStudio({
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                   activeTab === 'chat'
                     ? 'bg-white text-[#E76F2E] shadow-sm'
-                    : 'text-[#74706A] hover:text-[#292826]'
+                    : 'text-[#54504A] hover:text-[#292826]'
                 }`}
               >
                 <span>💬</span>
@@ -498,8 +498,8 @@ export default function NivaasAiStudio({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-[#74706A] hover:text-[#292826] hover:bg-[#F4EFEA] transition"
-              aria-label="Close Nivaas AI Studio"
+              className="p-2 rounded-xl text-[#54504A] hover:text-[#292826] hover:bg-[#F4EFEA] transition"
+              aria-label="Close AI Studio"
             >
               <Icons.Close size={18} />
             </button>
@@ -518,8 +518,8 @@ export default function NivaasAiStudio({
                   <span className="text-xs font-bold text-[#E76F2E]">
                     Step {step} of {totalWizardSteps}
                   </span>
-                  <span className="hidden sm:inline-block text-xs text-[#74706A]">|</span>
-                  <span className="hidden sm:inline-block text-xs text-[#74706A] font-medium">
+                  <span className="hidden sm:inline-block text-xs text-[#54504A]">|</span>
+                  <span className="hidden sm:inline-block text-xs text-[#54504A] font-medium">
                     {getStepCategoryTitle()}
                   </span>
                 </div>
@@ -530,7 +530,7 @@ export default function NivaasAiStudio({
                       style={{ width: `${(step / totalWizardSteps) * 100}%` }}
                     />
                   </div>
-                  <span className="text-[10px] font-bold text-[#74706A] hidden sm:inline-block">
+                  <span className="text-[10px] font-bold text-[#54504A] hidden sm:inline-block">
                     {Math.round((step / totalWizardSteps) * 100)}%
                   </span>
                 </div>
@@ -552,7 +552,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         What shape is your plot / land?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Choose your plot geometry so our AI can configure accurate setbacks, column alignments, and Vastu grids.
                       </p>
                     </div>
@@ -584,7 +584,7 @@ export default function NivaasAiStudio({
                           )}
                         </div>
                         <h4 className="font-bold text-base text-[#292826]">Rectangle / Square Plot</h4>
-                        <p className="text-xs text-[#74706A] mt-1">
+                        <p className="text-xs text-[#54504A] mt-1">
                           Standard 4-side rectangular plot with standard 90° corners (e.g. 30x50, 40x60).
                         </p>
                         <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-semibold text-[#E76F2E]">
@@ -618,7 +618,7 @@ export default function NivaasAiStudio({
                           )}
                         </div>
                         <h4 className="font-bold text-base text-[#292826]">Asymmetric / Odd Shape</h4>
-                        <p className="text-xs text-[#74706A] mt-1">
+                        <p className="text-xs text-[#54504A] mt-1">
                           L-shape, Triangle, Trapezoid, Corner cut, or curved odd-shaped plot boundary.
                         </p>
                         <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-semibold text-[#E76F2E]">
@@ -652,7 +652,7 @@ export default function NivaasAiStudio({
                             <div className="font-extrabold text-sm sm:text-base text-[#292826]">
                               Not Sure? Upload Photo &amp; AI Will Detect
                             </div>
-                            <div className="text-xs text-[#74706A] mt-0.5 leading-relaxed">
+                            <div className="text-xs text-[#54504A] mt-0.5 leading-relaxed">
                               Upload your plot photo or registry map — our AI will automatically analyze boundaries &amp; angles.
                             </div>
                           </div>
@@ -690,7 +690,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         What is your Plot Width (Frontage)?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Enter the front width facing the road in feet.
                       </p>
                     </div>
@@ -707,14 +707,14 @@ export default function NivaasAiStudio({
                             placeholder="Enter width (e.g. 30)"
                             className="w-full px-4 py-3.5 text-lg font-bold rounded-xl border border-[#E7E0D7] focus:ring-2 focus:ring-[#E76F2E] outline-none bg-[#FDFCF9]"
                           />
-                          <span className="absolute right-4 top-3.5 text-sm font-bold text-[#74706A]">
+                          <span className="absolute right-4 top-3.5 text-sm font-bold text-[#54504A]">
                             Feet (ft)
                           </span>
                         </div>
                       </div>
 
                       <div>
-                        <span className="text-xs text-[#74706A] font-semibold block mb-2">
+                        <span className="text-xs text-[#54504A] font-semibold block mb-2">
                           Popular Indian Plot Widths:
                         </span>
                         <div className="flex flex-wrap gap-2">
@@ -747,7 +747,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         What is your Plot Depth (Length)?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Enter the plot length from front to back in feet.
                       </p>
                     </div>
@@ -763,13 +763,13 @@ export default function NivaasAiStudio({
                           placeholder="Enter depth (e.g. 50)"
                           className="w-full px-4 py-3.5 text-lg font-bold rounded-xl border border-[#E7E0D7] focus:ring-2 focus:ring-[#E76F2E] outline-none bg-[#FDFCF9]"
                         />
-                        <span className="absolute right-4 top-3.5 text-sm font-bold text-[#74706A]">
+                        <span className="absolute right-4 top-3.5 text-sm font-bold text-[#54504A]">
                           Feet (ft)
                         </span>
                       </div>
 
                       <div>
-                        <span className="text-xs text-[#74706A] font-semibold block mb-2">
+                        <span className="text-xs text-[#54504A] font-semibold block mb-2">
                           Popular Indian Plot Lengths:
                         </span>
                         <div className="flex flex-wrap gap-2">
@@ -791,7 +791,7 @@ export default function NivaasAiStudio({
                       </div>
 
                       <div className="p-3 bg-[#FFF6E8] rounded-xl border border-[#E76F2E]/20 flex items-center justify-between text-xs">
-                        <span className="font-semibold text-[#74706A]">Total Plot Area:</span>
+                        <span className="font-semibold text-[#54504A]">Total Plot Area:</span>
                         <span className="font-extrabold text-[#C65320]">
                           {rawPlotAreaSqFt} sq.ft (~{plotAreaSqYards} sq.yards)
                         </span>
@@ -812,7 +812,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Upload Plot Survey Map or Photo
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Upload an image or document of your plot so our AI engine can map the boundary angles accurately.
                       </p>
                     </div>
@@ -831,7 +831,7 @@ export default function NivaasAiStudio({
                         <span className="font-bold text-sm text-[#292826] mt-3">
                           {uploadedFile ? uploadedFile.name : 'Click to Browse or Drag & Drop File'}
                         </span>
-                        <span className="text-xs text-[#74706A] mt-1">
+                        <span className="text-xs text-[#54504A] mt-1">
                           Supported: JPG, PNG, PDF (Government survey, registry map, or hand-drawn sketch)
                         </span>
                       </label>
@@ -866,14 +866,14 @@ export default function NivaasAiStudio({
                           className={`px-3 py-1 rounded-lg text-xs font-bold border transition ${
                             hasMapPin
                               ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
-                              : 'bg-[#FDFCF9] text-[#74706A] border-[#E7E0D7]'
+                              : 'bg-[#FDFCF9] text-[#54504A] border-[#E7E0D7]'
                           }`}
                         >
                           {hasMapPin ? '📍 Pin Dropped' : '+ Drop Pin'}
                         </button>
                       </div>
 
-                      <div className="p-3 bg-[#F4EFEA] rounded-xl border border-[#E7E0D7] text-[11px] text-[#74706A] leading-relaxed">
+                      <div className="p-3 bg-[#F4EFEA] rounded-xl border border-[#E7E0D7] text-[11px] text-[#54504A] leading-relaxed">
                         ⚠️ <strong className="text-[#292826]">Disclaimer:</strong> Preliminary layout only — a physical site survey is recommended before construction begins.
                       </div>
                     </div>
@@ -892,14 +892,14 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Enter Plot Side Dimensions
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Specify the length of each boundary side and mark which side faces the road.
                       </p>
                     </div>
 
                     <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-4">
                       <div>
-                        <label className="block text-xs font-bold text-[#74706A] uppercase tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-[#54504A] uppercase tracking-wider mb-2">
                           Number of Boundary Sides:
                         </label>
                         <div className="grid grid-cols-4 gap-2">
@@ -941,7 +941,7 @@ export default function NivaasAiStudio({
                                 placeholder={`Side ${sideLetter}`}
                                 className="w-full px-3 py-2.5 rounded-xl border border-[#E7E0D7] text-sm font-bold focus:ring-2 focus:ring-[#E76F2E] outline-none bg-[#FDFCF9]"
                               />
-                              <span className="absolute right-3 top-2.5 text-xs font-bold text-[#74706A]">ft</span>
+                              <span className="absolute right-3 top-2.5 text-xs font-bold text-[#54504A]">ft</span>
                             </div>
                           </div>
                         ))}
@@ -949,13 +949,13 @@ export default function NivaasAiStudio({
 
                       <div className="p-3.5 bg-gradient-to-r from-[#FFF6E8] to-[#F7ECE1] rounded-xl border border-[#E76F2E]/30 grid grid-cols-2 gap-2 text-xs">
                         <div>
-                          <span className="text-[#74706A] block text-[11px]">Raw Plot Area:</span>
+                          <span className="text-[#54504A] block text-[11px]">Raw Plot Area:</span>
                           <span className="font-extrabold text-sm text-[#292826]">
                             ~{rawPlotAreaSqFt} sq.ft
                           </span>
                         </div>
                         <div>
-                          <span className="text-[#74706A] block text-[11px]">Est. Buildable Area (18% Setback):</span>
+                          <span className="text-[#54504A] block text-[11px]">Est. Buildable Area (18% Setback):</span>
                           <span className="font-extrabold text-sm text-[#C65320]">
                             ~{buildableAreaSqFt} sq.ft
                           </span>
@@ -998,13 +998,13 @@ export default function NivaasAiStudio({
                               onChange={(e) => setRoadWidth(Number(e.target.value))}
                               className="w-full px-3 py-2 rounded-xl border border-[#E7E0D7] text-xs font-bold focus:ring-2 focus:ring-[#E76F2E] outline-none"
                             />
-                            <span className="absolute right-3 top-2 text-xs font-bold text-[#74706A]">ft road</span>
+                            <span className="absolute right-3 top-2 text-xs font-bold text-[#54504A]">ft road</span>
                           </div>
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-[#74706A] uppercase tracking-wider mb-1.5">
+                        <label className="block text-xs font-bold text-[#54504A] uppercase tracking-wider mb-1.5">
                           Existing Structures on Site (if any):
                         </label>
                         <div className="flex flex-wrap gap-1.5">
@@ -1022,7 +1022,7 @@ export default function NivaasAiStudio({
                               className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition ${
                                 existingStructures.includes(item)
                                   ? 'bg-[#292826] text-white border-[#292826]'
-                                  : 'bg-[#FDFCF9] text-[#74706A] border-[#E7E0D7] hover:border-[#292826]'
+                                  : 'bg-[#FDFCF9] text-[#54504A] border-[#E7E0D7] hover:border-[#292826]'
                               }`}
                             >
                               {item}
@@ -1031,7 +1031,7 @@ export default function NivaasAiStudio({
                         </div>
                       </div>
 
-                      <div className="p-3 bg-[#F4EFEA] rounded-xl border border-[#E7E0D7] text-[11px] text-[#74706A] leading-relaxed">
+                      <div className="p-3 bg-[#F4EFEA] rounded-xl border border-[#E7E0D7] text-[11px] text-[#54504A] leading-relaxed">
                         ⚠️ <strong className="text-[#292826]">Municipal Note:</strong> Approximate estimate based on general norms — please verify exact setback/FSI limits with your local municipal authority before finalizing.
                       </div>
                     </div>
@@ -1050,7 +1050,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Smart Blueprint Setup for Your Plot
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Based on your ~{buildableAreaSqFt} sq.ft buildable area and {plotDirection}-facing irregular plot, our AI has pre-configured optimal recommendations.
                       </p>
                     </div>
@@ -1059,7 +1059,7 @@ export default function NivaasAiStudio({
                       {/* Family Size & Budget Chips */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-[#FDFCF9] rounded-xl border border-[#E7E0D7]">
                         <div>
-                          <label className="block text-[11px] font-bold text-[#74706A] uppercase mb-1">
+                          <label className="block text-[11px] font-bold text-[#54504A] uppercase mb-1">
                             👨‍👩‍👧‍👦 Family Living Group:
                           </label>
                           <div className="flex gap-1.5">
@@ -1085,7 +1085,7 @@ export default function NivaasAiStudio({
                         </div>
 
                         <div>
-                          <label className="block text-[11px] font-bold text-[#74706A] uppercase mb-1">
+                          <label className="block text-[11px] font-bold text-[#54504A] uppercase mb-1">
                             💰 Estimated Budget Tier:
                           </label>
                           <div className="flex gap-1.5">
@@ -1118,7 +1118,7 @@ export default function NivaasAiStudio({
                             <Icons.Home size={14} />
                             <span>Recommended: {suggestedBHK} BHK Duplex Layout</span>
                           </div>
-                          <p className="text-[11px] text-[#74706A] mt-0.5">
+                          <p className="text-[11px] text-[#54504A] mt-0.5">
                             Optimizes your {buildableAreaSqFt} sq.ft buildable footprint with spacious living &amp; natural daylight.
                           </p>
                         </div>
@@ -1140,7 +1140,7 @@ export default function NivaasAiStudio({
                             <Icons.Building size={14} className="text-[#E76F2E]" />
                             <span>Suggested Floors: {suggestedFloors}</span>
                           </div>
-                          <p className="text-[11px] text-[#74706A] mt-0.5">
+                          <p className="text-[11px] text-[#54504A] mt-0.5">
                             G+1 maintains ~65% ground coverage. (Approximate estimate — verify setback limits with municipal authority).
                           </p>
                         </div>
@@ -1200,7 +1200,7 @@ export default function NivaasAiStudio({
                             ⚠️ <strong>Disclaimer:</strong> Your plot's road-facing width is under 15 ft — standard car parking may not be feasible. Our design team will assess tandem or alternative parking options during detailed planning.
                           </p>
                         ) : (
-                          <p className="text-[11px] text-[#74706A]">
+                          <p className="text-[11px] text-[#54504A]">
                             Your {roadWidth} ft road allows covered 1-car porch + 2-wheeler. Note: May require angled parking layout — final design to be confirmed by our design team.
                           </p>
                         )}
@@ -1208,7 +1208,7 @@ export default function NivaasAiStudio({
 
                       {/* 5. Lifestyle Feature Chips */}
                       <div>
-                        <label className="block text-xs font-bold text-[#74706A] uppercase tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-[#54504A] uppercase tracking-wider mb-2">
                           Select What Matters Most to You:
                         </label>
                         <div className="flex flex-wrap gap-1.5">
@@ -1260,7 +1260,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         How many floors are you planning?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Select the total number of storeys for your residential design.
                       </p>
                     </div>
@@ -1366,7 +1366,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Number of Master Bedrooms?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Spacious bedrooms with attached toilets and dressing wardrobes.
                       </p>
                     </div>
@@ -1400,7 +1400,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         How many Married Couples in the house?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Helps AI configure privacy zones and master bedroom separation.
                       </p>
                     </div>
@@ -1434,7 +1434,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         How many Children / Kids?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Determines study desk allocations and kids bedroom sizes.
                       </p>
                     </div>
@@ -1468,7 +1468,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Need a Dedicated Kids Bedroom?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Includes custom bunk bed or twin single bed space with study tables.
                       </p>
                     </div>
@@ -1502,7 +1502,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Which Floor for Main Kitchen?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Ground floor is standard for Indian households; first floor for stilt parking.
                       </p>
                     </div>
@@ -1564,7 +1564,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Kitchen Layout Style
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Choose between open breakfast counter or traditional closed Indian cooking space.
                       </p>
                     </div>
@@ -1594,7 +1594,7 @@ export default function NivaasAiStudio({
                           </div>
                           <div className="p-2">
                             <div className={`font-bold text-xs sm:text-sm ${kitchenType === item.id ? 'text-[#C65320]' : 'text-[#292826]'}`}>{item.label}</div>
-                            <div className="text-[10px] text-[#74706A] mt-0.5">{item.desc}</div>
+                            <div className="text-[10px] text-[#54504A] mt-0.5">{item.desc}</div>
                           </div>
                         </button>
                       ))}
@@ -1612,7 +1612,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Pooja / Mandir Preference
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Strictly placed in North-East (Ishanya corner) for maximum prosperity.
                       </p>
                     </div>
@@ -1642,7 +1642,7 @@ export default function NivaasAiStudio({
                           </div>
                           <div className="p-2">
                             <div className={`font-bold text-xs sm:text-sm ${mandirPreference === item.id ? 'text-[#C65320]' : 'text-[#292826]'}`}>{item.label}</div>
-                            <div className="text-[10px] text-[#74706A] mt-0.5">{item.desc}</div>
+                            <div className="text-[10px] text-[#54504A] mt-0.5">{item.desc}</div>
                           </div>
                         </button>
                       ))}
@@ -1660,7 +1660,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Balconies for Bedrooms?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Front sit-outs with glass or louver railings for cross ventilation.
                       </p>
                     </div>
@@ -1694,7 +1694,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Need a Home Office / Study Space?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Quiet workspace setup with ethernet connectivity and bookshelf walls.
                       </p>
                     </div>
@@ -1728,7 +1728,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Parking Requirements
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Configured based on plot width, gate entry radius and road accessibility.
                       </p>
                     </div>
@@ -1802,7 +1802,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Garden or Courtyard Area?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Front lawn garden, central Brahmasthan courtyard (OTS), or terrace lawn.
                       </p>
                     </div>
@@ -1836,7 +1836,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Provision for Home Elevator / Lift?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Civil shaft allocation for senior citizen friendly vertical access.
                       </p>
                     </div>
@@ -1870,7 +1870,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Bathroom Size Preference
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Dry/wet partition separation with wall-hung WC fittings.
                       </p>
                     </div>
@@ -1901,7 +1901,7 @@ export default function NivaasAiStudio({
                           </div>
                           <div className="p-1.5">
                             <div className={`font-bold text-xs ${bathroomChoice === item.id ? 'text-[#C65320]' : 'text-[#292826]'}`}>{item.label}</div>
-                            <div className="text-[9px] text-[#74706A] mt-0.5">{item.desc}</div>
+                            <div className="text-[9px] text-[#54504A] mt-0.5">{item.desc}</div>
                           </div>
                         </button>
                       ))}
@@ -1919,7 +1919,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Main Road Facing Direction
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Rotate the Vastu compass dial to align your plot's main entrance.
                       </p>
                     </div>
@@ -1934,7 +1934,7 @@ export default function NivaasAiStudio({
                           <span className="text-3xl sm:text-4xl font-black font-display text-[#E76F2E]">
                             {plotDirection}
                           </span>
-                          <span className="text-xs font-bold text-[#74706A] block mt-0.5">
+                          <span className="text-xs font-bold text-[#54504A] block mt-0.5">
                             {activeCompassDir.tag}
                           </span>
                         </div>
@@ -1970,7 +1970,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Choose 3D Front Facade Style
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Ultra-photorealistic 3D elevations engineered for Indian weather and materials.
                       </p>
                     </div>
@@ -2018,7 +2018,7 @@ export default function NivaasAiStudio({
                           </div>
                           <div className="p-2">
                             <div className={`font-bold text-xs sm:text-sm ${elevationStyle === item.id ? 'text-[#C65320]' : 'text-[#292826]'}`}>{item.id}</div>
-                            <div className="text-[10px] text-[#74706A] mt-0.5 line-clamp-2">{item.desc}</div>
+                            <div className="text-[10px] text-[#54504A] mt-0.5 line-clamp-2">{item.desc}</div>
                           </div>
                         </button>
                       ))}
@@ -2036,7 +2036,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Select Material Quality &amp; Budget Grade
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Specifies structure materials, sanitaryware, electricals, and flooring.
                       </p>
                     </div>
@@ -2141,7 +2141,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Asymmetric Boundary Alignment
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Our AI structural grid algorithm will auto-compensate for non-perpendicular walls.
                       </p>
                     </div>
@@ -2149,11 +2149,11 @@ export default function NivaasAiStudio({
                     <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-4">
                       <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 bg-[#FDFCF9] rounded-xl border border-[#E7E0D7]">
-                          <span className="text-[11px] text-[#74706A] block font-bold">Irregular Sides</span>
+                          <span className="text-[11px] text-[#54504A] block font-bold">Irregular Sides</span>
                           <span className="font-extrabold text-sm text-[#292826]">{sidesCount} Distinct Sides</span>
                         </div>
                         <div className="p-3 bg-[#FDFCF9] rounded-xl border border-[#E7E0D7]">
-                          <span className="text-[11px] text-[#74706A] block font-bold">Road Access Side</span>
+                          <span className="text-[11px] text-[#54504A] block font-bold">Road Access Side</span>
                           <span className="font-extrabold text-sm text-[#E76F2E]">Side {roadFacingSide} ({roadWidth} ft)</span>
                         </div>
                       </div>
@@ -2167,7 +2167,7 @@ export default function NivaasAiStudio({
                         </p>
                       </div>
 
-                      <div className="p-3 bg-[#F4EFEA] rounded-xl border border-[#E7E0D7] text-[11px] text-[#74706A]">
+                      <div className="p-3 bg-[#F4EFEA] rounded-xl border border-[#E7E0D7] text-[11px] text-[#54504A]">
                         ⚠️ <strong>Reminder:</strong> Detailed CAD structural drawings (IS-456 load calculations) will be prepared based on these exact measurements.
                       </div>
                     </div>
@@ -2184,34 +2184,34 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Ready to Synthesize Your Custom Blueprint
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
-                        Review your configured parameters below before triggering the NIVAAS AI Architecture Synthesis Engine.
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
+                        Review your configured parameters below before triggering the Indore House Maker's AI Architecture Synthesis Engine.
                       </p>
                     </div>
 
                     <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-3 text-xs">
                       <div className="flex justify-between py-2 border-b border-[#EEE9E3]">
-                        <span className="text-[#74706A]">Plot Type:</span>
+                        <span className="text-[#54504A]">Plot Type:</span>
                         <span className="font-bold text-[#292826]">Irregular (~{rawPlotAreaSqFt} sq.ft)</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-[#EEE9E3]">
-                        <span className="text-[#74706A]">Buildable Base Area:</span>
+                        <span className="text-[#54504A]">Buildable Base Area:</span>
                         <span className="font-bold text-[#C65320]">~{buildableAreaSqFt} sq.ft</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-[#EEE9E3]">
-                        <span className="text-[#74706A]">Configuration:</span>
+                        <span className="text-[#54504A]">Configuration:</span>
                         <span className="font-bold text-[#292826]">{masterBedrooms} BHK · {floors}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-[#EEE9E3]">
-                        <span className="text-[#74706A]">Orientation:</span>
+                        <span className="text-[#54504A]">Orientation:</span>
                         <span className="font-bold text-[#292826]">{plotDirection} Facing (100% Vastu)</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-[#EEE9E3]">
-                        <span className="text-[#74706A]">3D Facade Style:</span>
+                        <span className="text-[#54504A]">3D Facade Style:</span>
                         <span className="font-bold text-[#292826]">{elevationStyle}</span>
                       </div>
                       <div className="flex justify-between py-2">
-                        <span className="text-[#74706A]">Material Grade:</span>
+                        <span className="text-[#54504A]">Material Grade:</span>
                         <span className="font-bold text-[#292826]">{materialGrade.split(' ')[0]}</span>
                       </div>
                     </div>
@@ -2258,14 +2258,14 @@ export default function NivaasAiStudio({
 
                     <div className="space-y-2 max-w-md mx-auto">
                       <h4 className="font-display text-xl font-bold text-[#292826]">
-                        Synthesizing Custom NIVAAS AI Plan...
+                        Synthesizing Custom Indore House Maker's Plan...
                       </h4>
-                      <p className="text-xs text-[#74706A] animate-pulse">
+                      <p className="text-xs text-[#54504A] animate-pulse">
                         {processingStatus}
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#74706A]">
+                    <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#54504A]">
                       <Icons.ShieldCheck size={14} className="text-[#E76F2E]" />
                       <span>Checking 100% Vastu compliance &amp; structural column alignment</span>
                     </div>
@@ -2284,7 +2284,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-3 text-[#292826]">
                         Your 2D Blueprint &amp; 3D Facade are Ready!
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#74706A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
                         Enter your details to view full interactive dimensions and receive softcopy drawings via WhatsApp.
                       </p>
                     </div>
@@ -2340,7 +2340,7 @@ export default function NivaasAiStudio({
                         <span>Unlock Instant 2D Floor Plan &amp; 3D Elevation</span>
                       </button>
 
-                      <p className="text-[11px] text-center text-[#74706A]">
+                      <p className="text-[11px] text-center text-[#54504A]">
                         🔒 100% Privacy. Instant delivery to your WhatsApp. No spam guaranteed.
                       </p>
                     </form>
@@ -2366,7 +2366,7 @@ export default function NivaasAiStudio({
                         <h4 className="font-display font-extrabold text-lg sm:text-xl text-[#292826] mt-1">
                           {isRegular ? `${plotWidth}x${plotDepth} ft` : `~${rawPlotAreaSqFt} sq.ft Asymmetric`} {plotDirection} Facing {floors.split(' ')[0]} Residence
                         </h4>
-                        <p className="text-xs text-[#74706A]">
+                        <p className="text-xs text-[#54504A]">
                           Engineered for {leadName || 'You'} ({leadCity || 'India'}) · {isRegular ? '100% Vastu & Setback Compliant' : 'Asymmetric Corner Remedy Applied'}
                         </p>
                       </div>
@@ -2394,37 +2394,37 @@ export default function NivaasAiStudio({
                     {/* Key Technical Specs Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                       <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
-                        <span className="text-[10px] font-bold uppercase text-[#74706A] block">Total Plot Area</span>
+                        <span className="text-[10px] font-bold uppercase text-[#54504A] block">Total Plot Area</span>
                         <span className="font-display font-extrabold text-base text-[#292826]">
                           {rawPlotAreaSqFt} sq.ft
                         </span>
-                        <span className="text-[10px] text-[#74706A] block">~{plotAreaSqYards} sq.yards</span>
+                        <span className="text-[10px] text-[#54504A] block">~{plotAreaSqYards} sq.yards</span>
                       </div>
 
                       <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
-                        <span className="text-[10px] font-bold uppercase text-[#74706A] block">
+                        <span className="text-[10px] font-bold uppercase text-[#54504A] block">
                           {isRegular ? 'Super Built-Up' : 'Buildable Base'}
                         </span>
                         <span className="font-display font-extrabold text-base text-[#C65320]">
                           {builtUpArea} sq.ft
                         </span>
-                        <span className="text-[10px] text-[#74706A] block">Carpet: ~{carpetArea} sq.ft</span>
+                        <span className="text-[10px] text-[#54504A] block">Carpet: ~{carpetArea} sq.ft</span>
                       </div>
 
                       <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
-                        <span className="text-[10px] font-bold uppercase text-[#74706A] block">Est. Cost Range</span>
+                        <span className="text-[10px] font-bold uppercase text-[#54504A] block">Est. Cost Range</span>
                         <span className="font-display font-extrabold text-base text-emerald-700">
                           ₹{estimatedCostLakhs} L
                         </span>
-                        <span className="text-[10px] text-[#74706A] block">@ ₹{finalRatePerSqFt}/sq.ft</span>
+                        <span className="text-[10px] text-[#54504A] block">@ ₹{finalRatePerSqFt}/sq.ft</span>
                       </div>
 
                       <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
-                        <span className="text-[10px] font-bold uppercase text-[#74706A] block">Vastu Score</span>
+                        <span className="text-[10px] font-bold uppercase text-[#54504A] block">Vastu Score</span>
                         <span className="font-display font-extrabold text-base text-[#E76F2E]">
                           98 / 100
                         </span>
-                        <span className="text-[10px] text-[#74706A] block">Ishan + Agneya Align</span>
+                        <span className="text-[10px] text-[#54504A] block">Ishan + Agneya Align</span>
                       </div>
                     </div>
 
@@ -2444,7 +2444,7 @@ export default function NivaasAiStudio({
                               type="button"
                               onClick={() => setIsNightLighting(false)}
                               className={`px-2 py-0.5 rounded transition ${
-                                !isNightLighting ? 'bg-white text-[#292826] shadow-xs' : 'text-[#74706A]'
+                                !isNightLighting ? 'bg-white text-[#292826] shadow-xs' : 'text-[#54504A]'
                               }`}
                             >
                               ☀️ Day
@@ -2453,7 +2453,7 @@ export default function NivaasAiStudio({
                               type="button"
                               onClick={() => setIsNightLighting(true)}
                               className={`px-2 py-0.5 rounded transition ${
-                                isNightLighting ? 'bg-[#292826] text-white shadow-xs' : 'text-[#74706A]'
+                                isNightLighting ? 'bg-[#292826] text-white shadow-xs' : 'text-[#54504A]'
                               }`}
                             >
                               🌙 Twilight
@@ -2486,7 +2486,7 @@ export default function NivaasAiStudio({
                               type="button"
                               onClick={() => setActiveFloorView('ground')}
                               className={`px-2 py-0.5 rounded transition ${
-                                activeFloorView === 'ground' ? 'bg-white text-[#292826] shadow-xs' : 'text-[#74706A]'
+                                activeFloorView === 'ground' ? 'bg-white text-[#292826] shadow-xs' : 'text-[#54504A]'
                               }`}
                             >
                               Ground Plan
@@ -2495,7 +2495,7 @@ export default function NivaasAiStudio({
                               type="button"
                               onClick={() => setActiveFloorView('first')}
                               className={`px-2 py-0.5 rounded transition ${
-                                activeFloorView === 'first' ? 'bg-white text-[#292826] shadow-xs' : 'text-[#74706A]'
+                                activeFloorView === 'first' ? 'bg-white text-[#292826] shadow-xs' : 'text-[#54504A]'
                               }`}
                             >
                               First Floor
@@ -2556,7 +2556,7 @@ export default function NivaasAiStudio({
 
                     {/* Action Buttons */}
                     <div className="p-4 bg-white rounded-2xl border border-[#E7E0D7] flex flex-col sm:flex-row items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 text-xs text-[#74706A]">
+                      <div className="flex items-center gap-2 text-xs text-[#54504A]">
                         <Icons.Check size={16} className="text-emerald-600" />
                         <span>High-Resolution CAD Softcopy Sent to WhatsApp ({leadPhone || '+91 98765 43210'})</span>
                       </div>
@@ -2592,7 +2592,7 @@ export default function NivaasAiStudio({
                   disabled={step === 1}
                   className={`px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${
                     step === 1
-                      ? 'opacity-40 border-[#E7E0D7] text-[#74706A] cursor-not-allowed'
+                      ? 'opacity-40 border-[#E7E0D7] text-[#54504A] cursor-not-allowed'
                       : 'border-[#E7E0D7] text-[#292826] hover:border-[#292826] bg-white'
                   }`}
                 >
@@ -2601,7 +2601,7 @@ export default function NivaasAiStudio({
                 </button>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-[#74706A] hidden sm:inline-block">
+                  <span className="text-[11px] font-bold text-[#54504A] hidden sm:inline-block">
                     {step === totalWizardSteps ? 'Ready to Synthesize' : `Next: Step ${step + 1} of ${totalWizardSteps}`}
                   </span>
                   <button
@@ -2644,7 +2644,7 @@ export default function NivaasAiStudio({
                     <div>{msg.text}</div>
                     <div
                       className={`text-[9px] mt-1.5 text-right ${
-                        msg.from === 'user' ? 'text-white/70' : 'text-[#74706A]'
+                        msg.from === 'user' ? 'text-white/70' : 'text-[#54504A]'
                       }`}
                     >
                       {msg.time}

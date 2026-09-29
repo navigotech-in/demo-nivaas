@@ -10,13 +10,13 @@ export default {
         'surface-grey': '#E7E0D7', // Warm Taupe Border
         'surface-dark': '#292826', // Graphite
         ink: '#292826', // Graphite
-        'ink-light': '#74706A', // Warm Grey
-        muted: '#74706A', // Warm Grey
+        'ink-light': '#54504A', // High-contrast Warm Charcoal (WCAG AA compliant)
+        muted: '#54504A', // High-contrast Warm Charcoal
         line: '#E7E0D7', // Warm Taupe Border
         'line-subtle': '#F0EBE6',
         accent: '#E76F2E', // Saffron Orange
-        'accent-dark': '#C65320', // Deep Saffron
-        'accent-soft': '#74706A',
+        'accent-dark': '#B84718', // Deep Saffron (4.5:1+ contrast)
+        'accent-soft': '#54504A',
         'accent-tint': '#FBE7D3', // Soft Saffron Tint
         slatecard: '#FFFFFF',
       },

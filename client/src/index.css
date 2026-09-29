@@ -10,10 +10,20 @@
 
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   body {
     @apply bg-base text-ink font-body antialiased;
+    overflow-x: hidden;
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100vh;
   }
 
   ::selection {
@@ -44,7 +54,7 @@
   }
 
   .eyebrow {
-    @apply inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#E76F2E];
+    @apply inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#B84718];
   }
 
   .section-title {
@@ -60,11 +70,11 @@
   }
 
   .btn-ghost {
-    @apply btn border border-[#E76F2E] bg-white text-[#E76F2E] hover:bg-[#FBE7D3] hover:text-[#C65320] shadow-sm;
+    @apply btn border border-[#B84718] bg-white text-[#B84718] hover:bg-[#FBE7D3] hover:text-[#C65320] shadow-sm;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-[#E7E0D7] bg-white px-3.5 py-1.5 text-xs font-medium text-[#74706A] transition-all hover:border-[#E76F2E] hover:text-[#E76F2E] shadow-sm;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-[#E7E0D7] bg-white px-3.5 py-1.5 text-xs font-medium text-[#54504A] transition-all hover:border-[#E76F2E] hover:text-[#E76F2E] shadow-sm;
   }
 }
 
@@ -81,4 +91,23 @@
 
 .animate-fadeIn {
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 🚀 Extreme Performance: Skip layout & paint for offscreen sections */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
+}
+
+/* Fast font rendering without flash */
+* {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* GPU Hardware Acceleration for smooth animations */
+.gpu-accelerate {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
 }

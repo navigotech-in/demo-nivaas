@@ -280,12 +280,12 @@ export const Icons = {
   ),
 
   // AI Brand Icons (Exact match and official brand colors)
-  ChatGPT: ({ size = 22, className = '', ...props }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="#FFFFFF" className={className} {...props}>
+  ChatGPT: ({ size = 24, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={props.fill || "currentColor"} className={className} {...props}>
       <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.896zm16.597 3.855l-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zM8.307 10.74l2.458-1.42 2.459 1.42v2.84l-2.459 1.42-2.458-1.42z" />
     </svg>
   ),
-  Gemini: ({ size = 22, className = '', ...props }: IconProps) => (
+  Gemini: ({ size = 24, className = '', ...props }: IconProps) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} {...props}>
       <defs>
         <linearGradient id="gemini-official-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -298,8 +298,8 @@ export const Icons = {
       <path d="M12 1.5C12 7.3 7.3 12 1.5 12c5.8 0 10.5 4.7 10.5 10.5 0-5.8 4.7-10.5 10.5-10.5-5.8 0-10.5-4.7-10.5-10.5z" fill="url(#gemini-official-grad)" />
     </svg>
   ),
-  Claude: ({ size = 22, className = '', ...props }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="#D97757" className={className} {...props}>
+  Claude: ({ size = 24, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={props.fill || "#D97757"} className={className} {...props}>
       <g transform="translate(12,12)">
         <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" />
         <path d="M-1.1-9.5c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v4c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1z" transform="rotate(36)" />
@@ -314,8 +314,8 @@ export const Icons = {
       </g>
     </svg>
   ),
-  Perplexity: ({ size = 22, className = '', ...props }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#20B8CD" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+  Perplexity: ({ size = 24, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={props.stroke || "currentColor"} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
       <line x1="12" y1="2" x2="12" y2="22" />
       <path d="M6 4.5L12 10.5L18 4.5" />
       <path d="M6 19.5L12 13.5L18 19.5" />
@@ -323,7 +323,7 @@ export const Icons = {
       <path d="M14.5 8.5H20.5V15.5H14.5Z" />
     </svg>
   ),
-  Copilot: ({ size = 22, className = '', ...props }: IconProps) => (
+  Copilot: ({ size = 24, className = '', ...props }: IconProps) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} {...props}>
       <defs>
         <linearGradient id="copilot-grad-top" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -342,8 +342,8 @@ export const Icons = {
       <path d="M4.8 14.8a4.9 4.9 0 0 0 5.1 3.7c.9 0 1.8-.3 2.6-.8.9-.5 1.6-1.3 2-2.2a4.8 4.8 0 0 0 .4-2.5c-.1-1-.5-2-1.2-2.8l-2.7 2.7a2.9 2.9 0 0 1-.3 1.5 3 3 0 0 1-1.2 1.3c-.5.3-1.1.5-1.6.5-.7 0-1.4-.3-1.9-.7-.5-.5-.9-1.1-1-1.8a3.2 3.2 0 0 1 .6-2.1 3.1 3.1 0 0 1 1.7-1.1 3.1 3.1 0 0 1 2.3.2l2.7-2.7c-1.3-.1-2.5 0-3.7.9a5.2 5.2 0 0 0-1.9 3.5 4.9 4.9 0 0 0 1.9 4.4z" fill="url(#copilot-grad-bottom)" />
     </svg>
   ),
-  Grok: ({ size = 22, className = '', ...props }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="#FFFFFF" className={className} {...props}>
+  Grok: ({ size = 24, className = '', ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={props.fill || "currentColor"} className={className} {...props}>
       <path d="M22.5 1.5 15.8 8.2a7.5 7.5 0 0 0-4-.8c-4.4 0-8 3.6-8 8a7.5 7.5 0 0 0 .8 4L1.5 22.5l3.1-3.1a7.5 7.5 0 0 0 4 .8c4.4 0 8-3.6 8-8a7.5 7.5 0 0 0-.8-4l6.7-6.7zM11.8 18.2c-3.1 0-5.7-2.6-5.7-5.7 0-3.1 2.6-5.7 5.7-5.7 3.1 0 5.7 2.6 5.7 5.7 0 3.1-2.6 5.7-5.7 5.7z" />
     </svg>
   ),

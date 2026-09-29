@@ -23,8 +23,8 @@ export default function OneStop({ onOpenConsult }: OneStopProps) {
           <h2 className="section-title mt-2">
             Everything you need to build, finance & supervise
           </h2>
-          <p className="mt-2 text-sm text-[#74706A]">
-            NIVAAS is more than a plan store — we connect you to trusted builders, contractors and lenders to take the project to completion.
+          <p className="mt-2 text-sm text-[#54504A]">
+            Indore House Maker's is more than a plan store — we connect you to trusted builders, contractors and lenders to take the project to completion.
           </p>
         </div>
 
@@ -39,7 +39,7 @@ export default function OneStop({ onOpenConsult }: OneStopProps) {
                   {serviceIcons[svc.icon]}
                 </div>
                 <h3 className="mt-4 font-display text-lg font-bold text-[#292826]">{svc.title}</h3>
-                <p className="mt-2 text-xs text-[#74706A] leading-relaxed">{svc.desc}</p>
+                <p className="mt-2 text-xs text-[#54504A] leading-relaxed">{svc.desc}</p>
               </div>
               <button
                 type="button"

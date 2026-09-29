@@ -51,13 +51,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <Icons.User size={16} />
             </span>
             <h3 className="font-display text-lg font-bold text-[#292826]">
-              {loggedIn ? 'Welcome to NIVAAS' : otpSent ? 'Enter OTP Verification' : 'Sign In / Register'}
+              {loggedIn ? 'Welcome to Indore House Maker\'s' : otpSent ? 'Enter OTP Verification' : 'Sign In / Register'}
             </h3>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#74706A] hover:bg-[#FFF6E8] hover:text-[#74706A] transition"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[#54504A] hover:bg-[#FFF6E8] hover:text-[#54504A] transition"
           >
             <Icons.Close size={16} />
           </button>
@@ -70,7 +70,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <Icons.Check size={28} />
               </div>
               <h4 className="mt-3 font-display text-xl font-bold text-[#292826]">Logged In Successfully</h4>
-              <p className="mt-1 text-xs text-[#74706A] max-w-xs mx-auto">
+              <p className="mt-1 text-xs text-[#54504A] max-w-xs mx-auto">
                 Welcome back! You can now track your enquiries, save favorite plans and download CAD samples.
               </p>
               <button
@@ -83,15 +83,15 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             </div>
           ) : !otpSent ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
-              <p className="text-xs text-[#74706A]">
+              <p className="text-xs text-[#54504A]">
                 Enter your mobile number to access saved designs, project drawings and consultations.
               </p>
               <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                   Mobile Number
                 </label>
                 <div className="flex rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] focus-within:border-[#292826] focus-within:bg-white">
-                  <span className="inline-flex items-center px-3.5 text-xs font-bold text-[#74706A] border-r border-[#E7E0D7] bg-[#FFF6E8] rounded-l-xl">
+                  <span className="inline-flex items-center px-3.5 text-xs font-bold text-[#54504A] border-r border-[#E7E0D7] bg-[#FFF6E8] rounded-l-xl">
                     +91
                   </span>
                   <input
@@ -117,11 +117,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <p className="text-xs text-[#74706A]">
+              <p className="text-xs text-[#54504A]">
                 We sent a 4-digit OTP to <span className="font-bold text-[#292826]">+91 {mobile}</span>
               </p>
               <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                   4-Digit OTP
                 </label>
                 <input
@@ -147,7 +147,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="button"
                 onClick={() => setOtpSent(false)}
-                className="w-full text-center text-xs font-semibold text-[#74706A] hover:text-[#292826] underline"
+                className="w-full text-center text-xs font-semibold text-[#54504A] hover:text-[#292826] underline"
               >
                 Change mobile number
               </button>

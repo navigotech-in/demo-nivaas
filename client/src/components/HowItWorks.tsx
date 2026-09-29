@@ -17,12 +17,12 @@ export default function HowItWorks({ onOpenConsult }: HowItWorksProps) {
       <div className="container-content">
         <div className="text-center max-w-2xl mx-auto">
           <span className="eyebrow flex items-center justify-center gap-1.5">
-            <Icons.TrendUp size={14} /> How NIVAAS Works
+            <Icons.TrendUp size={14} /> How Indore House Maker's Works
           </span>
           <h2 className="section-title mt-2">
             From empty plot to finished home in 3 steps
           </h2>
-          <p className="mt-2 text-sm text-[#74706A]">
+          <p className="mt-2 text-sm text-[#54504A]">
             A structured, milestone-driven process that removes guesswork, rework and budget surprises from house construction.
           </p>
         </div>
@@ -40,7 +40,7 @@ export default function HowItWorks({ onOpenConsult }: HowItWorksProps) {
                 <Icons.Check size={14} className="text-[#E76F2E]" />
                 <h3 className="font-display text-lg font-bold text-[#292826]">{step.title}</h3>
               </div>
-              <p className="mt-2 text-xs sm:text-sm text-[#74706A] leading-relaxed flex-1">
+              <p className="mt-2 text-xs sm:text-sm text-[#54504A] leading-relaxed flex-1">
                 {step.text}
               </p>
               <div className="mt-5 pt-4 border-t border-[#EEE9E3]">
@@ -62,7 +62,7 @@ export default function HowItWorks({ onOpenConsult }: HowItWorksProps) {
               <Icons.Phone size={18} className="text-[#E76F2E]" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#74706A]">Prefer to talk?</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-[#54504A]">Prefer to talk?</p>
               <p className="font-display text-sm font-bold text-[#E76F2E]">Get a free expert consultation</p>
             </div>
           </div>

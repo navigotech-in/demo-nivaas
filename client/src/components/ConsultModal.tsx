@@ -76,29 +76,29 @@ export default function ConsultModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1A1815]/70 p-4 ">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 backdrop-blur-md p-4 animate-fadeIn">
       <div
-        className="relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white shadow-sm border border-[#E7E0D7] animate-fadeIn"
+        className="relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white/90 backdrop-blur-3xl shadow-[0_30px_70px_rgba(0,0,0,0.45),inset_0_1.5px_2px_rgba(255,255,255,0.9),0_0_0_1px_rgba(255,255,255,0.4)] border border-white/60 animate-scaleUp"
         role="dialog"
         aria-modal="true"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-[#EEE9E3] bg-[#FFF6E8] px-6 py-4">
+        <div className="flex items-center justify-between border-b border-white/50 bg-gradient-to-r from-[#FFF6E8]/90 via-white/80 to-[#FFF6E8]/90 backdrop-blur-xl px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E76F2E] text-white font-bold text-sm shadow">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#E76F2E] to-[#C65320] text-white font-bold text-sm shadow-[0_4px_12px_rgba(231,111,46,0.4)] border border-white/40">
               <Icons.Blueprint size={18} />
             </span>
             <div>
               <h3 className="font-display text-lg font-bold text-[#292826]">
                 Consult With Home Design Experts
               </h3>
-              <p className="text-xs text-[#74706A] font-medium">Free consultation · 1-on-1 architect guidance</p>
+              <p className="text-xs text-[#54504A] font-medium">Free consultation · 1-on-1 architect guidance</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#74706A] hover:bg-[#F1ECE5] hover:text-[#74706A] transition"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[#54504A] hover:bg-white/80 hover:text-[#292826] transition shadow-sm border border-transparent hover:border-white/50"
             aria-label="Close modal"
           >
             <Icons.Close size={18} />
@@ -106,7 +106,7 @@ export default function ConsultModal({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6">
+        <div className="p-6 bg-white/40 backdrop-blur-md">
           {success ? (
             <div className="py-8 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F1ECE5] text-[#E76F2E] text-2xl font-bold shadow-sm">
@@ -115,8 +115,8 @@ export default function ConsultModal({
 <h4 className="mt-4 font-display text-2xl font-bold text-[#292826]">
                 Consultation Booked!
               </h4>
-              <p className="mt-2 text-xs sm:text-sm text-[#74706A] max-w-sm mx-auto">
-                Thank you, <span className="font-bold text-[#292826]">{form.name}</span>. A senior NIVAAS architect will contact you on <span className="font-bold text-[#292826]">{form.phone}</span> within 2 hours.
+              <p className="mt-2 text-xs sm:text-sm text-[#54504A] max-w-sm mx-auto">
+                Thank you, <span className="font-bold text-[#292826]">{form.name}</span>. A senior Indore House Maker's architect will contact you on <span className="font-bold text-[#292826]">{form.phone}</span> within 2 hours.
               </p>
               <button
                 type="button"
@@ -141,7 +141,7 @@ export default function ConsultModal({
               )}
 
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                   Full Name <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -153,18 +153,18 @@ export default function ConsultModal({
                     placeholder="e.g. Rajesh Sharma"
                     className="w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] pl-10 pr-4 py-2.5 text-sm text-[#292826] outline-none focus:border-[#292826] focus:bg-white"
                   />
-                  <div className="absolute left-3.5 top-3 text-[#74706A]">
+                  <div className="absolute left-3.5 top-3 text-[#54504A]">
                     <Icons.User size={16} />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                   Mobile Number (WhatsApp) <span className="text-red-500">*</span>
                 </label>
                 <div className="flex rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] focus-within:border-[#292826] focus-within:bg-white">
-                  <span className="inline-flex items-center px-3.5 text-xs font-bold text-[#74706A] border-r border-[#E7E0D7] bg-[#FFF6E8] rounded-l-xl">
+                  <span className="inline-flex items-center px-3.5 text-xs font-bold text-[#54504A] border-r border-[#E7E0D7] bg-[#FFF6E8] rounded-l-xl">
                     +91
                   </span>
                   <input
@@ -181,7 +181,7 @@ export default function ConsultModal({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                     City <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -194,7 +194,7 @@ export default function ConsultModal({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                     State <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -212,7 +212,7 @@ export default function ConsultModal({
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                   Service Requirement
                 </label>
                 <select
@@ -229,7 +229,7 @@ export default function ConsultModal({
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#74706A]">
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                   Plot Dimensions / Specific Notes
                 </label>
                 <textarea
@@ -249,7 +249,7 @@ export default function ConsultModal({
                 {loading ? 'Submitting...' : 'Book Free Online Consultation →'}
               </button>
 
-              <p className="text-center text-[11px] text-[#74706A]">
+              <p className="text-center text-[11px] text-[#54504A]">
                 🔒 Protected by 256-bit SSL encryption. Zero spam.
               </p>
             </form>

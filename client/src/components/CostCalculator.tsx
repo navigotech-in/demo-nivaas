@@ -48,7 +48,7 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
           <h2 className="section-title mt-2">
             House Construction Cost Estimator (2026)
           </h2>
-          <p className="mt-2 text-sm text-[#74706A]">
+          <p className="mt-2 text-sm text-[#54504A]">
             Plan your construction budget with realistic material and labor rate breakdowns for Indian residential plots.
           </p>
         </div>
@@ -59,8 +59,8 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
             {/* Plot Area Slider */}
             <div>
               <div className="flex justify-between items-center mb-[7px]">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#74706A] flex items-center gap-1.5">
-                  <Icons.Grid size={14} className="text-[#74706A]" />
+                <label className="text-xs font-bold uppercase tracking-wider text-[#54504A] flex items-center gap-1.5">
+                  <Icons.Grid size={14} className="text-[#54504A]" />
                   <span>Plot Ground Area</span>
                 </label>
                 <span className="text-sm font-bold text-[#292826]">
@@ -73,10 +73,11 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                 max={5000}
                 step={50}
                 value={area}
+                aria-label="Plot ground area in square feet"
                 onChange={(e) => setArea(Number(e.target.value))}
                 className="w-full accent-[#E76F2E] h-2.5 bg-[#E7E0D7] rounded-lg cursor-pointer"
               />
-              <div className="flex justify-between text-[11px] text-[#74706A] mt-1.5 font-medium">
+              <div className="flex justify-between text-[11px] text-[#54504A] mt-1.5 font-medium">
                 <span>500 sq.ft</span>
                 <span>2,500 sq.ft</span>
                 <span>5,000 sq.ft</span>
@@ -85,8 +86,8 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
 
             {/* Quality Grade */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#74706A] mb-[9px] flex items-center gap-1.5">
-                <Icons.Layers size={14} className="text-[#74706A]" />
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#54504A] mb-[9px] flex items-center gap-1.5">
+                <Icons.Layers size={14} className="text-[#54504A]" />
                 <span>Construction Package & Finishes</span>
               </label>
               <div className="grid grid-cols-3 gap-[9px]">
@@ -94,11 +95,12 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                   <button
                     key={opt.id}
                     type="button"
+                    aria-label={`Select ${opt.label} construction package at ${opt.price} per sqft`}
                     onClick={() => setQuality(opt.id)}
                     className={`py-[11px] px-2 rounded-lg border text-center transition text-xs font-bold ${
                       quality === opt.id
                         ? 'border-[#E76F2E] bg-[#E76F2E] text-white'
-                        : 'border-[#E7E0D7] bg-white text-[#74706A] hover:border-[#C65320]'
+                        : 'border-[#E7E0D7] bg-white text-[#54504A] hover:border-[#C65320]'
                     }`}
                   >
                     {opt.label}
@@ -112,8 +114,8 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
 
             {/* Floors */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#74706A] mb-[9px] flex items-center gap-1.5">
-                <Icons.Building size={14} className="text-[#74706A]" />
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#54504A] mb-[9px] flex items-center gap-1.5">
+                <Icons.Building size={14} className="text-[#54504A]" />
                 <span>Number of Floors</span>
               </label>
               <div className="grid grid-cols-4 gap-[7px]">
@@ -126,6 +128,7 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
                   <button
                     key={fl.val}
                     type="button"
+                    aria-label={`Select ${fl.label} floor structure`}
                     onClick={() => setFloors(fl.val)}
                     className={`py-[9px] px-1 rounded-lg border text-xs text-center transition font-bold ${
                       floors === fl.val
@@ -143,19 +146,19 @@ export default function CostCalculator({ onOpenConsult }: CostCalculatorProps) {
           {/* Results Column */}
           <div className="lg:border-l lg:border-[#EEE9E3] lg:pl-[43px] flex flex-col justify-between">
             <div>
-              <div className="text-xs font-bold text-[#74706A] uppercase tracking-wider flex items-center gap-1.5">
-                <Icons.Tag size={13} className="text-[#74706A]" />
+              <div className="text-xs font-bold text-[#54504A] uppercase tracking-wider flex items-center gap-1.5">
+                <Icons.Tag size={13} className="text-[#54504A]" />
                 <span>Estimated Turnkey Project Cost</span>
               </div>
               <div className="mt-[7px] flex items-baseline gap-2">
                 <span className="text-3xl sm:text-4xl font-extrabold text-[#292826]">
                   ₹{(totalCost / 100000).toFixed(2)} Lakhs
                 </span>
-                <span className="text-xs text-[#74706A] font-semibold">
+                <span className="text-xs text-[#54504A] font-semibold">
                   (~₹{totalCost.toLocaleString('en-IN')})
                 </span>
               </div>
-              <p className="mt-1 text-xs text-[#74706A]">
+              <p className="mt-1 text-xs text-[#54504A]">
                 Total constructed area: <span className="font-bold text-[#292826]">{totalBuiltup.toLocaleString('en-IN')} sq.ft</span>
               </p>
 

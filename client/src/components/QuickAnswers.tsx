@@ -16,7 +16,7 @@ export default function QuickAnswers({ onOpenConsult }: QuickAnswersProps) {
           <h2 className="section-title mt-2">
             Questions homeowners ask us first
           </h2>
-          <p className="mt-2 text-sm text-[#74706A]">
+          <p className="mt-2 text-sm text-[#54504A]">
             Short, practical answers to the things that decide most buying decisions.
           </p>
         </div>
@@ -29,7 +29,7 @@ export default function QuickAnswers({ onOpenConsult }: QuickAnswersProps) {
                   {qa.tag}
                 </span>
                 <h3 className="mt-3 font-display text-sm font-bold text-[#292826] leading-snug">{qa.q}</h3>
-                <p className="mt-2 text-xs text-[#74706A] leading-relaxed">{qa.a}</p>
+                <p className="mt-2 text-xs text-[#54504A] leading-relaxed">{qa.a}</p>
               </div>
               <a
                 href="#faq"

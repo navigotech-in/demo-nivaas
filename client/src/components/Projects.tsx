@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchProjects } from '../lib/api'
 import { fallbackProjects, type Project } from '../lib/data'
 import { Icons } from './Icons'
-import { cityAliases, type CatalogOpenMenu, type DesignFilterState } from './useDesignCatalogFilters'
-import { DesignEmptyState, DesignImageBadge, DesignImageCard } from './DesignImageCard'
+import { cityAliases, masterIndianCities, type CatalogOpenMenu, type DesignFilterState } from './useDesignCatalogFilters'
+import { DesignEmptyState, DesignImageCard } from './DesignImageCard'
 
 interface ProjectsProps {
   onOpenConsult: (planTitle?: string) => void
@@ -25,6 +25,7 @@ const directionOptions = ['East Facing', 'West Facing', 'North Facing', 'South F
 interface CityOption {
   name: string
   slug: string
+  state?: string
   aliases?: string[]
   planCount: number
 }
@@ -65,8 +66,6 @@ const directionMatches = (facing: string, direction: string) => {
   return facing.toLowerCase().startsWith(direction.split(' ')[0].toLowerCase())
 }
 
-const shortFacing = (facing: string) => facing.split(' (')[0] || 'House Plan'
-
 interface FilterDropdownProps {
   placeholder: string
   icon: typeof Icons.Ruler
@@ -93,12 +92,13 @@ function FilterDropdown({ placeholder, icon: Icon, value, options, isOpen, onTog
     <div className="shrink-0">
       <button
         type="button"
+        aria-label={`Filter by ${placeholder}`}
         aria-expanded={isOpen}
         onClick={handleToggle}
         className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-bold transition ${
           value
             ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-sm'
-            : 'border-[#E7E0D7] bg-white text-[#74706A] hover:border-[#C65320] hover:text-[#292826]'
+            : 'border-[#E7E0D7] bg-white text-[#54504A] hover:border-[#C65320] hover:text-[#292826]'
         }`}
       >
         <Icon size={13} />
@@ -115,7 +115,7 @@ function FilterDropdown({ placeholder, icon: Icon, value, options, isOpen, onTog
             <button
               type="button"
               onClick={() => onChange('')}
-              className="mb-1 flex w-full items-center justify-between rounded-lg border-b border-[#E7E0D7] px-3 py-2 text-xs font-semibold text-[#74706A] transition hover:bg-[#F5F2EC]"
+              className="mb-1 flex w-full items-center justify-between rounded-lg border-b border-[#E7E0D7] px-3 py-2 text-xs font-semibold text-[#54504A] transition hover:bg-[#F5F2EC]"
             >
               Any {placeholder}
               <Icons.Close size={11} />
@@ -146,21 +146,43 @@ function FilterDropdown({ placeholder, icon: Icon, value, options, isOpen, onTog
 function CityOptionsList({
   cities,
   value,
+  searchQuery,
   onSelect,
   resultNoun = 'plan',
 }: {
   cities: CityOption[]
   value: string
+  searchQuery?: string
   onSelect: (name: string) => void
   resultNoun?: 'plan' | 'design'
 }) {
-  if (cities.length === 0) {
-    return <p className="px-3 py-4 text-center text-xs text-[#74706A]">No city found</p>
-  }
+  const trimmed = searchQuery?.trim()
+  const isExactMatch = cities.some((c) => c.name.toLowerCase() === trimmed?.toLowerCase())
+
   return (
-    <div className="max-h-[240px] overflow-y-auto">
+    <div className="max-h-[260px] overflow-y-auto divide-y divide-[#F5F2EC]/60">
+      {trimmed && !isExactMatch && (
+        <button
+          type="button"
+          onClick={() => onSelect(trimmed)}
+          className="flex w-full items-center justify-between gap-2 rounded-lg bg-[#FFF6E8] p-2.5 text-left text-xs font-bold text-[#E76F2E] hover:bg-[#FFEBD0] transition mb-1"
+        >
+          <div className="flex items-center gap-1.5 truncate">
+            <Icons.Check size={13} className="shrink-0" />
+            <span className="truncate">Select &quot;{trimmed}&quot; (Custom City)</span>
+          </div>
+          <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded bg-white text-[#E76F2E] border border-[#E76F2E]/30 shrink-0">
+            Apply
+          </span>
+        </button>
+      )}
+
+      {cities.length === 0 && !trimmed && (
+        <p className="px-3 py-4 text-center text-xs text-[#54504A]">No city found</p>
+      )}
+
       {cities.map((c) => {
-        const active = value === c.name
+        const active = value.toLowerCase() === c.name.toLowerCase()
         return (
           <button
             key={c.name}
@@ -170,8 +192,13 @@ function CityOptionsList({
               active ? 'bg-[#FFF6E8] text-[#E76F2E]' : 'text-[#292826] hover:bg-[#F5F2EC]'
             }`}
           >
-            <span>{c.name}</span>
-            <span className={`text-[10px] font-semibold ${active ? 'text-[#E76F2E]' : 'text-[#A8A29B]'}`}>
+            <div className="flex flex-col truncate">
+              <span className="truncate">{c.name}</span>
+              {c.state && (
+                <span className="text-[10px] font-normal text-[#54504A] truncate">{c.state}</span>
+              )}
+            </div>
+            <span className={`text-[10px] font-semibold shrink-0 ${active ? 'text-[#E76F2E]' : 'text-[#54504A]'}`}>
               {c.planCount} {c.planCount === 1 ? resultNoun : `${resultNoun}s`}
             </span>
           </button>
@@ -202,7 +229,7 @@ function CityDropdown({
   const query = search.trim().toLowerCase()
   const filtered = query
     ? cities.filter((c) =>
-        [c.name, ...(c.aliases ?? [])].some((t) => t.toLowerCase().includes(query)),
+        [c.name, c.state ?? '', ...(c.aliases ?? [])].some((t) => t.toLowerCase().includes(query)),
       )
     : cities
 
@@ -211,7 +238,7 @@ function CityDropdown({
       setSearch('')
       const rect = e.currentTarget.getBoundingClientRect()
       setPos({
-        left: Math.min(Math.max(8, rect.left), window.innerWidth - 250),
+        left: Math.min(Math.max(8, rect.left), window.innerWidth - 290),
         top: rect.bottom + 6,
       })
     }
@@ -220,14 +247,15 @@ function CityDropdown({
 
   const searchInput = (
     <div className="relative">
-      <Icons.Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29B]" />
+      <Icons.Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#54504A]" />
       <input
         autoFocus
         type="text"
+        aria-label="Search city name for house plans"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search city..."
-        className="w-full rounded-lg border border-[#E7E0D7] bg-white py-2 pl-8 pr-3 text-xs font-medium text-[#292826] placeholder:text-[#A8A29B] focus:border-[#C94F36] focus:outline-none"
+        placeholder="Type any city (e.g. Mumbai, Pune, Delhi)..."
+        className="w-full rounded-lg border border-[#E7E0D7] bg-white py-2 pl-8 pr-3 text-xs font-medium text-[#292826] placeholder:text-[#54504A] focus:border-[#C94F36] focus:outline-none"
       />
     </div>
   )
@@ -236,9 +264,9 @@ function CityDropdown({
     <button
       type="button"
       onClick={() => { onSelect(''); setSearch('') }}
-      className="mb-1 flex w-full items-center justify-between rounded-lg border-b border-[#E7E0D7] px-3 py-2 text-xs font-semibold text-[#74706A] transition hover:bg-[#F5F2EC]"
+      className="mb-1 flex w-full items-center justify-between rounded-lg border-b border-[#E7E0D7] px-3 py-2 text-xs font-semibold text-[#54504A] transition hover:bg-[#F5F2EC]"
     >
-      Clear city
+      Clear city filter
       <Icons.Close size={11} />
     </button>
   )
@@ -248,12 +276,13 @@ function CityDropdown({
       <div className="shrink-0">
         <button
           type="button"
+          aria-label="Filter plans by city"
           aria-expanded={open}
           onClick={handleToggle}
           className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-bold transition ${
             value
               ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-sm'
-              : 'border-[#E7E0D7] bg-white text-[#74706A] hover:border-[#C65320] hover:text-[#292826]'
+              : 'border-[#E7E0D7] bg-white text-[#54504A] hover:border-[#C65320] hover:text-[#292826]'
           }`}
         >
           <Icons.MapPin size={13} />
@@ -265,13 +294,13 @@ function CityDropdown({
       {/* Desktop searchable popover */}
       {open && (
         <div
-          className="hidden sm:block fixed z-50 w-[240px] rounded-xl border border-[#E7E0D7] bg-white p-2 shadow-xl animate-fadeIn"
+          className="hidden sm:block fixed z-50 w-[280px] rounded-xl border border-[#E7E0D7] bg-white p-2.5 shadow-xl animate-fadeIn"
           style={{ left: pos.left, top: pos.top }}
         >
           {searchInput}
           <div className="mt-2">
             {value && clearRow}
-            <CityOptionsList cities={filtered} value={value} onSelect={onSelect} resultNoun={resultNoun} />
+            <CityOptionsList cities={filtered} value={value} searchQuery={search} onSelect={onSelect} resultNoun={resultNoun} />
           </div>
         </div>
       )}
@@ -281,7 +310,7 @@ function CityDropdown({
         <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-white p-4 pb-6 shadow-xl animate-fadeIn">
           <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[#E7E0D7]" />
           <div className="mb-2 flex items-center justify-between">
-            <h4 className="font-display text-base font-bold text-[#292826]">Search City</h4>
+            <h4 className="font-display text-base font-bold text-[#292826]">Select Your City</h4>
             <button
               type="button"
               onClick={onToggle}
@@ -293,7 +322,7 @@ function CityDropdown({
           <div className="relative">{searchInput}</div>
           <div className="mt-2">
             {value && clearRow}
-            <CityOptionsList cities={filtered} value={value} onSelect={onSelect} resultNoun={resultNoun} />
+            <CityOptionsList cities={filtered} value={value} searchQuery={search} onSelect={onSelect} resultNoun={resultNoun} />
           </div>
         </div>
       )}
@@ -318,13 +347,28 @@ export function DesignCatalogFilterBar({
   onToggle,
   onClose,
 }: DesignCatalogFilterBarProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const advancedFilterCount = [filters.homeType, filters.area, filters.direction].filter(Boolean).length
-
   return (
     <>
       <div className="relative z-50 mt-6 rounded-xl border border-[#E7E0D7] bg-white p-3.5 shadow-xs">
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-nowrap items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none sm:flex-wrap sm:overflow-visible sm:pb-0">
+          <FilterDropdown
+            placeholder="Home Type"
+            icon={Icons.Layers}
+            value={filters.homeType}
+            options={homeTypeOptions}
+            isOpen={openMenu === 'homeType'}
+            onToggle={() => onToggle('homeType')}
+            onChange={(value) => onChange('homeType', value)}
+          />
+          <FilterDropdown
+            placeholder="Built-up Area"
+            icon={Icons.Ruler}
+            value={filters.area}
+            options={areaOptions}
+            isOpen={openMenu === 'area'}
+            onToggle={() => onToggle('area')}
+            onChange={(value) => onChange('area', value)}
+          />
           <FilterDropdown
             placeholder="BHK"
             icon={Icons.Bed}
@@ -334,23 +378,15 @@ export function DesignCatalogFilterBar({
             onToggle={() => onToggle('bhk')}
             onChange={(value) => onChange('bhk', value)}
           />
-          <button
-            type="button"
-            aria-expanded={showAdvanced}
-            onClick={() => {
-              setShowAdvanced((current) => !current)
-              onClose()
-            }}
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold transition ${
-              advancedFilterCount > 0 || showAdvanced
-                ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-sm'
-                : 'border-[#E7E0D7] bg-white text-[#74706A] hover:border-[#C65320] hover:text-[#292826]'
-            }`}
-          >
-            <Icons.Layers size={13} />
-            Filters{advancedFilterCount > 0 ? ` (${advancedFilterCount})` : ''}
-            <Icons.ChevronDown size={12} className={`transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-          </button>
+          <FilterDropdown
+            placeholder="Vastu Direction"
+            icon={Icons.Compass}
+            value={filters.direction}
+            options={directionOptions}
+            isOpen={openMenu === 'direction'}
+            onToggle={() => onToggle('direction')}
+            onChange={(value) => onChange('direction', value)}
+          />
           <CityDropdown
             value={filters.city}
             open={openMenu === 'city'}
@@ -360,38 +396,6 @@ export function DesignCatalogFilterBar({
             resultNoun="design"
           />
         </div>
-
-        {showAdvanced && (
-          <div className="mt-3 flex flex-wrap gap-2.5 border-t border-[#E7E0D7] pt-3">
-            <FilterDropdown
-              placeholder="Home Type"
-              icon={Icons.Layers}
-              value={filters.homeType}
-              options={homeTypeOptions}
-              isOpen={openMenu === 'homeType'}
-              onToggle={() => onToggle('homeType')}
-              onChange={(value) => onChange('homeType', value)}
-            />
-            <FilterDropdown
-              placeholder="Built-up Area"
-              icon={Icons.Ruler}
-              value={filters.area}
-              options={areaOptions}
-              isOpen={openMenu === 'area'}
-              onToggle={() => onToggle('area')}
-              onChange={(value) => onChange('area', value)}
-            />
-            <FilterDropdown
-              placeholder="Vastu Direction"
-              icon={Icons.Compass}
-              value={filters.direction}
-              options={directionOptions}
-              isOpen={openMenu === 'direction'}
-              onToggle={() => onToggle('direction')}
-              onChange={(value) => onChange('direction', value)}
-            />
-          </div>
-        )}
       </div>
 
       {openMenu && (
@@ -427,12 +431,13 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
     for (const p of allProjects) {
       if (p.city) counts.set(p.city, (counts.get(p.city) ?? 0) + 1)
     }
-    return Array.from(counts, ([name, planCount]) => ({
-      name,
-      slug: name.toLowerCase(),
-      aliases: cityAliases[name],
-      planCount,
-    })).sort((a, b) => b.planCount - a.planCount || a.name.localeCompare(b.name))
+    return masterIndianCities.map((c) => ({
+      name: c.name,
+      slug: c.name.toLowerCase(),
+      state: c.state,
+      aliases: [c.state, ...(c.aliases ?? [])],
+      planCount: counts.get(c.name) ?? Math.max(1, allProjects.length),
+    }))
   }, [allProjects])
 
   const filtered = allProjects.filter((p) => {
@@ -440,7 +445,14 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
     if (!homeTypeMatches(p, homeType)) return false
     if (!areaMatches(areaRange, parseBuiltUp(p.area))) return false
     if (!directionMatches(p.facing, direction)) return false
-    if (city && p.city !== city) return false
+    if (city) {
+      if (p.city && p.city.toLowerCase() === city.toLowerCase()) return true
+      const aliases = cityAliases[city] ?? [city]
+      const matchesAlias = aliases.some((a) => (p.city ?? '').toLowerCase().includes(a.toLowerCase()))
+      if (matchesAlias) return true
+      const hasStrictCityProjects = allProjects.some((proj) => proj.city?.toLowerCase() === city.toLowerCase())
+      if (hasStrictCityProjects) return false
+    }
     return true
   })
 
@@ -482,14 +494,14 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
           <h2 className="section-title mt-2">
             Indian House Plans with 2D & 3D Layouts
           </h2>
-          <p className="mt-2 text-sm text-[#74706A] max-w-2xl">
+          <p className="mt-2 text-sm text-[#54504A] max-w-2xl">
             Vastu-compliant house plans with practical space planning, structural clarity, and photorealistic 3D previews — designed for Indian plot sizes, family needs, and contemporary living.
           </p>
         </div>
 
         {/* Compact Trust & Specification Metadata Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-white border border-[#E7E0D7] shadow-2xs mb-6">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#74706A]">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#54504A]">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] px-3 py-1 text-[#E76F2E] font-bold">
               <Icons.ShieldCheck size={13} />
               <span>GHMC & BBMP Setbacks</span>
@@ -505,7 +517,7 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-[#74706A] hidden sm:inline">
+            <span className="text-xs font-medium text-[#54504A] hidden sm:inline">
               12,000+ verified plans available
             </span>
             <button
@@ -532,7 +544,7 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
                   className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold whitespace-nowrap transition ${
                     isActive
                       ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-sm'
-                      : 'border-[#E7E0D7] bg-white text-[#74706A] hover:border-[#C65320] hover:text-[#292826]'
+                      : 'border-[#E7E0D7] bg-white text-[#54504A] hover:border-[#C65320] hover:text-[#292826]'
                   }`}
                 >
                   <tab.icon size={13} />
@@ -628,21 +640,6 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
                   alt={project.title}
                   title={project.title}
                   description={project.plotDetails ?? 'Complete architectural working drawing with structural reinforcement, electrical & plumbing CAD sets.'}
-                  leftBadges={
-                    <>
-                      <DesignImageBadge icon={<Icons.Compass size={11} className="text-[#FFA366]" />}>
-                        {shortFacing(project.facing)}
-                      </DesignImageBadge>
-                      {project.vastuCompliant && (
-                        <DesignImageBadge variant="accent">100% Vastu</DesignImageBadge>
-                      )}
-                    </>
-                  }
-                  rightBadge={
-                    <DesignImageBadge variant="light" className="text-xs font-black normal-case tracking-normal">
-                      {project.price || '₹4,999'}
-                    </DesignImageBadge>
-                  }
                   meta={
                     <>
                       <span className="rounded border border-white/10 bg-[#FFF6E8]/20 px-2 py-0.5 text-white/90">
@@ -670,7 +667,7 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
         {/* Active filter summary + Clear Filters */}
         {hasActiveFilters && (
           <div className="mt-8 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-[#74706A]">Active filters:</span>
+            <span className="text-xs font-bold text-[#54504A]">Active filters:</span>
             {chips.map((chip) => (
               <button
                 key={chip.key}
