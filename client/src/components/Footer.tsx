@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { site, megaMenus } from '../lib/data'
 import { Icons } from './Icons'
@@ -129,11 +129,25 @@ const socialPlatforms: SocialPlatform[] = rawSocialPlatforms.filter((s) => Boole
 
 export default function Footer() {
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null)
-  const [mobileExpanded, setMobileExpanded] = useState<string | null>(null)
+  const [floatingMenu, setFloatingMenu] = useState<'architecture' | 'interior' | 'designs' | 'services' | 'about' | 'faq' | null>(null)
 
-  const toggleMobileCategory = (cat: string) => {
-    setMobileExpanded((prev) => (prev === cat ? null : cat))
-  }
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setFloatingMenu(null)
+      }
+    }
+    if (floatingMenu) {
+      window.addEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = ''
+    }
+  }, [floatingMenu])
 
   const handleAiClick = async (platform: AiPlatform) => {
     try {
@@ -198,7 +212,7 @@ export default function Footer() {
       {/* Main Footer Links Container */}
       <div className="container-content py-12 lg:py-16">
         {/* ========================================================================= */}
-        {/* MOBILE VIEW: "Editorial Index" with Rich Interactive Sub-Options Accordion */}
+        {/* MOBILE VIEW: "Editorial Index" with Rich Floated Card on Click            */}
         {/* ========================================================================= */}
         <div className="block lg:hidden">
           {/* Brand Header */}
@@ -214,272 +228,97 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Numbered Interactive Editorial Accordion Rows */}
+          {/* Numbered Interactive Editorial Rows that open Floated Card on Click */}
           <div className="divide-y divide-white/10 border-y border-white/10">
             {/* 01 Architecture */}
-            <div className="py-2">
-              <button
-                type="button"
-                onClick={() => toggleMobileCategory('architecture')}
-                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
-              >
-                <span className="flex items-center gap-3">
-                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">01</span>
-                  <span>Architecture</span>
-                </span>
-                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'architecture' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
-                  →
-                </span>
-              </button>
-
-              {mobileExpanded === 'architecture' && (
-                <div className="pt-3 pb-4 px-2 space-y-4 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">House Plans &amp; Blueprints</span>
-                    <Link to="/house-plans" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
-                      <span>Open Page</span>
-                      <Icons.ChevronRight size={12} />
-                    </Link>
-                  </div>
-                  {megaMenus.architecture.map((group) => (
-                    <div key={group.title} className="space-y-1.5">
-                      <h5 className="text-[11px] font-bold text-white/90 uppercase tracking-wide flex items-center gap-1.5">
-                        <Icons.Layers size={11} className="text-[#E76F2E]" />
-                        <span>{group.title}</span>
-                      </h5>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-3">
-                        {group.items.map((item) => (
-                          <Link
-                            key={item.label}
-                            to={item.href}
-                            className="text-xs text-white/70 hover:text-white flex items-center justify-between py-1 transition"
-                          >
-                            <span>{item.label}</span>
-                            {item.badge && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#E76F2E]/20 text-[#E76F2E] border border-[#E76F2E]/30">
-                                {item.badge}
-                              </span>
-                            )}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setFloatingMenu('architecture')}
+              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
+            >
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">01</span>
+                <span>Architecture</span>
+              </span>
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                Explore →
+              </span>
+            </button>
 
             {/* 02 Interiors */}
-            <div className="py-2">
-              <button
-                type="button"
-                onClick={() => toggleMobileCategory('interiors')}
-                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
-              >
-                <span className="flex items-center gap-3">
-                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">02</span>
-                  <span>Interiors</span>
-                </span>
-                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'interiors' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
-                  →
-                </span>
-              </button>
-
-              {mobileExpanded === 'interiors' && (
-                <div className="pt-3 pb-4 px-2 space-y-4 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">Interior Design Studio</span>
-                    <Link to="/interiors" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
-                      <span>Open Page</span>
-                      <Icons.ChevronRight size={12} />
-                    </Link>
-                  </div>
-                  {megaMenus.interior.map((group) => (
-                    <div key={group.title} className="space-y-1.5">
-                      <h5 className="text-[11px] font-bold text-white/90 uppercase tracking-wide flex items-center gap-1.5">
-                        <Icons.Sofa size={11} className="text-[#E76F2E]" />
-                        <span>{group.title}</span>
-                      </h5>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-3">
-                        {group.items.map((item) => (
-                          <Link
-                            key={item.label}
-                            to={item.href}
-                            className="text-xs text-white/70 hover:text-white flex items-center justify-between py-1 transition"
-                          >
-                            <span>{item.label}</span>
-                            {item.badge && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#E76F2E]/20 text-[#E76F2E] border border-[#E76F2E]/30">
-                                {item.badge}
-                              </span>
-                            )}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setFloatingMenu('interior')}
+              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
+            >
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">02</span>
+                <span>Interiors</span>
+              </span>
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                Explore →
+              </span>
+            </button>
 
             {/* 03 Designs */}
-            <div className="py-2">
-              <button
-                type="button"
-                onClick={() => toggleMobileCategory('designs')}
-                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
-              >
-                <span className="flex items-center gap-3">
-                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">03</span>
-                  <span>Designs</span>
-                </span>
-                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'designs' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
-                  →
-                </span>
-              </button>
-
-              {mobileExpanded === 'designs' && (
-                <div className="pt-3 pb-4 px-2 space-y-3 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">3D Elevations &amp; Concepts</span>
-                    <Link to="/designs" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
-                      <span>Open Page</span>
-                      <Icons.ChevronRight size={12} />
-                    </Link>
-                  </div>
-                  <div className="space-y-2">
-                    {megaMenus.designIdeas.map((item) => (
-                      <Link
-                        key={item.label}
-                        to={item.href}
-                        className="block py-1.5 px-2 rounded hover:bg-white/10 transition"
-                      >
-                        <div className="text-xs font-bold text-white flex items-center justify-between">
-                          <span>{item.label}</span>
-                          <span className="text-[#E76F2E]">→</span>
-                        </div>
-                        <p className="text-[10.5px] text-white/60">{item.desc}</p>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setFloatingMenu('designs')}
+              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
+            >
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">03</span>
+                <span>Designs</span>
+              </span>
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                Explore →
+              </span>
+            </button>
 
             {/* 04 Services */}
-            <div className="py-2">
-              <button
-                type="button"
-                onClick={() => toggleMobileCategory('services')}
-                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
-              >
-                <span className="flex items-center gap-3">
-                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">04</span>
-                  <span>Services</span>
-                </span>
-                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'services' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
-                  →
-                </span>
-              </button>
-
-              {mobileExpanded === 'services' && (
-                <div className="pt-3 pb-4 px-2 space-y-3 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">Architectural &amp; Site Services</span>
-                    <Link to="/services" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
-                      <span>Open Page</span>
-                      <Icons.ChevronRight size={12} />
-                    </Link>
-                  </div>
-                  <div className="space-y-2">
-                    {megaMenus.otherServices.map((item) => (
-                      <Link
-                        key={item.label}
-                        to={item.href}
-                        className="block py-1.5 px-2 rounded hover:bg-white/10 transition"
-                      >
-                        <div className="text-xs font-bold text-white flex items-center justify-between">
-                          <span>{item.label}</span>
-                          <span className="text-[#E76F2E]">→</span>
-                        </div>
-                        <p className="text-[10.5px] text-white/60">{item.desc}</p>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setFloatingMenu('services')}
+              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
+            >
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">04</span>
+                <span>Services</span>
+              </span>
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                Explore →
+              </span>
+            </button>
 
             {/* 05 About NIVAAS */}
-            <div className="py-2">
-              <button
-                type="button"
-                onClick={() => toggleMobileCategory('about')}
-                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
-              >
-                <span className="flex items-center gap-3">
-                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">05</span>
-                  <span>About NIVAAS</span>
-                </span>
-                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'about' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
-                  →
-                </span>
-              </button>
-
-              {mobileExpanded === 'about' && (
-                <div className="pt-3 pb-4 px-2 space-y-2 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">About &amp; Credentials</span>
-                    <Link to="/about" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
-                      <span>Open Page</span>
-                      <Icons.ChevronRight size={12} />
-                    </Link>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Link to="/about" className="text-xs text-white/80 hover:text-white block py-1">About Indore House Maker's Story</Link>
-                    <Link to="/cost-estimator" className="text-xs text-white/80 hover:text-white block py-1">Cost Estimator Calculator</Link>
-                    <Link to="/guides" className="text-xs text-white/80 hover:text-white block py-1">Architectural Insights &amp; Vastu Guides</Link>
-                    <Link to="/contact" className="text-xs text-white/80 hover:text-white block py-1">Architect Consultation &amp; Booking</Link>
-                  </div>
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setFloatingMenu('about')}
+              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
+            >
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">05</span>
+                <span>About NIVAAS</span>
+              </span>
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                Explore →
+              </span>
+            </button>
 
             {/* 06 Help & FAQs */}
-            <div className="py-2">
-              <button
-                type="button"
-                onClick={() => toggleMobileCategory('faq')}
-                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
-              >
-                <span className="flex items-center gap-3">
-                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">06</span>
-                  <span>Help &amp; FAQs</span>
-                </span>
-                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'faq' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
-                  →
-                </span>
-              </button>
-
-              {mobileExpanded === 'faq' && (
-                <div className="pt-3 pb-4 px-2 space-y-2 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">Help Desk &amp; FAQs</span>
-                    <Link to="/faq" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
-                      <span>Open Page</span>
-                      <Icons.ChevronRight size={12} />
-                    </Link>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Link to="/faq" className="text-xs text-white/80 hover:text-white block py-1">Frequently Asked Questions</Link>
-                    <Link to="/contact" className="text-xs text-white/80 hover:text-white block py-1">Contact Customer Support</Link>
-                    <a href={`tel:${site.phone.replace(/\D/g, '')}`} className="text-xs text-[#E76F2E] hover:underline block py-1 font-semibold">
-                      Helpline: {site.phone}
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setFloatingMenu('faq')}
+              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
+            >
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">06</span>
+                <span>Help &amp; FAQs</span>
+              </span>
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                Explore →
+              </span>
+            </button>
           </div>
 
           {/* Popular Links */}
@@ -506,11 +345,21 @@ export default function Footer() {
           {/* Col 1: Architecture */}
           <div>
             <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
-              <Link to="/house-plans" className="flex items-center gap-1.5 hover:text-[#E76F2E] transition">
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('architecture')}
+                className="flex items-center gap-1.5 hover:text-[#E76F2E] transition cursor-pointer text-left font-bold"
+              >
                 <Icons.Blueprint size={13} className="text-[#E76F2E]" />
                 <span>Architecture</span>
-              </Link>
-              <Link to="/house-plans" className="text-[10px] text-[#E76F2E] hover:underline font-normal">All →</Link>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('architecture')}
+                className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
+              >
+                View All ⊞
+              </button>
             </h4>
             <div className="space-y-3 text-white/75">
               <div>
@@ -540,11 +389,21 @@ export default function Footer() {
           {/* Col 2: Interior */}
           <div>
             <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
-              <Link to="/interiors" className="flex items-center gap-1.5 hover:text-[#E76F2E] transition">
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('interior')}
+                className="flex items-center gap-1.5 hover:text-[#E76F2E] transition cursor-pointer text-left font-bold"
+              >
                 <Icons.Sofa size={13} className="text-[#E76F2E]" />
                 <span>Interior</span>
-              </Link>
-              <Link to="/interiors" className="text-[10px] text-[#E76F2E] hover:underline font-normal">All →</Link>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('interior')}
+                className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
+              >
+                View All ⊞
+              </button>
             </h4>
             <div className="space-y-3 text-white/75">
               <div>
@@ -573,11 +432,21 @@ export default function Footer() {
           {/* Col 3: Designs */}
           <div>
             <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
-              <Link to="/designs" className="flex items-center gap-1.5 hover:text-[#E76F2E] transition">
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('designs')}
+                className="flex items-center gap-1.5 hover:text-[#E76F2E] transition cursor-pointer text-left font-bold"
+              >
                 <Icons.Sparkles size={13} className="text-[#E76F2E]" />
                 <span>Designs</span>
-              </Link>
-              <Link to="/designs" className="text-[10px] text-[#E76F2E] hover:underline font-normal">All →</Link>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('designs')}
+                className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
+              >
+                View All ⊞
+              </button>
             </h4>
             <ul className="space-y-2 text-white/75">
               <li><Link to="/designs" className="hover:text-[#E76F2E] transition">3D Front Elevations</Link></li>
@@ -594,11 +463,21 @@ export default function Footer() {
           {/* Col 4: Services */}
           <div>
             <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
-              <Link to="/services" className="flex items-center gap-1.5 hover:text-[#E76F2E] transition">
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('services')}
+                className="flex items-center gap-1.5 hover:text-[#E76F2E] transition cursor-pointer text-left font-bold"
+              >
                 <Icons.HardHat size={13} className="text-[#E76F2E]" />
                 <span>Services</span>
-              </Link>
-              <Link to="/services" className="text-[10px] text-[#E76F2E] hover:underline font-normal">All →</Link>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('services')}
+                className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
+              >
+                View All ⊞
+              </button>
             </h4>
             <ul className="space-y-2 text-white/75">
               <li><Link to="/services" className="hover:text-[#E76F2E] transition">2D Architectural CAD</Link></li>
@@ -615,11 +494,21 @@ export default function Footer() {
           {/* Col 5: About & Guides */}
           <div>
             <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
-              <Link to="/about" className="flex items-center gap-1.5 hover:text-[#E76F2E] transition">
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('about')}
+                className="flex items-center gap-1.5 hover:text-[#E76F2E] transition cursor-pointer text-left font-bold"
+              >
                 <Icons.Building size={13} className="text-[#E76F2E]" />
                 <span>About &amp; Guides</span>
-              </Link>
-              <Link to="/guides" className="text-[10px] text-[#E76F2E] hover:underline font-normal">More →</Link>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('about')}
+                className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
+              >
+                View All ⊞
+              </button>
             </h4>
             <ul className="space-y-2 text-white/75">
               <li><Link to="/about" className="hover:text-[#E76F2E] transition font-medium text-white">About Indore House Maker's</Link></li>
@@ -662,6 +551,269 @@ export default function Footer() {
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* FLOATED MEGA MENU POPUP CARD ON CLICK (Matching Header Mega Menu)          */}
+      {/* ========================================================================= */}
+      {floatingMenu && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs animate-fadeIn"
+          onClick={() => setFloatingMenu(null)}
+        >
+          <div
+            className="bg-white text-[#292826] rounded-2xl shadow-2xl border border-[#E7E0D7] w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Floated Card Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#EEE9E3] bg-[#FAF8F5]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] flex items-center justify-center text-[#E76F2E]">
+                  {floatingMenu === 'architecture' && <Icons.Blueprint size={18} />}
+                  {floatingMenu === 'interior' && <Icons.Sofa size={18} />}
+                  {floatingMenu === 'designs' && <Icons.Sparkles size={18} />}
+                  {floatingMenu === 'services' && <Icons.HardHat size={18} />}
+                  {floatingMenu === 'about' && <Icons.Building size={18} />}
+                  {floatingMenu === 'faq' && <Icons.Compass size={18} />}
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-base sm:text-lg text-[#292826]">
+                    {floatingMenu === 'architecture' && 'Architecture & House Plans'}
+                    {floatingMenu === 'interior' && 'Interior Design Studio'}
+                    {floatingMenu === 'designs' && '3D Front Elevations & Design Gallery'}
+                    {floatingMenu === 'services' && 'Architectural & Engineering Services'}
+                    {floatingMenu === 'about' && 'About NIVAAS & Insights'}
+                    {floatingMenu === 'faq' && 'Help & Frequently Asked Questions'}
+                  </h3>
+                  <p className="text-[11px] text-[#74706A]">
+                    {floatingMenu === 'architecture' && 'Vastu-compliant layouts, modern styles, storey types & BHK floor plans'}
+                    {floatingMenu === 'interior' && 'Modular kitchens, living rooms, master bedrooms & pooja spaces'}
+                    {floatingMenu === 'designs' && 'Photorealistic 3D elevations, walkthroughs and modern facade concepts'}
+                    {floatingMenu === 'services' && 'End-to-end drawings, PMC site supervision & verified contractor network'}
+                    {floatingMenu === 'about' && 'India\'s leading residential architecture brand story & resources'}
+                    {floatingMenu === 'faq' && 'Answers to common questions, approvals, pricing & architect assistance'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Link
+                  to={
+                    floatingMenu === 'architecture'
+                      ? '/house-plans'
+                      : floatingMenu === 'interior'
+                      ? '/interiors'
+                      : floatingMenu === 'designs'
+                      ? '/designs'
+                      : floatingMenu === 'services'
+                      ? '/services'
+                      : floatingMenu === 'about'
+                      ? '/about'
+                      : '/faq'
+                  }
+                  onClick={() => setFloatingMenu(null)}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#E76F2E] text-white hover:bg-[#C65320] transition"
+                >
+                  <span>Open Full Page</span>
+                  <Icons.ChevronRight size={13} />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setFloatingMenu(null)}
+                  aria-label="Close menu"
+                  className="w-8 h-8 rounded-lg border border-[#E7E0D7] bg-white hover:bg-slate-100 flex items-center justify-center text-[#54504A] hover:text-[#292826] transition cursor-pointer"
+                >
+                  <Icons.Close size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Floated Card Body with 4-Column / Multi-Column Mega Menu */}
+            <div className="p-6 overflow-y-auto max-h-[calc(85vh-130px)]">
+              {floatingMenu === 'architecture' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {megaMenus.architecture.map((col) => (
+                    <div key={col.title} className="bg-[#FAF8F5] p-4 rounded-xl border border-[#E7E0D7]/70">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-[#292826] border-b border-[#E7E0D7] pb-2 mb-3 flex items-center gap-1.5">
+                        {col.title.includes('Style') ? <Icons.Building size={14} className="text-[#E76F2E]" /> : col.title.includes('Storey') || col.title.includes('Elevation') ? <Icons.Layers size={14} className="text-[#E76F2E]" /> : col.title.includes('Bedroom') ? <Icons.Bed size={14} className="text-[#E76F2E]" /> : <Icons.Compass size={14} className="text-[#E76F2E]" />}
+                        <span>{col.title}</span>
+                      </h4>
+                      <ul className="space-y-1.5 text-xs">
+                        {col.items.map((item) => (
+                          <li key={item.label}>
+                            <Link
+                              to={item.href}
+                              onClick={() => setFloatingMenu(null)}
+                              className="text-[#54504A] hover:text-[#E76F2E] hover:font-semibold flex items-center justify-between py-1 px-1.5 rounded hover:bg-white transition"
+                            >
+                              <span>{item.label}</span>
+                              {item.badge && (
+                                <span className="text-[9px] bg-[#FFF6E8] text-[#E76F2E] border border-[#E7E0D7] px-1.5 py-0.2 rounded font-bold">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {floatingMenu === 'interior' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {megaMenus.interior.map((col) => (
+                    <div key={col.title} className="bg-[#FAF8F5] p-4 rounded-xl border border-[#E7E0D7]/70">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-[#292826] border-b border-[#E7E0D7] pb-2 mb-3 flex items-center gap-1.5">
+                        <Icons.Home size={14} className="text-[#E76F2E]" />
+                        <span>{col.title}</span>
+                      </h4>
+                      <ul className="space-y-1.5 text-xs">
+                        {col.items.map((item) => (
+                          <li key={item.label}>
+                            <Link
+                              to={item.href}
+                              onClick={() => setFloatingMenu(null)}
+                              className="text-[#54504A] hover:text-[#E76F2E] hover:font-semibold flex items-center justify-between py-1 px-1.5 rounded hover:bg-white transition"
+                            >
+                              <span>{item.label}</span>
+                              {item.badge && (
+                                <span className="text-[9px] bg-[#FFF6E8] text-[#E76F2E] border border-[#E7E0D7] px-1.5 py-0.2 rounded font-bold">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {floatingMenu === 'designs' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {megaMenus.designIdeas.map((idea) => (
+                    <Link
+                      key={idea.label}
+                      to={idea.href}
+                      onClick={() => setFloatingMenu(null)}
+                      className="p-4 rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] hover:bg-white hover:border-[#E76F2E] transition group flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="text-sm font-bold text-[#292826] group-hover:text-[#E76F2E] flex items-center justify-between">
+                          <span>{idea.label}</span>
+                          <span className="text-xs text-[#E76F2E]">→</span>
+                        </div>
+                        <p className="text-xs text-[#74706A] mt-1.5 leading-relaxed">{idea.desc}</p>
+                      </div>
+                      <div className="mt-3 pt-2 border-t border-[#E7E0D7]/60 text-[10px] font-bold text-[#E76F2E]">
+                        Explore Designs →
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              {floatingMenu === 'services' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {megaMenus.otherServices.map((srv) => (
+                    <Link
+                      key={srv.label}
+                      to={srv.href}
+                      onClick={() => setFloatingMenu(null)}
+                      className="p-4 rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] hover:bg-white hover:border-[#E76F2E] transition group flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="text-sm font-bold text-[#292826] group-hover:text-[#E76F2E] flex items-center justify-between">
+                          <span>{srv.label}</span>
+                          <span className="text-xs text-[#E76F2E]">→</span>
+                        </div>
+                        <p className="text-xs text-[#74706A] mt-1.5 leading-relaxed">{srv.desc}</p>
+                      </div>
+                      <div className="mt-3 pt-2 border-t border-[#E7E0D7]/60 text-[10px] font-bold text-[#E76F2E]">
+                        Book Service →
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              {floatingMenu === 'about' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Link
+                    to="/about"
+                    onClick={() => setFloatingMenu(null)}
+                    className="p-4 rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] hover:bg-white hover:border-[#E76F2E] transition group"
+                  >
+                    <h4 className="text-sm font-bold text-[#292826] group-hover:text-[#E76F2E]">About Indore House Maker's</h4>
+                    <p className="text-xs text-[#74706A] mt-1">Transforming Indian residential architecture with AI blueprints and verified trades.</p>
+                  </Link>
+                  <Link
+                    to="/cost-estimator"
+                    onClick={() => setFloatingMenu(null)}
+                    className="p-4 rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] hover:bg-white hover:border-[#E76F2E] transition group"
+                  >
+                    <h4 className="text-sm font-bold text-[#292826] group-hover:text-[#E76F2E]">Cost Estimator 2026</h4>
+                    <p className="text-xs text-[#74706A] mt-1">Instant construction rate calculations, material pricing and budget breakdown.</p>
+                  </Link>
+                  <Link
+                    to="/guides"
+                    onClick={() => setFloatingMenu(null)}
+                    className="p-4 rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] hover:bg-white hover:border-[#E76F2E] transition group"
+                  >
+                    <h4 className="text-sm font-bold text-[#292826] group-hover:text-[#E76F2E]">Vastu Rules &amp; Bylaws Guides</h4>
+                    <p className="text-xs text-[#74706A] mt-1">Practical zoning guides written by certified architects and structural engineers.</p>
+                  </Link>
+                  <Link
+                    to="/contact"
+                    onClick={() => setFloatingMenu(null)}
+                    className="p-4 rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] hover:bg-white hover:border-[#E76F2E] transition group"
+                  >
+                    <h4 className="text-sm font-bold text-[#292826] group-hover:text-[#E76F2E]">Consult Senior Architects</h4>
+                    <p className="text-xs text-[#74706A] mt-1">Book a 1-on-1 virtual design session for custom floor plans and 3D elevations.</p>
+                  </Link>
+                </div>
+              )}
+
+              {floatingMenu === 'faq' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Link
+                    to="/faq"
+                    onClick={() => setFloatingMenu(null)}
+                    className="p-4 rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] hover:bg-white hover:border-[#E76F2E] transition group"
+                  >
+                    <h4 className="text-sm font-bold text-[#292826] group-hover:text-[#E76F2E]">Frequently Asked Questions</h4>
+                    <p className="text-xs text-[#74706A] mt-1">Everything about CAD deliverables, delivery timelines, municipal permits &amp; pricing.</p>
+                  </Link>
+                  <Link
+                    to="/contact"
+                    onClick={() => setFloatingMenu(null)}
+                    className="p-4 rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] hover:bg-white hover:border-[#E76F2E] transition group"
+                  >
+                    <h4 className="text-sm font-bold text-[#292826] group-hover:text-[#E76F2E]">Customer Support Desk</h4>
+                    <p className="text-xs text-[#74706A] mt-1">Talk to our project coordinators directly via phone or WhatsApp for quick resolution.</p>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Floated Card Bottom Bar */}
+            <div className="px-6 py-3 border-t border-[#EEE9E3] bg-[#FAF8F5] flex items-center justify-between text-xs text-[#74706A]">
+              <span>Press <kbd className="px-1.5 py-0.5 rounded bg-white border border-[#E7E0D7] text-[10px] font-mono">Esc</kbd> to close</span>
+              <button
+                type="button"
+                onClick={() => setFloatingMenu(null)}
+                className="text-xs font-bold text-[#E76F2E] hover:underline cursor-pointer"
+              >
+                Close Menu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Warm-White Inset Band: Ask AI About Indore House Maker's + Connect With Indore House Maker's */}
       <section
