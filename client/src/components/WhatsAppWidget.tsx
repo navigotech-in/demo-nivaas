@@ -5,11 +5,16 @@ import { Icons } from './Icons'
 interface WhatsAppWidgetProps {
   onOpenConsult?: (query?: string) => void
   onOpenAiStudio?: () => void
+  sheetOpen?: boolean
 }
 
-export default function WhatsAppWidget({ onOpenAiStudio }: WhatsAppWidgetProps) {
+export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false }: WhatsAppWidgetProps) {
   const [openChat, setOpenChat] = useState(false)
   const [chatMessage, setChatMessage] = useState('')
+
+  if (sheetOpen) {
+    return null
+  }
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,7 +36,10 @@ export default function WhatsAppWidget({ onOpenAiStudio }: WhatsAppWidgetProps) 
   return (
     <>
       {/* Unified Floating Sticky Actions (AI + WhatsApp) */}
-      <div id="floating-whatsapp-actions" className="fixed bottom-4 right-3 sm:bottom-6 sm:right-5 z-[999999] flex flex-col items-end gap-2.5 pointer-events-auto select-none">
+      <div
+        id="floating-whatsapp-actions"
+        className="fixed bottom-[calc(72px+env(safe-area-inset-bottom))] md:bottom-22 lg:bottom-6 right-3 sm:right-5 z-[99970] flex flex-col items-end gap-2.5 pointer-events-auto select-none transition-all duration-200"
+      >
         {/* Chat Popover Window */}
         {openChat && (
           <div className="w-[300px] sm:w-[360px] rounded-2xl bg-white shadow-2xl border border-[#E7E0D7] overflow-hidden animate-fadeIn text-[#292826] mb-1">

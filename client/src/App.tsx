@@ -1,6 +1,7 @@
 import { useState, lazy, Suspense } from 'react'
 import Nav from './components/Nav'
 import Hero from './components/Hero'
+import ResponsiveBottomNav from './components/ResponsiveBottomNav'
 import WhatsAppWidget from './components/WhatsAppWidget'
 import { useSeoMeta } from './components/useSeoMeta'
 
@@ -34,6 +35,7 @@ function App() {
   const [loginOpen, setLoginOpen] = useState(false)
   const [estimateOpen, setEstimateOpen] = useState(false)
   const [aiStudioOpen, setAiStudioOpen] = useState(false)
+  const [exploreSheetOpen, setExploreSheetOpen] = useState(false)
   const [aiStudioMode, setAiStudioMode] = useState<'generator' | 'chat'>('generator')
   const [selectedRequirement, setSelectedRequirement] = useState<string | undefined>()
   const [selectedPlanDetails, setSelectedPlanDetails] = useState<string | undefined>()
@@ -170,10 +172,19 @@ function App() {
         </Suspense>
       </main>
 
+      {/* Responsive Bottom Navigation (0–767px Mobile Full-Width Bar, 768–1023px Tablet Dock, Hidden on Desktop 1024px+) */}
+      <ResponsiveBottomNav
+        onOpenConsult={handleOpenConsult}
+        onOpenAiStudio={() => handleOpenAiStudio('generator')}
+        aiStudioOpen={aiStudioOpen}
+        onSheetStateChange={setExploreSheetOpen}
+      />
+
       {/* Floating Sticky Actions (AI Assistant + WhatsApp Support) */}
       <WhatsAppWidget
         onOpenConsult={handleOpenConsult}
         onOpenAiStudio={() => handleOpenAiStudio('generator')}
+        sheetOpen={exploreSheetOpen}
       />
 
       {/* Modals Loaded On-Demand */}
