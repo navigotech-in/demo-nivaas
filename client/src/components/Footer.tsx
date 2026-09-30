@@ -209,315 +209,185 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Main Footer Links Container */}
-      <div className="container-content py-12 lg:py-16">
-        {/* ========================================================================= */}
-        {/* MOBILE VIEW: "Editorial Index" with Rich Floated Card on Click            */}
-        {/* ========================================================================= */}
-        <div className="block lg:hidden">
-          {/* Brand Header */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2">
-              <Icons.NivaasMark className="h-5 w-5 text-[#C94F36] shrink-0" />
-              <h4 className="font-display font-black text-lg text-white tracking-tight">
-                {site.name}
-              </h4>
-            </div>
-            <p className="mt-1.5 text-xs text-white/70 leading-relaxed max-w-sm">
-              India's premier AI-powered architecture &amp; residential home design platform.
-            </p>
-          </div>
-
-          {/* Numbered Interactive Editorial Rows that open Floated Card on Click */}
-          <div className="divide-y divide-white/10 border-y border-white/10">
-            {/* 01 Architecture */}
-            <button
-              type="button"
-              onClick={() => setFloatingMenu('architecture')}
-              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">01</span>
-                <span>Architecture</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
-                Explore →
-              </span>
-            </button>
-
-            {/* 02 Interiors */}
-            <button
-              type="button"
-              onClick={() => setFloatingMenu('interior')}
-              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">02</span>
-                <span>Interiors</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
-                Explore →
-              </span>
-            </button>
-
-            {/* 03 Designs */}
-            <button
-              type="button"
-              onClick={() => setFloatingMenu('designs')}
-              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">03</span>
-                <span>Designs</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
-                Explore →
-              </span>
-            </button>
-
-            {/* 04 Services */}
-            <button
-              type="button"
-              onClick={() => setFloatingMenu('services')}
-              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">04</span>
-                <span>Services</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
-                Explore →
-              </span>
-            </button>
-
-            {/* 05 About NIVAAS */}
-            <button
-              type="button"
-              onClick={() => setFloatingMenu('about')}
-              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">05</span>
-                <span>About NIVAAS</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
-                Explore →
-              </span>
-            </button>
-
-            {/* 06 Help & FAQs */}
-            <button
-              type="button"
-              onClick={() => setFloatingMenu('faq')}
-              className="w-full flex items-center justify-between py-3.5 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer text-left"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">06</span>
-                <span>Help &amp; FAQs</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
-                Explore →
-              </span>
-            </button>
-          </div>
-
-          {/* Popular Links */}
-          <div className="mt-6 pt-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#E76F2E] block mb-2">
-              POPULAR LINKS
-            </span>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-white/75 font-medium">
-              <Link to="/house-plans" className="hover:text-[#E76F2E] transition">House Plans</Link>
-              <span className="text-white/30">·</span>
-              <Link to="/cost-estimator" className="hover:text-[#E76F2E] transition">Cost Estimator</Link>
-              <span className="text-white/30">·</span>
-              <Link to="/guides" className="hover:text-[#E76F2E] transition">Guides</Link>
-              <span className="text-white/30">·</span>
-              <Link to="/contact" className="hover:text-[#E76F2E] transition">Contact</Link>
-            </div>
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* DESKTOP VIEW: 6-Column Full Directory (Clean & Standard)                  */}
-        {/* ========================================================================= */}
-        <div className="hidden lg:grid grid-cols-6 gap-8 text-xs text-white/80">
-          {/* Col 1: Architecture */}
-          <div>
-            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setFloatingMenu('architecture')}
-                className="flex items-center gap-1.5 hover:text-[#E76F2E] transition cursor-pointer text-left font-bold"
-              >
-                <Icons.Blueprint size={13} className="text-[#E76F2E]" />
-                <span>Architecture</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFloatingMenu('architecture')}
-                className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
-              >
-                Explore ⊞
-              </button>
-            </h4>
-            <ul className="space-y-2 text-white/75">
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">30 x 50 House Plans</Link></li>
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">20 x 40 House Plans</Link></li>
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">25 x 40 House Plans</Link></li>
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">40 x 60 Luxury Villas</Link></li>
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">G+1 Duplex Plans</Link></li>
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">100% Vastu Blueprints</Link></li>
-            </ul>
-          </div>
-
-          {/* Col 2: Interior */}
-          <div>
-            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setFloatingMenu('interior')}
-                className="flex items-center gap-1.5 hover:text-[#E76F2E] transition cursor-pointer text-left font-bold"
-              >
-                <Icons.Sofa size={13} className="text-[#E76F2E]" />
-                <span>Interior</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFloatingMenu('interior')}
-                className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
-              >
-                Explore ⊞
-              </button>
-            </h4>
-            <ul className="space-y-2 text-white/75">
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Modular Kitchens</Link></li>
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Luxury Living Rooms</Link></li>
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Master Bedroom Suites</Link></li>
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Pooja Room Mandirs</Link></li>
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Wardrobe &amp; Storage</Link></li>
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">3D Interior Renders</Link></li>
-            </ul>
-          </div>
-
-          {/* Col 3: Designs */}
-          <div>
-            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setFloatingMenu('designs')}
-                className="flex items-center gap-1.5 hover:text-[#E76F2E] transition cursor-pointer text-left font-bold"
-              >
-                <Icons.Sparkles size={13} className="text-[#E76F2E]" />
-                <span>Designs</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFloatingMenu('designs')}
-                className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
-              >
-                View All ⊞
-              </button>
-            </h4>
-            <ul className="space-y-2 text-white/75">
-              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">3D Front Elevations</Link></li>
-              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Modern Duplex Elevations</Link></li>
-              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Tropical Kerala Roofs</Link></li>
-              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Contemporary CNC Jaali</Link></li>
-              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Neoclassical Villas</Link></li>
-              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Exterior Facade Lighting</Link></li>
-              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">3D Walkthrough Videos</Link></li>
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Terrace Garden Layouts</Link></li>
-            </ul>
-          </div>
-
-          {/* Col 4: Services */}
-          <div>
-            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setFloatingMenu('services')}
-                className="flex items-center gap-1.5 hover:text-[#E76F2E] transition cursor-pointer text-left font-bold"
-              >
-                <Icons.HardHat size={13} className="text-[#E76F2E]" />
-                <span>Services</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFloatingMenu('services')}
-                className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
-              >
-                View All ⊞
-              </button>
-            </h4>
-            <ul className="space-y-2 text-white/75">
-              <li><Link to="/services" className="hover:text-[#E76F2E] transition">2D Architectural CAD</Link></li>
-              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Structural Working Drawings</Link></li>
-              <li><Link to="/services" className="hover:text-[#E76F2E] transition">PMC &amp; Site Supervision</Link></li>
-              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Astro-Vastu Consultation</Link></li>
-              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Municipal By-Laws Support</Link></li>
-              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Verified Contractor Network</Link></li>
-              <li><Link to="/contact" className="hover:text-[#E76F2E] transition">Turnkey Construction</Link></li>
-              <li><Link to="/contact" className="hover:text-[#E76F2E] transition">Home Loan Assistance</Link></li>
-            </ul>
-          </div>
-
-          {/* Col 5: About & Guides */}
-          <div>
-            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setFloatingMenu('about')}
-                className="flex items-center gap-1.5 hover:text-[#E76F2E] transition cursor-pointer text-left font-bold"
-              >
-                <Icons.Building size={13} className="text-[#E76F2E]" />
-                <span>About &amp; Guides</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFloatingMenu('about')}
-                className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
-              >
-                View All ⊞
-              </button>
-            </h4>
-            <ul className="space-y-2 text-white/75">
-              <li><Link to="/about" className="hover:text-[#E76F2E] transition font-medium text-white">About Indore House Maker's</Link></li>
-              <li><Link to="/cost-estimator" className="hover:text-[#E76F2E] transition">Cost Estimator 2026</Link></li>
-              <li><Link to="/guides" className="hover:text-[#E76F2E] transition">Vastu Rules &amp; Guides</Link></li>
-              <li><Link to="/about" className="hover:text-[#E76F2E] transition">Client Video Stories</Link></li>
-              <li><Link to="/faq" className="hover:text-[#E76F2E] transition">Help &amp; FAQs</Link></li>
-              <li><Link to="/contact" className="hover:text-[#E76F2E] transition">Contact Architects</Link></li>
-              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Architect Directory</Link></li>
-            </ul>
-          </div>
-
-          {/* Col 6: Helpline */}
-          <div>
-            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
-              <Icons.Phone size={13} className="text-[#E76F2E]" />
-              <span>Design Helpline</span>
-            </h4>
-            <div className="space-y-2 text-white/75">
-              <p className="font-bold text-xs text-white">{site.phone}</p>
-              <p className="text-[10.5px] text-white/60">{site.operatingHours}</p>
-              <p className="pt-1 text-white/60 flex items-center gap-1.5 text-[11px]">
-                <Icons.Mail size={12} className="text-[#E76F2E]" />
-                <span>{site.email}</span>
+      {/* Main Footer Links Container: Editorial Index Layout */}
+      <div className="container-content py-10 lg:py-14">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          {/* Brand Column & Quick Contact (5 Cols on Desktop) */}
+          <div className="lg:col-span-5 space-y-6">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <Icons.NivaasMark className="h-6 w-6 text-[#E76F2E] shrink-0" />
+                <h4 className="font-display font-black text-xl text-white tracking-tight">
+                  {site.name}
+                </h4>
+              </div>
+              <p className="mt-2 text-xs sm:text-sm text-white/70 leading-relaxed max-w-md">
+                India's premier AI-powered architecture &amp; residential home design platform. Creating intelligent Vastu blueprints, photorealistic 3D elevations, and turnkey construction.
               </p>
-              <p className="text-white/60 flex items-center gap-1.5 text-[11px]">
-                <Icons.MapPin size={12} className="text-[#E76F2E]" />
-                <span>{site.city}</span>
-              </p>
-              <div className="pt-2">
+            </div>
+
+            {/* Helpline / Direct Contact Card */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2.5 text-xs text-white/80 max-w-md">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E76F2E]">Design Helpline</span>
+                <span className="text-[10px] text-white/50">{site.operatingHours}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-white/90">
+                <span className="font-bold text-white flex items-center gap-1.5">
+                  <Icons.Phone size={13} className="text-[#E76F2E]" />
+                  <span>{site.phone}</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-white/70">
+                  <Icons.MapPin size={13} className="text-[#E76F2E]" />
+                  <span>{site.city}</span>
+                </span>
+              </div>
+              <div className="pt-1 flex items-center gap-2">
                 <Link
                   to="/contact"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#E76F2E] text-white text-[11px] font-bold hover:bg-[#C65320] transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E76F2E] text-white text-[11px] font-bold hover:bg-[#C65320] transition cursor-pointer"
                 >
                   <Icons.Sparkles size={12} />
                   <span>Book Free Consultation</span>
                 </Link>
+                <Link
+                  to="/cost-estimator"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white text-[11px] font-medium hover:bg-white/15 transition cursor-pointer"
+                >
+                  <Icons.Calculator size={12} />
+                  <span>Cost Estimator</span>
+                </Link>
               </div>
+            </div>
+
+            {/* Popular Links */}
+            <div className="pt-1">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#E76F2E] block mb-2">
+                POPULAR LINKS
+              </span>
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs text-white/75 font-medium">
+                <Link to="/house-plans" className="hover:text-[#E76F2E] transition">House Plans</Link>
+                <span className="text-white/30">·</span>
+                <Link to="/cost-estimator" className="hover:text-[#E76F2E] transition">Cost Estimator</Link>
+                <span className="text-white/30">·</span>
+                <Link to="/guides" className="hover:text-[#E76F2E] transition">Guides</Link>
+                <span className="text-white/30">·</span>
+                <Link to="/about" className="hover:text-[#E76F2E] transition">About Us</Link>
+                <span className="text-white/30">·</span>
+                <Link to="/faq" className="hover:text-[#E76F2E] transition">FAQs</Link>
+                <span className="text-white/30">·</span>
+                <Link to="/contact" className="hover:text-[#E76F2E] transition">Contact</Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Editorial Index Numbered Rows (7 Cols on Desktop) */}
+          <div className="lg:col-span-7">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">
+                DIRECTORY INDEX
+              </span>
+              <span className="text-[10px] text-white/40">
+                Click any section to view full categories ⊞
+              </span>
+            </div>
+
+            <div className="divide-y divide-white/10 border-y border-white/10">
+              {/* 01 Architecture */}
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('architecture')}
+                className="w-full flex items-center justify-between py-4 px-2 text-sm sm:text-base font-bold text-white hover:text-[#E76F2E] hover:bg-white/[0.02] transition group cursor-pointer text-left"
+              >
+                <span className="flex items-center gap-3.5">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E] w-6">01</span>
+                  <span>Architecture &amp; House Plans</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                  <span>Explore 480+ Plans</span>
+                  <span>→</span>
+                </span>
+              </button>
+
+              {/* 02 Interiors */}
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('interior')}
+                className="w-full flex items-center justify-between py-4 px-2 text-sm sm:text-base font-bold text-white hover:text-[#E76F2E] hover:bg-white/[0.02] transition group cursor-pointer text-left"
+              >
+                <span className="flex items-center gap-3.5">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E] w-6">02</span>
+                  <span>Interiors Studio</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                  <span>Modular &amp; Luxury</span>
+                  <span>→</span>
+                </span>
+              </button>
+
+              {/* 03 Designs */}
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('designs')}
+                className="w-full flex items-center justify-between py-4 px-2 text-sm sm:text-base font-bold text-white hover:text-[#E76F2E] hover:bg-white/[0.02] transition group cursor-pointer text-left"
+              >
+                <span className="flex items-center gap-3.5">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E] w-6">03</span>
+                  <span>3D Front Elevations &amp; Facades</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                  <span>Design Ideas</span>
+                  <span>→</span>
+                </span>
+              </button>
+
+              {/* 04 Services */}
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('services')}
+                className="w-full flex items-center justify-between py-4 px-2 text-sm sm:text-base font-bold text-white hover:text-[#E76F2E] hover:bg-white/[0.02] transition group cursor-pointer text-left"
+              >
+                <span className="flex items-center gap-3.5">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E] w-6">04</span>
+                  <span>Architectural &amp; Turnkey Services</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                  <span>CAD &amp; PMC</span>
+                  <span>→</span>
+                </span>
+              </button>
+
+              {/* 05 About NIVAAS */}
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('about')}
+                className="w-full flex items-center justify-between py-4 px-2 text-sm sm:text-base font-bold text-white hover:text-[#E76F2E] hover:bg-white/[0.02] transition group cursor-pointer text-left"
+              >
+                <span className="flex items-center gap-3.5">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E] w-6">05</span>
+                  <span>About Indore House Maker's</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                  <span>Our Story</span>
+                  <span>→</span>
+                </span>
+              </button>
+
+              {/* 06 Help & FAQs */}
+              <button
+                type="button"
+                onClick={() => setFloatingMenu('faq')}
+                className="w-full flex items-center justify-between py-4 px-2 text-sm sm:text-base font-bold text-white hover:text-[#E76F2E] hover:bg-white/[0.02] transition group cursor-pointer text-left"
+              >
+                <span className="flex items-center gap-3.5">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E] w-6">06</span>
+                  <span>Help &amp; Frequently Asked Questions</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                  <span>Support Desk</span>
+                  <span>→</span>
+                </span>
+              </button>
             </div>
           </div>
         </div>
