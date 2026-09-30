@@ -4,7 +4,8 @@ import { Icons } from './Icons'
 
 export interface ResponsiveBottomNavProps {
   onOpenConsult: (req?: string) => void
-  onOpenAiStudio: () => void
+  onOpenAiStudio: (mode?: 'generator' | 'chat') => void
+  onOpenLogin?: () => void
   aiStudioOpen?: boolean
   onSheetStateChange?: (isOpen: boolean) => void
 }
@@ -14,6 +15,7 @@ type NavTab = 'home' | 'designs' | 'estimate' | 'ai' | 'menu'
 export default function ResponsiveBottomNav({
   onOpenConsult,
   onOpenAiStudio,
+  onOpenLogin,
   aiStudioOpen = false,
   onSheetStateChange,
 }: ResponsiveBottomNavProps) {
@@ -88,7 +90,7 @@ export default function ResponsiveBottomNav({
     } else if (tab === 'ai') {
       setActiveTab('ai')
       setExploreSheetOpen(false)
-      onOpenAiStudio()
+      onOpenAiStudio('chat')
     } else if (tab === 'menu') {
       setExploreSheetOpen((prev) => !prev)
     }
@@ -96,12 +98,12 @@ export default function ResponsiveBottomNav({
 
   const sheetLinks = [
     { label: 'Architecture & House Plans', href: '/house-plans', icon: Icons.Blueprint },
-    { label: 'Interiors', href: '/interiors', icon: Icons.Sofa },
+    { label: 'Interiors Studio', href: '/interiors', icon: Icons.Sofa },
     { label: '3D Elevation & Designs', href: '/designs', icon: Icons.Sparkles },
     { label: 'Services & Contractors', href: '/services', icon: Icons.HardHat },
     { label: 'Cost Estimator', href: '/cost-estimator', icon: Icons.Calculator },
     { label: 'Guides & Articles', href: '/guides', icon: Icons.FileText },
-    { label: 'About Us', href: '/about', icon: Icons.Building },
+    { label: 'About Indore House Makers', href: '/about', icon: Icons.Building },
     { label: 'Help & FAQs', href: '/faq', icon: Icons.HelpCircle },
     { label: 'Contact & Support', href: '/contact', icon: Icons.Phone },
   ]
@@ -110,7 +112,7 @@ export default function ResponsiveBottomNav({
     { id: 'home' as NavTab, label: 'Home', icon: Icons.House, ariaLabel: 'Go to home page' },
     { id: 'designs' as NavTab, label: 'Designs', icon: Icons.LayoutGrid, ariaLabel: 'Explore house designs & blueprints' },
     { id: 'estimate' as NavTab, label: 'Estimate', icon: Icons.Calculator, ariaLabel: 'Construction cost estimator' },
-    { id: 'ai' as NavTab, label: 'AI', icon: Icons.Sparkles, ariaLabel: 'Open Indore House Makers AI planner' },
+    { id: 'ai' as NavTab, label: 'AI', icon: Icons.Sparkles, ariaLabel: 'Open Indore House Makers AI assistant' },
     { id: 'menu' as NavTab, label: 'Menu', icon: Icons.Menu, ariaLabel: 'Open Explore menu' },
   ]
 
@@ -138,20 +140,25 @@ export default function ResponsiveBottomNav({
         aria-label="Explore Menu"
         className={`fixed z-[99995] bg-[#FDFCF9] text-[#292826] transition-transform duration-250 ease-out lg:hidden flex flex-col shadow-2xl ${
           // Mobile: Full width bottom sheet
-          'inset-x-0 bottom-0 w-full max-h-[85dvh] rounded-t-lg border-t border-[#E7E0D7] ' +
+          'inset-x-0 bottom-0 w-full max-h-[88dvh] rounded-t-2xl border-t border-[#E7E0D7] ' +
           // Tablet: Centered compact floating sheet
-          'md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:w-[92%] md:max-w-[620px] md:rounded-lg md:border md:border-[#E7E0D7]'
+          'md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:w-[92%] md:max-w-[620px] md:rounded-2xl md:border md:border-[#E7E0D7]'
         } ${exploreSheetOpen ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-full opacity-0 pointer-events-none'}`}
       >
         {/* Drag Handle & Header */}
-        <div className="shrink-0 pt-2.5 px-4 pb-3 border-b border-[#EEE9E3]">
+        <div className="shrink-0 pt-2.5 px-4 pb-3 border-b border-[#EEE9E3] bg-white rounded-t-2xl">
           <div className="w-10 h-1 bg-[#E7E0D7] rounded-full mx-auto mb-2" aria-hidden="true" />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Icons.NivaasMark className="h-5 w-5 text-[#C94F36] shrink-0" />
-              <h3 className="font-display font-black text-base sm:text-lg text-[#292725] tracking-tight">
-                Explore Indore House Makers
-              </h3>
+              <Icons.NivaasMark className="h-5.5 w-5.5 text-[#C94F36] shrink-0" />
+              <div className="flex flex-col">
+                <h3 className="font-display font-black text-sm sm:text-base text-[#292725] tracking-tight leading-tight">
+                  Indore House Makers
+                </h3>
+                <span className="text-[7.5px] font-bold text-[#54504A] tracking-wider leading-none">
+                  AI-POWERED ARCHITECTURE
+                </span>
+              </div>
             </div>
             <button
               type="button"
@@ -168,7 +175,7 @@ export default function ResponsiveBottomNav({
         </div>
 
         {/* Scrollable Navigation Links */}
-        <div className="flex-1 overflow-y-auto px-4 py-2 divide-y divide-[#EEE9E3]/70">
+        <div className="flex-1 overflow-y-auto px-3.5 py-2 divide-y divide-[#EEE9E3]/70">
           {sheetLinks.map((item) => {
             const IconComp = item.icon
             return (
@@ -176,7 +183,7 @@ export default function ResponsiveBottomNav({
                 key={item.label}
                 to={item.href}
                 onClick={() => setExploreSheetOpen(false)}
-                className="flex items-center justify-between py-3.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#C94F36] transition group"
+                className="flex items-center justify-between py-3 px-2 rounded-xl text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#C94F36] transition group"
               >
                 <span className="flex items-center gap-3">
                   <span className="h-8 w-8 rounded-lg bg-[#FFF6E8] text-[#C94F36] flex items-center justify-center shrink-0 border border-[#E7E0D7]/60">
@@ -185,27 +192,83 @@ export default function ResponsiveBottomNav({
                   <span>{item.label}</span>
                 </span>
                 <Icons.ChevronRight
-                  size={16}
+                  size={15}
                   className="text-[#74706A] group-hover:text-[#C94F36] group-hover:translate-x-0.5 transition-transform"
                 />
               </Link>
             )
           })}
+
+          {/* User Account Login & Register Link */}
+          {onOpenLogin && (
+            <button
+              type="button"
+              onClick={() => {
+                setExploreSheetOpen(false)
+                onOpenLogin()
+              }}
+              className="w-full flex items-center justify-between py-3 px-2 rounded-xl text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition group text-left cursor-pointer"
+            >
+              <span className="flex items-center gap-3">
+                <span className="h-8 w-8 rounded-lg bg-[#FFF6E8] text-[#E76F2E] flex items-center justify-center shrink-0 border border-[#E7E0D7]/60">
+                  <Icons.User size={16} />
+                </span>
+                <span className="flex items-center gap-2">
+                  <span>User Login / Register</span>
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-[#FFF6E8] text-[#E76F2E] border border-[#E76F2E]/30">
+                    Account
+                  </span>
+                </span>
+              </span>
+              <Icons.ChevronRight
+                size={15}
+                className="text-[#74706A] group-hover:text-[#E76F2E] group-hover:translate-x-0.5 transition-transform"
+              />
+            </button>
+          )}
         </div>
 
-        {/* Bottom Primary CTA */}
-        <div className="p-4 border-t border-[#EEE9E3] bg-[#FAF8F5] shrink-0">
-          <button
-            type="button"
-            onClick={() => {
-              setExploreSheetOpen(false)
-              onOpenConsult()
-            }}
-            className="w-full py-3 px-4 rounded-lg bg-[#C94F36] hover:bg-[#B33E26] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md active:scale-[0.98] cursor-pointer"
-          >
-            <span>Book Free Consultation</span>
-            <Icons.ChevronRight size={16} />
-          </button>
+        {/* Bottom Primary Actions Card (Ask AI, Consult, Login) */}
+        <div className="p-3.5 border-t border-[#EEE9E3] bg-[#FAF8F5] shrink-0 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setExploreSheetOpen(false)
+                onOpenAiStudio('chat')
+              }}
+              className="py-2.5 px-3 rounded-xl border border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E] font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-[#E76F2E] hover:text-white transition shadow-xs cursor-pointer active:scale-[0.98]"
+            >
+              <Icons.Sparkles size={13} />
+              <span>Ask AI Studio</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setExploreSheetOpen(false)
+                onOpenConsult()
+              }}
+              className="py-2.5 px-3 rounded-xl bg-[#C94F36] hover:bg-[#B33E26] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs active:scale-[0.98] cursor-pointer"
+            >
+              <Icons.Phone size={12} />
+              <span>Consultation</span>
+            </button>
+          </div>
+
+          {onOpenLogin && (
+            <button
+              type="button"
+              onClick={() => {
+                setExploreSheetOpen(false)
+                onOpenLogin()
+              }}
+              className="w-full py-2 rounded-xl border border-[#E7E0D7] bg-white text-[#54504A] hover:text-[#292826] font-semibold text-xs text-center hover:bg-[#FFF6E8] transition cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <Icons.User size={13} className="text-[#E76F2E]" />
+              <span>User Profile (Login / Sign Up)</span>
+            </button>
+          )}
         </div>
       </div>
 

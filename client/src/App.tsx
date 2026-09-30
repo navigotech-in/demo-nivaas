@@ -151,7 +151,8 @@ function App() {
       {/* Responsive Bottom Navigation (0–767px Mobile Full-Width Bar, 768–1023px Tablet Dock, Hidden on Desktop 1024px+) */}
       <ResponsiveBottomNav
         onOpenConsult={handleOpenConsult}
-        onOpenAiStudio={() => handleOpenAiStudio('generator')}
+        onOpenAiStudio={(mode = 'chat') => handleOpenAiStudio(mode)}
+        onOpenLogin={() => setLoginOpen(true)}
         aiStudioOpen={aiStudioOpen}
         onSheetStateChange={setExploreSheetOpen}
       />
@@ -159,7 +160,7 @@ function App() {
       {/* Floating Sticky Actions (AI Assistant + WhatsApp Support) */}
       <WhatsAppWidget
         onOpenConsult={handleOpenConsult}
-        onOpenAiStudio={() => handleOpenAiStudio('generator')}
+        onOpenAiStudio={() => handleOpenAiStudio('chat')}
         sheetOpen={exploreSheetOpen}
         modalOpen={consultOpen || loginOpen || estimateOpen || aiStudioOpen || exploreSheetOpen}
       />

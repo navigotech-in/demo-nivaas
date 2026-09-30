@@ -402,6 +402,27 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
                   <span>→</span>
                 </span>
               </Link>
+
+              {/* 07 User Account & Login */}
+              {onOpenLogin && (
+                <button
+                  type="button"
+                  onClick={onOpenLogin}
+                  className="w-full flex items-center justify-between py-4 px-2 text-sm sm:text-base font-bold text-white hover:text-[#E76F2E] hover:bg-white/[0.02] transition group text-left cursor-pointer"
+                >
+                  <span className="flex items-center gap-3.5">
+                    <span className="font-mono text-xs font-semibold text-[#E76F2E] w-6">07</span>
+                    <span className="flex items-center gap-2">
+                      <Icons.User size={16} className="text-[#E76F2E]" />
+                      <span>User Account (Login / Sign Up)</span>
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                    <span>Access Plans &amp; Dashboard</span>
+                    <span>→</span>
+                  </span>
+                </button>
+              )}
             </div>
           </div>
         </div>

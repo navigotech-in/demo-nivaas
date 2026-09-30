@@ -379,18 +379,22 @@ export default function NivaasAiStudio({
     setTimeout(() => {
       setChatTyping(false)
       const qLower = q.toLowerCase()
-      let reply = 'I can help you customize floor plans, calculate setbacks, review Vastu directions, or recommend 3D front elevations. You can also generate your complete plan in 30 seconds using the "AI Plan Generator" tab!'
+      let reply = 'I can help you customize 2D floor plans, verify Vastu alignments, estimate construction costs in Indore, or recommend 3D elevation designs. You can also generate a custom 2D/3D concept in the "AI Plan Generator" tab!'
 
-      if (/(price|cost|budget|rate|lakh)/i.test(qLower)) {
-        reply = `For your ${isRegular ? `${plotWidth}x${plotDepth} ft` : 'irregular'} plot (~${builtUpArea} sq.ft built-up), the estimated construction budget is ₹${estimatedCostLakhs} Lakhs at ${materialGrade.split(' ')[0]} grade${!isRegular ? ' (including irregular geometry framing adjustments)' : ''}. Indore House Makers design packages start at ₹4,999 for full 2D CAD working drawings.`
+      if (/(299|plan pack|credit|subscription|package|pricing)/i.test(qLower)) {
+        reply = `✨ Indore House Makers AI Starter Plan (₹299 / month):\n• 5 Full AI Design Generations per billing cycle\n• High-Resolution 2D CAD Layouts with Room Dimensions\n• Area Statements, Built-up & Carpet Area Summary\n• Photorealistic 3D Front Elevation Renders\n• Watermark-free PDF & PNG Downloads\n• 1 Free Plan Regeneration within 7 days\n\n📌 Note: All designs are conceptual recommendations. Construction requires verification by a licensed architect/structural engineer.`
+      } else if (/(price|cost|budget|rate|lakh|estimate|sq\.? ?ft)/i.test(qLower)) {
+        reply = `💰 Estimated Construction Cost for Indore & MP Region:\n• Standard Economy: ₹1,550 – ₹1,750 / sq.ft\n• Premium Executive: ₹2,100 – ₹2,450 / sq.ft (Most Popular)\n• Luxury Ultra: ₹2,900 – ₹3,500 / sq.ft\n\nFor your ${isRegular ? `${plotWidth}x${plotDepth} ft` : 'selected'} plot (~${builtUpArea} sq.ft built-up), the estimated construction budget is approx ₹${estimatedCostLakhs} Lakhs.`
+      } else if (/(30x50|20x40|20x50|30x60|plot|dimension|size)/i.test(qLower)) {
+        reply = `📐 Recommended Layout for ${q.toUpperCase()}:\n• Configuration: 3 BHK / 4 BHK G+1 Duplex with Car Parking\n• Ground Floor: Living Room, Master Bedroom with Attached Toilet, Kitchen in SE (Agneya), Pooja in NE (Ishanya)\n• First Floor: 2 Bedrooms, Family Lounge, Balcony & Open Terrace\n• Switch to the "AI Plan Generator" tab above to generate this exact dimensioned floor plan!`
       } else if (/(irregular|asymmetric|cut|shape|l-shape|corner|trap)/i.test(qLower)) {
-        reply = `For irregular plots, Indore House Makers AI calculates an 18% standard setback buffer and suggests placing utility or landscaping buffers in non-90° corner cuts. This ensures 100% Vastu compliance and optimal room proportions!`
-      } else if (/(vastu|vaastu|direction|mandir|pooja|kitchen)/i.test(qLower)) {
-        reply = `For ${plotDirection} facing plots, Vastu recommends placing the Pooja Mandir in the North-East (Ishan), Kitchen in South-East (Agneya), and the Master Bedroom in South-West (Nairutya). Our AI engine auto-aligns all these zones!`
-      } else if (/(3d|elevation|facade|exterior|render)/i.test(qLower)) {
-        reply = `Our ultra-realistic 3D elevations feature day and twilight lighting modes with HPL wooden louvers, CNC jali accents, and ambient warm LED profiles. You can preview them instantly in the "AI Plan Generator" tab!`
-      } else if (/(talk|architect|call|contact|consult)/i.test(qLower)) {
-        reply = `Our Senior Architects are available for a 1-on-1 virtual consultation. Click "Book Free Architect Review" or call us at ${site.phone} to discuss your exact site requirements.`
+        reply = `📐 Irregular Plot Planning Engine:\nIndore House Makers AI automatically computes setback buffers (18% standard deduction) and converts non-90° corner cuts into landscaped green pockets, ventilation shafts, or utility zones. This ensures 100% Vastu compliance and square interior living spaces!`
+      } else if (/(vastu|vaastu|direction|mandir|pooja|kitchen|north|east|south|west)/i.test(qLower)) {
+        reply = `🧭 100% Vastu Shastra Guidelines:\n• Pooja Mandir: North-East (Ishanya) — Most sacred corner\n• Kitchen: South-East (Agneya) or North-West (Vayavya)\n• Master Bedroom: South-West (Nairutya) for stability\n• Staircase: South or West (Clockwise rotation)\n• Main Entrance: North or East (Positive energy zones)`
+      } else if (/(3d|elevation|facade|exterior|render|night|light)/i.test(qLower)) {
+        reply = `🏛️ 3D Front Elevation Styles:\n• Modern Indian Duplex (Warm wooden textures + ambient profile LEDs)\n• Contemporary Jaali & Stone Cladding (Perforated CNC screens)\n• Kerala Tropical Sloped Roof with Mangalore tiles\n• Classical Spanish Villa with arched balconies\n\nAll 3D elevations feature Day and Twilight lighting modes with material breakdowns!`
+      } else if (/(talk|architect|call|contact|consult|callback|phone)/i.test(qLower)) {
+        reply = `📞 Connect with Indore House Makers Chief Architect:\nOur senior architectural consultants are available for 1-on-1 review calls.\n• Helpline: ${site.phone}\n• Email: ${site.email}\n• You can click "Book Free Consultation" to schedule an instant callback.`
       }
 
       setChatMessages((prev) => [
@@ -401,7 +405,7 @@ export default function NivaasAiStudio({
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ])
-    }, 700)
+    }, 600)
   }
 
   const handleSharePlan = () => {
@@ -443,7 +447,13 @@ export default function NivaasAiStudio({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1A1815]/75 backdrop-blur-sm p-2 sm:p-4 animate-fadeIn">
-      <div className="relative w-full max-w-4xl h-[92vh] max-h-[850px] bg-white rounded-2xl shadow-2xl border border-[#E7E0D7] flex flex-col overflow-hidden text-[#292826]">
+      <div
+        className={`relative w-full bg-white rounded-2xl shadow-2xl border border-[#E7E0D7] flex flex-col overflow-hidden text-[#292826] transition-all duration-300 ${
+          activeTab === 'chat'
+            ? 'max-w-md sm:max-w-xl h-[84vh] sm:h-[580px] max-h-[600px]'
+            : 'max-w-3xl lg:max-w-4xl h-[88vh] max-h-[780px]'
+        }`}
+      >
         {/* Top Header */}
         <header className="shrink-0 bg-white border-b border-[#EEE9E3] px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -453,14 +463,23 @@ export default function NivaasAiStudio({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-display font-extrabold text-base tracking-tight text-[#292826]">
-                  Indore House Makers <span className="text-[#C94F36]">AI Architect</span> Studio
+                  Indore House Makers <span className="text-[#C94F36]">{activeTab === 'chat' ? 'AI Design Desk' : 'AI Architect Studio'}</span>
                 </span>
-                <span className="hidden sm:inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#FFF6E8] text-[#C65320] border border-[#E76F2E]/20 rounded-full">
-                  {isRegular ? '20-Step Regular Flow' : '23-Step Asymmetric Engine'}
-                </span>
+                {activeTab === 'generator' ? (
+                  <span className="hidden sm:inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#FFF6E8] text-[#C65320] border border-[#E76F2E]/20 rounded-full">
+                    {isRegular ? '20-Step Regular Flow' : '23-Step Asymmetric Engine'}
+                  </span>
+                ) : (
+                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Online • Instant AI Answers
+                  </span>
+                )}
               </div>
               <p className="text-[11px] text-[#54504A]">
-                India's First AI Engine for Regular &amp; Asymmetric Plots with 100% Vastu
+                {activeTab === 'chat'
+                  ? 'Ask any question on 2D house plans, Vastu directions, 3D facades & turnkey cost estimation in Indore'
+                  : "India's First AI Engine for Regular & Asymmetric Plots with 100% Vastu"}
               </p>
             </div>
           </div>
@@ -2619,32 +2638,134 @@ export default function NivaasAiStudio({
         )}
 
         {/* ========================================================= */}
-        {/* TAB 2: ASK AI ASSISTANT */}
+        {/* TAB 2: ASK AI ARCHITECTURE & DESIGN DESK                   */}
         {/* ========================================================= */}
         {activeTab === 'chat' && (
           <div className="flex-1 flex flex-col min-h-0 bg-[#FDFCF9]">
-            <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 text-xs sm:text-sm">
+            {/* Messages Scroll Area */}
+            <div className="flex-1 p-3 sm:p-5 overflow-y-auto space-y-3.5 text-xs sm:text-sm">
+              {/* Compact Architect Welcome Card (Shown when conversation has few messages) */}
+              {chatMessages.length <= 2 && (
+                <div className="p-3 sm:p-3.5 rounded-xl bg-white border border-[#E7E0D7] shadow-xs text-[#292826] space-y-2.5 animate-fadeIn">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#E76F2E] to-[#C94F36] flex items-center justify-center text-white font-extrabold shadow-xs">
+                        <Icons.Sparkles size={16} />
+                      </div>
+                      <div>
+                        <h4 className="font-display font-extrabold text-xs sm:text-sm text-[#292826] leading-tight">
+                          Indore House Makers AI Design Desk
+                        </h4>
+                        <p className="text-[10px] sm:text-[10.5px] text-[#54504A]">
+                          Floor plans, Vastu Shastra &amp; Indore construction estimates
+                        </p>
+                      </div>
+                    </div>
+                    <span className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[9.5px] font-bold border border-emerald-200 shrink-0">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Active
+                    </span>
+                  </div>
+
+                  {/* Capability Quick Pills (2x2 Compact Grid) */}
+                  <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => handleSendChat('30x50 East Facing Vastu Plan')}
+                      className="p-2 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:border-[#E76F2E] hover:bg-[#FFF6E8] text-left transition group cursor-pointer"
+                    >
+                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1">
+                        <span>📐</span> <span>2D House Plans</span>
+                      </div>
+                      <div className="text-[9.5px] text-[#54504A] mt-0.5">30x50, 20x40 layouts</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSendChat('Vastu rules for Kitchen and Pooja room')}
+                      className="p-2 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:border-[#E76F2E] hover:bg-[#FFF6E8] text-left transition group cursor-pointer"
+                    >
+                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1">
+                        <span>🧭</span> <span>100% Vastu Shastra</span>
+                      </div>
+                      <div className="text-[9.5px] text-[#54504A] mt-0.5">Kitchen &amp; Mandir rules</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSendChat('Construction cost for 1500 sq.ft in Indore')}
+                      className="p-2 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:border-[#E76F2E] hover:bg-[#FFF6E8] text-left transition group cursor-pointer"
+                    >
+                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1">
+                        <span>💰</span> <span>Cost Estimator</span>
+                      </div>
+                      <div className="text-[9.5px] text-[#54504A] mt-0.5">Indore material rates</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSendChat('What is included in the ₹299 AI Plan?')}
+                      className="p-2 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:border-[#E76F2E] hover:bg-[#FFF6E8] text-left transition group cursor-pointer"
+                    >
+                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1">
+                        <span>✨</span> <span>₹299 AI Plan</span>
+                      </div>
+                      <div className="text-[9.5px] text-[#54504A] mt-0.5">5 Credits • CAD &amp; 3D</div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Message List */}
               {chatMessages.map((msg, idx) => (
                 <div
                   key={idx}
                   className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
                 >
                   {msg.from === 'bot' && (
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#E76F2E] text-[11px] font-extrabold text-white mr-2.5 mt-0.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E76F2E] to-[#C94F36] text-white text-[11px] font-extrabold mr-2.5 mt-0.5 shadow-xs">
                       AI
-                    </span>
+                    </div>
                   )}
                   <div
-                    className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 shadow-sm leading-relaxed ${
+                    className={`max-w-[88%] sm:max-w-[80%] rounded-2xl p-3.5 sm:p-4 shadow-xs leading-relaxed ${
                       msg.from === 'user'
-                        ? 'bg-[#E76F2E] text-white rounded-tr-none'
-                        : 'bg-white text-[#292826] border border-[#EEE9E3] rounded-tl-none whitespace-pre-line'
+                        ? 'bg-[#E76F2E] text-white rounded-tr-none font-medium'
+                        : 'bg-white text-[#292826] border border-[#E7E0D7] rounded-tl-none whitespace-pre-line'
                     }`}
                   >
-                    <div>{msg.text}</div>
+                    <div className="text-xs sm:text-[13px]">{msg.text}</div>
+                    
+                    {/* Bot Message Contextual Action Buttons */}
+                    {msg.from === 'bot' && (
+                      <div className="mt-3 pt-2.5 border-t border-[#EEE9E3] flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('generator')}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FFF6E8] border border-[#E76F2E]/30 text-[#C65320] hover:bg-[#E76F2E] hover:text-white transition text-[11px] font-bold cursor-pointer"
+                        >
+                          <Icons.Blueprint size={12} />
+                          <span>Launch 20-Step AI Plan Generator</span>
+                        </button>
+                        {onOpenConsult && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose()
+                              onOpenConsult('AI Assistant Consultation Request')
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F4EFEA] border border-[#E7E0D7] text-[#54504A] hover:text-[#292826] hover:bg-[#E7E0D7] transition text-[11px] font-semibold cursor-pointer"
+                          >
+                            <Icons.Phone size={11} />
+                            <span>Book Architect Call</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     <div
                       className={`text-[9px] mt-1.5 text-right ${
-                        msg.from === 'user' ? 'text-white/70' : 'text-[#54504A]'
+                        msg.from === 'user' ? 'text-white/80' : 'text-[#54504A]'
                       }`}
                     >
                       {msg.time}
@@ -2653,53 +2774,69 @@ export default function NivaasAiStudio({
                 </div>
               ))}
 
+              {/* Typing Indicator */}
               {chatTyping && (
-                <div className="flex items-center gap-1.5 p-3 rounded-2xl bg-white border border-[#EEE9E3] w-fit shadow-xs">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#E76F2E] animate-bounce" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#E76F2E] animate-bounce [animation-delay:150ms]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#E76F2E] animate-bounce [animation-delay:300ms]" />
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E76F2E] to-[#C94F36] text-white text-[11px] font-extrabold shadow-xs">
+                    AI
+                  </div>
+                  <div className="flex items-center gap-1.5 p-3 rounded-2xl rounded-tl-none bg-white border border-[#E7E0D7] shadow-xs">
+                    <span className="h-2 w-2 rounded-full bg-[#E76F2E] animate-bounce" />
+                    <span className="h-2 w-2 rounded-full bg-[#E76F2E] animate-bounce [animation-delay:150ms]" />
+                    <span className="h-2 w-2 rounded-full bg-[#E76F2E] animate-bounce [animation-delay:300ms]" />
+                    <span className="text-[11px] text-[#54504A] ml-1.5 font-medium">Analyzing design rules...</span>
+                  </div>
                 </div>
               )}
               <div ref={chatBottomRef} />
             </div>
 
-            <div className="px-4 py-2 bg-white border-t border-[#EEE9E3] flex flex-wrap gap-1.5">
+            {/* Quick Suggestion Chips */}
+            <div className="px-3 sm:px-4 py-2 bg-white border-t border-[#EEE9E3] flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <span className="text-[10px] font-bold uppercase text-[#54504A] shrink-0 mr-1 flex items-center gap-1">
+                <Icons.Sparkles size={11} className="text-[#E76F2E]" /> Quick:
+              </span>
               {[
-                `Cost to build on irregular plot?`,
-                `Vastu remedies for corner-cut plot`,
-                `Can I upload a survey map?`,
-                `Talk to Chief Architect`,
+                { label: '📐 30x50 East Plan', query: '30x50 East Facing House Plan recommendation' },
+                { label: '💰 Indore Construction Cost', query: 'Construction cost for 1500 sq.ft in Indore' },
+                { label: '🧭 Vastu for Mandir & Kitchen', query: 'Vastu directions for Mandir and Kitchen' },
+                { label: '✨ What is in ₹299 Plan?', query: 'What is included in the ₹299 AI Plan?' },
+                { label: '🏛️ Modern Duplex 3D Elevation', query: 'Modern 3D Front Elevation designs' },
+                { label: '📞 Speak with Architect', query: 'I want to talk to an architect' },
               ].map((s) => (
                 <button
-                  key={s}
+                  key={s.label}
                   type="button"
-                  onClick={() => handleSendChat(s)}
-                  className="rounded-lg border border-[#E76F2E]/30 bg-[#FFF6E8] px-2.5 py-1 text-[11px] font-semibold text-[#C65320] hover:bg-[#E76F2E]/20 transition"
+                  onClick={() => handleSendChat(s.query)}
+                  className="shrink-0 rounded-lg border border-[#E7E0D7] bg-[#FAF8F5] hover:border-[#E76F2E] hover:bg-[#FFF6E8] px-2.5 py-1 text-[11px] font-semibold text-[#292826] hover:text-[#E76F2E] transition cursor-pointer active:scale-95"
                 >
-                  {s}
+                  {s.label}
                 </button>
               ))}
             </div>
 
+            {/* Chat Input Bar */}
             <form
               onSubmit={(e) => {
                 e.preventDefault()
                 handleSendChat(chatInput)
               }}
-              className="p-3 sm:p-4 bg-white border-t border-[#EEE9E3] flex gap-2"
+              className="p-2.5 sm:p-3 bg-white border-t border-[#EEE9E3] flex gap-2 items-center"
             >
               <input
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask about irregular plots, setback rules, Vastu remedies or rates..."
-                className="flex-1 px-4 py-3 rounded-xl border border-[#E7E0D7] text-xs sm:text-sm outline-none focus:ring-2 focus:ring-[#E76F2E] bg-[#FDFCF9]"
+                placeholder="Ask about plot sizes (30x50, 20x40), Vastu directions, ₹299 plan or rates..."
+                className="flex-1 px-3.5 py-2.5 sm:py-3 rounded-xl border border-[#E7E0D7] text-xs sm:text-sm outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20 bg-[#FDFCF9] transition"
               />
               <button
                 type="submit"
-                className="px-5 py-3 rounded-xl bg-[#E76F2E] text-white font-bold text-xs sm:text-sm hover:bg-[#C65320] transition shadow-sm"
+                disabled={!chatInput.trim()}
+                className="px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-[#E76F2E] text-white font-bold text-xs sm:text-sm hover:bg-[#C65320] transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 shrink-0"
               >
-                Send
+                <span>Send</span>
+                <Icons.ChevronRight size={14} />
               </button>
             </form>
           </div>
