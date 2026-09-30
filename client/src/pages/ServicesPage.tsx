@@ -122,24 +122,52 @@ export default function ServicesPage({ onOpenConsult }: ServicesPageProps) {
 
           <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {contractorTrades.map((c) => (
-              <div key={c.title} className="bg-white rounded-lg border border-[#E7E0D7] p-3.5 shadow-xs flex flex-col justify-between">
-                <div>
-                  <div className="h-28 rounded-md overflow-hidden bg-[#FAF8F5] mb-2.5">
-                    <img src={c.image} alt={c.title} className="h-full w-full object-cover" />
-                  </div>
-                  <h3 className="font-bold text-xs text-[#292826]">{c.title}</h3>
-                  <p className="text-[10px] text-[#74706A] mt-1 leading-snug">{c.desc}</p>
+              <article
+                key={c.title}
+                onClick={() => onOpenConsult(`Contractor: ${c.title}`)}
+                className="group relative h-[240px] sm:h-[260px] overflow-hidden rounded-xl border border-[#E7E0D7] bg-[#292826] shadow-xs transition-all duration-300 hover:border-[#C94F36]/60 hover:shadow-card hover:-translate-y-1 cursor-pointer flex flex-col justify-between"
+              >
+                {/* Full Background Image */}
+                <div className="absolute inset-0 overflow-hidden">
+                  <img
+                    src={c.image}
+                    alt={c.title}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 ease-out saturate-[1.1] group-hover:scale-108"
+                  />
+                  {/* Transparent Dark Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#1F1E1C]/95 via-[#1F1E1C]/40 to-black/20 transition-colors group-hover:via-[#1F1E1C]/50" />
                 </div>
-                <div className="mt-3 pt-2 border-t border-[#EEE9E3]">
+
+                {/* Top Badge: Verified Trade */}
+                <div className="relative z-10 p-3 sm:p-3.5 flex items-start justify-between">
+                  <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider backdrop-blur-md bg-black/60 border border-white/20 text-white">
+                    <Icons.HardHat size={11} className="text-[#C94F36]" />
+                    Verified
+                  </span>
+                </div>
+
+                {/* Bottom Transparent Overlay */}
+                <div className="relative z-10 p-3.5 text-white">
+                  <h3 className="font-display text-xs sm:text-sm font-bold leading-snug text-white transition-colors group-hover:text-[#FFA366] line-clamp-1">
+                    {c.title}
+                  </h3>
+                  <p className="mt-1 line-clamp-2 text-[10px] sm:text-[11px] leading-relaxed text-white/80">
+                    {c.desc}
+                  </p>
                   <button
                     type="button"
-                    onClick={() => onOpenConsult(`Contractor: ${c.title}`)}
-                    className="w-full text-center text-xs font-bold text-[#C94F36] hover:underline cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onOpenConsult(`Contractor: ${c.title}`)
+                    }}
+                    className="mt-2.5 inline-flex w-full items-center justify-center gap-1 rounded-lg bg-[#C94F36] px-2.5 py-1.5 text-[11px] font-bold text-white shadow-md transition hover:bg-[#B33E26] active:scale-[0.98] cursor-pointer group/btn"
                   >
-                    Hire Trade →
+                    <span>Hire Trade</span>
+                    <Icons.ChevronRight size={12} className="transition-transform group-hover/btn:translate-x-0.5" />
                   </button>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         </div>

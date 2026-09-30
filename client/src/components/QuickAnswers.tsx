@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { quickAnswers } from '../lib/data'
 import { Icons } from './Icons'
 
@@ -25,19 +26,19 @@ export default function QuickAnswers({ onOpenConsult }: QuickAnswersProps) {
           {quickAnswers.map((qa) => (
             <div key={qa.q} className="flex flex-col justify-between rounded-lg border border-[#E7E0D7] bg-white p-5 shadow-sm transition-all hover:shadow-card-hover hover:border-[#E7E0D7]">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E76F2E] bg-[#F1ECE5] px-2.5 py-0.5 rounded-lg inline-block border border-[#E7E0D7]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#C94F36] bg-[#FFF6E8] px-2.5 py-0.5 rounded-lg inline-block border border-[#E7E0D7]">
                   {qa.tag}
                 </span>
                 <h3 className="mt-3 font-display text-sm font-bold text-[#292826] leading-snug">{qa.q}</h3>
                 <p className="mt-2 text-xs text-[#54504A] leading-relaxed">{qa.a}</p>
               </div>
-              <a
-                href="#faq"
-                className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-[#E76F2E] hover:text-[#292826] transition"
+              <Link
+                to="/faq"
+                className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-[#C94F36] hover:text-[#292826] transition"
               >
-                <span>See full FAQ</span>
+                <span>Read in FAQ</span>
                 <Icons.ChevronRight size={12} />
-              </a>
+              </Link>
             </div>
           ))}
         </div>

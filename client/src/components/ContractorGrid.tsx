@@ -45,49 +45,52 @@ export default function ContractorGrid({ onOpenConsult }: ContractorGridProps) {
 
         <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {contractorTrades.map((trade) => (
-            <div
+            <article
               key={trade.title}
-              className="text-left flex flex-col rounded-xl border border-[#E7E0D7] bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg hover:border-[#E76F2E] group"
+              onClick={() => handleTradeClick(trade.title)}
+              className="group relative h-[240px] sm:h-[260px] overflow-hidden rounded-xl border border-[#E7E0D7] bg-[#292826] shadow-xs transition-all duration-300 hover:border-[#C94F36]/60 hover:shadow-card hover:-translate-y-1 cursor-pointer flex flex-col justify-between"
             >
-              {/* Image Container with Smooth Zoom */}
-              <div
-                className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 cursor-pointer"
-                onClick={() => handleTradeClick(trade.title)}
-              >
+              {/* Full Background Image */}
+              <div className="absolute inset-0 overflow-hidden">
                 <Img
                   src={trade.image || 'https://images.pexels.com/photos/585419/pexels-photo-585419.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop'}
                   alt={trade.title}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-108"
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-700 ease-out saturate-[1.1] group-hover:scale-108"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 group-hover:opacity-30 transition-opacity" />
+                {/* Transparent Dark Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1F1E1C]/95 via-[#1F1E1C]/40 to-black/20 transition-colors group-hover:via-[#1F1E1C]/50" />
               </div>
 
-              {/* Body */}
-              <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between bg-transparent">
-                <div>
-                  <h3
-                    onClick={() => handleTradeClick(trade.title)}
-                    className="font-display text-xs sm:text-sm font-bold text-[#292826] leading-snug cursor-pointer mb-1.5 truncate"
-                  >
-                    {trade.title}
-                  </h3>
-                  <p className="text-[11px] text-[#54504A] leading-relaxed line-clamp-2">
-                    {trade.desc}
-                  </p>
-                </div>
-
-                <div className="mt-3.5 pt-2.5 border-t border-[#EEE9E3]">
-                  <button
-                    type="button"
-                    onClick={() => handleTradeClick(trade.title)}
-                    className="w-full py-1.5 px-3 rounded-lg bg-[#E76F2E] text-white text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-[#C65320] transition shadow-xs cursor-pointer active:scale-[0.98]"
-                  >
-                    <span>Book Now</span>
-                    <Icons.ChevronRight size={13} className="transform group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                </div>
+              {/* Top Badge: Verified Trade */}
+              <div className="relative z-10 p-3 sm:p-3.5 flex items-start justify-between">
+                <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider backdrop-blur-md bg-black/60 border border-white/20 text-white">
+                  <Icons.HardHat size={11} className="text-[#C94F36]" />
+                  Verified
+                </span>
               </div>
-            </div>
+
+              {/* Bottom Transparent Overlay: Title, Desc, and Action */}
+              <div className="relative z-10 p-3.5 text-white">
+                <h3 className="font-display text-xs sm:text-sm font-bold leading-snug text-white transition-colors group-hover:text-[#FFA366] line-clamp-1">
+                  {trade.title}
+                </h3>
+                <p className="mt-1 line-clamp-2 text-[10px] sm:text-[11px] leading-relaxed text-white/80">
+                  {trade.desc}
+                </p>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleTradeClick(trade.title)
+                  }}
+                  className="mt-2.5 inline-flex w-full items-center justify-center gap-1 rounded-lg bg-[#C94F36] px-2.5 py-1.5 text-[11px] font-bold text-white shadow-md transition hover:bg-[#B33E26] active:scale-[0.98] cursor-pointer group/btn"
+                >
+                  <span>Hire Trade</span>
+                  <Icons.ChevronRight size={12} className="transition-transform group-hover/btn:translate-x-0.5" />
+                </button>
+              </div>
+            </article>
           ))}
         </div>
       </div>
