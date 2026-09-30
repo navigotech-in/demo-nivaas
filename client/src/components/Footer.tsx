@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { site, paymentPartners } from '../lib/data'
+import { site } from '../lib/data'
 import { Icons } from './Icons'
 
 const AI_PROMPT = `Using the official Indore House Maker's website at https://indorehousemakers.in and its verified services, explain its house plans, 3D elevations, interior-design services, construction-cost estimator, 3D walkthroughs and consultation options. Summarise the services and tell me how to get started. Use only information available on the official website.`
@@ -128,7 +128,6 @@ const socialPlatforms: SocialPlatform[] = rawSocialPlatforms.filter((s) => Boole
 
 export default function Footer() {
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null)
-  const [openFooterMenu, setOpenFooterMenu] = useState<string | null>(null)
 
   const handleAiClick = async (platform: AiPlatform) => {
     try {
@@ -190,201 +189,208 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Main Footer Links (Headings by default, click to expand data) */}
-      <div className="container-content py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 text-xs text-white/80">
-          {/* Col 1: Architecture */}
-          <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden transition-all">
-            <button
-              type="button"
-              onClick={() => setOpenFooterMenu(openFooterMenu === 'arch' ? null : 'arch')}
-              className="w-full flex items-center justify-between p-3.5 text-left font-bold uppercase tracking-wider text-white text-[11.5px] hover:bg-white/10 transition cursor-pointer"
+      {/* Main Footer Links Container */}
+      <div className="container-content py-12 lg:py-16">
+        {/* ========================================================================= */}
+        {/* MOBILE VIEW: "Editorial Index" (Short, readable, numbered full-width rows) */}
+        {/* ========================================================================= */}
+        <div className="block lg:hidden">
+          {/* Brand Header */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2">
+              <Icons.NivaasMark className="h-5 w-5 text-[#C94F36] shrink-0" />
+              <h4 className="font-display font-black text-lg text-white tracking-tight">
+                {site.name}
+              </h4>
+            </div>
+            <p className="mt-1.5 text-xs text-white/70 leading-relaxed max-w-sm">
+              India's premier AI-powered architecture &amp; residential home design platform.
+            </p>
+          </div>
+
+          {/* Numbered Full-Width Editorial Rows */}
+          <div className="divide-y divide-white/10 border-y border-white/10">
+            <a
+              href="#plans"
+              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
             >
-              <span className="flex items-center gap-2">
-                <Icons.Blueprint size={14} className="text-[#E76F2E]" />
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">01</span>
                 <span>Architecture</span>
               </span>
-              <Icons.ChevronDown
-                size={14}
-                className={`text-white/60 transition-transform duration-200 ${
-                  openFooterMenu === 'arch' ? 'rotate-180 text-[#E76F2E]' : ''
-                }`}
-              />
-            </button>
-            {openFooterMenu === 'arch' && (
-              <div className="p-3.5 pt-1 border-t border-white/10 animate-fadeIn">
-                <ul className="space-y-2 text-white/75">
-                  <li><a href="#plans" className="hover:text-[#E76F2E] transition block py-0.5">30 x 50 House Plans</a></li>
-                  <li><a href="#plans" className="hover:text-[#E76F2E] transition block py-0.5">20 x 40 House Plans</a></li>
-                  <li><a href="#plans" className="hover:text-[#E76F2E] transition block py-0.5">25 x 40 House Plans</a></li>
-                  <li><a href="#plans" className="hover:text-[#E76F2E] transition block py-0.5">40 x 60 Luxury Villas</a></li>
-                  <li><a href="#plans" className="hover:text-[#E76F2E] transition block py-0.5">G+1 Duplex Plans</a></li>
-                  <li><a href="#plans" className="hover:text-[#E76F2E] transition block py-0.5">100% Vastu Blueprints</a></li>
-                </ul>
-              </div>
-            )}
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
+            </a>
+            <a
+              href="#interiors"
+              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
+            >
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">02</span>
+                <span>Interiors</span>
+              </span>
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
+            </a>
+            <a
+              href="#elevations"
+              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
+            >
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">03</span>
+                <span>Designs</span>
+              </span>
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
+            </a>
+            <a
+              href="#services"
+              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
+            >
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">04</span>
+                <span>Services</span>
+              </span>
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
+            </a>
+            <a
+              href="#about"
+              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
+            >
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">05</span>
+                <span>About NIVAAS</span>
+              </span>
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
+            </a>
+            <a
+              href="#faq"
+              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
+            >
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold text-[#E76F2E]">06</span>
+                <span>Help &amp; FAQs</span>
+              </span>
+              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
+            </a>
+          </div>
+
+          {/* Popular Links */}
+          <div className="mt-6 pt-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#E76F2E] block mb-2">
+              POPULAR LINKS
+            </span>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-white/75 font-medium">
+              <a href="#plans" className="hover:text-[#E76F2E] transition">House Plans</a>
+              <span className="text-white/30">·</span>
+              <a href="#calculator" className="hover:text-[#E76F2E] transition">Cost Estimator</a>
+              <span className="text-white/30">·</span>
+              <a href="#blog" className="hover:text-[#E76F2E] transition">Guides</a>
+              <span className="text-white/30">·</span>
+              <a href="#contact" className="hover:text-[#E76F2E] transition">Contact</a>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* DESKTOP VIEW: 6-Column Full Directory                                     */}
+        {/* ========================================================================= */}
+        <div className="hidden lg:grid grid-cols-6 gap-8 text-xs text-white/80">
+          {/* Col 1: Architecture */}
+          <div>
+            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
+              <Icons.Blueprint size={13} className="text-[#E76F2E]" />
+              <span>Architecture</span>
+            </h4>
+            <ul className="space-y-2 text-white/75">
+              <li><a href="#plans" className="hover:text-[#E76F2E] transition">30 x 50 House Plans</a></li>
+              <li><a href="#plans" className="hover:text-[#E76F2E] transition">20 x 40 House Plans</a></li>
+              <li><a href="#plans" className="hover:text-[#E76F2E] transition">25 x 40 House Plans</a></li>
+              <li><a href="#plans" className="hover:text-[#E76F2E] transition">40 x 60 Luxury Villas</a></li>
+              <li><a href="#plans" className="hover:text-[#E76F2E] transition">G+1 Duplex Plans</a></li>
+              <li><a href="#plans" className="hover:text-[#E76F2E] transition">100% Vastu Blueprints</a></li>
+            </ul>
           </div>
 
           {/* Col 2: Interior */}
-          <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden transition-all">
-            <button
-              type="button"
-              onClick={() => setOpenFooterMenu(openFooterMenu === 'interior' ? null : 'interior')}
-              className="w-full flex items-center justify-between p-3.5 text-left font-bold uppercase tracking-wider text-white text-[11.5px] hover:bg-white/10 transition cursor-pointer"
-            >
-              <span className="flex items-center gap-2">
-                <Icons.Sofa size={14} className="text-[#E76F2E]" />
-                <span>Interior</span>
-              </span>
-              <Icons.ChevronDown
-                size={14}
-                className={`text-white/60 transition-transform duration-200 ${
-                  openFooterMenu === 'interior' ? 'rotate-180 text-[#E76F2E]' : ''
-                }`}
-              />
-            </button>
-            {openFooterMenu === 'interior' && (
-              <div className="p-3.5 pt-1 border-t border-white/10 animate-fadeIn">
-                <ul className="space-y-2 text-white/75">
-                  <li><a href="#interiors" className="hover:text-[#E76F2E] transition block py-0.5">Modular Kitchens</a></li>
-                  <li><a href="#interiors" className="hover:text-[#E76F2E] transition block py-0.5">Luxury Living Rooms</a></li>
-                  <li><a href="#interiors" className="hover:text-[#E76F2E] transition block py-0.5">Master Bedroom Suites</a></li>
-                  <li><a href="#interiors" className="hover:text-[#E76F2E] transition block py-0.5">Pooja Room Mandirs</a></li>
-                  <li><a href="#interiors" className="hover:text-[#E76F2E] transition block py-0.5">Wardrobe &amp; Storage</a></li>
-                  <li><a href="#interiors" className="hover:text-[#E76F2E] transition block py-0.5">3D Interior Renders</a></li>
-                </ul>
-              </div>
-            )}
+          <div>
+            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
+              <Icons.Sofa size={13} className="text-[#E76F2E]" />
+              <span>Interior</span>
+            </h4>
+            <ul className="space-y-2 text-white/75">
+              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">Modular Kitchens</a></li>
+              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">Luxury Living Rooms</a></li>
+              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">Master Bedroom Suites</a></li>
+              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">Pooja Room Mandirs</a></li>
+              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">Wardrobe &amp; Storage</a></li>
+              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">3D Interior Renders</a></li>
+            </ul>
           </div>
 
           {/* Col 3: Designs */}
-          <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden transition-all">
-            <button
-              type="button"
-              onClick={() => setOpenFooterMenu(openFooterMenu === 'designs' ? null : 'designs')}
-              className="w-full flex items-center justify-between p-3.5 text-left font-bold uppercase tracking-wider text-white text-[11.5px] hover:bg-white/10 transition cursor-pointer"
-            >
-              <span className="flex items-center gap-2">
-                <Icons.Sparkles size={14} className="text-[#E76F2E]" />
-                <span>Designs</span>
-              </span>
-              <Icons.ChevronDown
-                size={14}
-                className={`text-white/60 transition-transform duration-200 ${
-                  openFooterMenu === 'designs' ? 'rotate-180 text-[#E76F2E]' : ''
-                }`}
-              />
-            </button>
-            {openFooterMenu === 'designs' && (
-              <div className="p-3.5 pt-1 border-t border-white/10 animate-fadeIn">
-                <ul className="space-y-2 text-white/75">
-                  <li><a href="#elevations" className="hover:text-[#E76F2E] transition block py-0.5">3D Front Elevations</a></li>
-                  <li><a href="#elevations" className="hover:text-[#E76F2E] transition block py-0.5">Modern Duplex Elevations</a></li>
-                  <li><a href="#elevations" className="hover:text-[#E76F2E] transition block py-0.5">Tropical Kerala Roofs</a></li>
-                  <li><a href="#elevations" className="hover:text-[#E76F2E] transition block py-0.5">Contemporary CNC Jaali</a></li>
-                  <li><a href="#elevations" className="hover:text-[#E76F2E] transition block py-0.5">Neoclassical Villas</a></li>
-                  <li><a href="#elevations" className="hover:text-[#E76F2E] transition block py-0.5">Exterior Lighting</a></li>
-                </ul>
-              </div>
-            )}
+          <div>
+            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
+              <Icons.Sparkles size={13} className="text-[#E76F2E]" />
+              <span>Designs</span>
+            </h4>
+            <ul className="space-y-2 text-white/75">
+              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">3D Front Elevations</a></li>
+              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">Modern Duplex Elevations</a></li>
+              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">Tropical Kerala Roofs</a></li>
+              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">Contemporary CNC Jaali</a></li>
+              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">Neoclassical Villas</a></li>
+              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">Exterior Lighting</a></li>
+            </ul>
           </div>
 
           {/* Col 4: Services */}
-          <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden transition-all">
-            <button
-              type="button"
-              onClick={() => setOpenFooterMenu(openFooterMenu === 'services' ? null : 'services')}
-              className="w-full flex items-center justify-between p-3.5 text-left font-bold uppercase tracking-wider text-white text-[11.5px] hover:bg-white/10 transition cursor-pointer"
-            >
-              <span className="flex items-center gap-2">
-                <Icons.HardHat size={14} className="text-[#E76F2E]" />
-                <span>Services</span>
-              </span>
-              <Icons.ChevronDown
-                size={14}
-                className={`text-white/60 transition-transform duration-200 ${
-                  openFooterMenu === 'services' ? 'rotate-180 text-[#E76F2E]' : ''
-                }`}
-              />
-            </button>
-            {openFooterMenu === 'services' && (
-              <div className="p-3.5 pt-1 border-t border-white/10 animate-fadeIn">
-                <ul className="space-y-2 text-white/75">
-                  <li><a href="#services" className="hover:text-[#E76F2E] transition block py-0.5">2D Architectural CAD</a></li>
-                  <li><a href="#services" className="hover:text-[#E76F2E] transition block py-0.5">Structural Drawings</a></li>
-                  <li><a href="#services" className="hover:text-[#E76F2E] transition block py-0.5">PMC &amp; Site Supervision</a></li>
-                  <li><a href="#services" className="hover:text-[#E76F2E] transition block py-0.5">Vastu Consultation</a></li>
-                  <li><a href="#services" className="hover:text-[#E76F2E] transition block py-0.5">Municipal By-Laws</a></li>
-                  <li><a href="#contractors" className="hover:text-[#E76F2E] transition block py-0.5">Contractor Network</a></li>
-                </ul>
-              </div>
-            )}
+          <div>
+            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
+              <Icons.HardHat size={13} className="text-[#E76F2E]" />
+              <span>Services</span>
+            </h4>
+            <ul className="space-y-2 text-white/75">
+              <li><a href="#services" className="hover:text-[#E76F2E] transition">2D Architectural CAD</a></li>
+              <li><a href="#services" className="hover:text-[#E76F2E] transition">Structural Drawings</a></li>
+              <li><a href="#services" className="hover:text-[#E76F2E] transition">PMC &amp; Site Supervision</a></li>
+              <li><a href="#services" className="hover:text-[#E76F2E] transition">Vastu Consultation</a></li>
+              <li><a href="#services" className="hover:text-[#E76F2E] transition">Municipal By-Laws</a></li>
+              <li><a href="#contractors" className="hover:text-[#E76F2E] transition">Contractor Network</a></li>
+            </ul>
           </div>
 
           {/* Col 5: About & Guides */}
-          <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden transition-all">
-            <button
-              type="button"
-              onClick={() => setOpenFooterMenu(openFooterMenu === 'about' ? null : 'about')}
-              className="w-full flex items-center justify-between p-3.5 text-left font-bold uppercase tracking-wider text-white text-[11.5px] hover:bg-white/10 transition cursor-pointer"
-            >
-              <span className="flex items-center gap-2">
-                <Icons.Building size={14} className="text-[#E76F2E]" />
-                <span>About &amp; Guides</span>
-              </span>
-              <Icons.ChevronDown
-                size={14}
-                className={`text-white/60 transition-transform duration-200 ${
-                  openFooterMenu === 'about' ? 'rotate-180 text-[#E76F2E]' : ''
-                }`}
-              />
-            </button>
-            {openFooterMenu === 'about' && (
-              <div className="p-3.5 pt-1 border-t border-white/10 animate-fadeIn">
-                <ul className="space-y-2 text-white/75">
-                  <li><a href="#about" className="hover:text-[#E76F2E] transition block py-0.5 font-medium text-white">About Indore House Maker's</a></li>
-                  <li><a href="#calculator" className="hover:text-[#E76F2E] transition block py-0.5">Cost Estimator 2026</a></li>
-                  <li><a href="#blog" className="hover:text-[#E76F2E] transition block py-0.5">Vastu Rules &amp; Guides</a></li>
-                  <li><a href="#reviews" className="hover:text-[#E76F2E] transition block py-0.5">Client Video Stories</a></li>
-                  <li><a href="#faq" className="hover:text-[#E76F2E] transition block py-0.5">Help &amp; FAQs</a></li>
-                  <li><a href="#contact" className="hover:text-[#E76F2E] transition block py-0.5">Contact Architects</a></li>
-                </ul>
-              </div>
-            )}
+          <div>
+            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
+              <Icons.Building size={13} className="text-[#E76F2E]" />
+              <span>About &amp; Guides</span>
+            </h4>
+            <ul className="space-y-2 text-white/75">
+              <li><a href="#about" className="hover:text-[#E76F2E] transition font-medium text-white">About Indore House Maker's</a></li>
+              <li><a href="#calculator" className="hover:text-[#E76F2E] transition">Cost Estimator 2026</a></li>
+              <li><a href="#blog" className="hover:text-[#E76F2E] transition">Vastu Rules &amp; Guides</a></li>
+              <li><a href="#reviews" className="hover:text-[#E76F2E] transition">Client Video Stories</a></li>
+              <li><a href="#faq" className="hover:text-[#E76F2E] transition">Help &amp; FAQs</a></li>
+              <li><a href="#contact" className="hover:text-[#E76F2E] transition">Contact Architects</a></li>
+            </ul>
           </div>
 
           {/* Col 6: Helpline */}
-          <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden transition-all">
-            <button
-              type="button"
-              onClick={() => setOpenFooterMenu(openFooterMenu === 'helpline' ? null : 'helpline')}
-              className="w-full flex items-center justify-between p-3.5 text-left font-bold uppercase tracking-wider text-white text-[11.5px] hover:bg-white/10 transition cursor-pointer"
-            >
-              <span className="flex items-center gap-2">
-                <Icons.Phone size={14} className="text-[#E76F2E]" />
-                <span>Helpline</span>
-              </span>
-              <Icons.ChevronDown
-                size={14}
-                className={`text-white/60 transition-transform duration-200 ${
-                  openFooterMenu === 'helpline' ? 'rotate-180 text-[#E76F2E]' : ''
-                }`}
-              />
-            </button>
-            {openFooterMenu === 'helpline' && (
-              <div className="p-3.5 pt-1 border-t border-white/10 animate-fadeIn space-y-2 text-white/75">
-                <p className="font-bold text-xs text-white">{site.phone}</p>
-                <p className="text-[10.5px] text-white/60">{site.operatingHours}</p>
-                <p className="pt-1 text-white/60 flex items-center gap-1.5 text-[11px]">
-                  <Icons.Mail size={12} className="text-[#E76F2E]" />
-                  <span>{site.email}</span>
-                </p>
-                <p className="text-white/60 flex items-center gap-1.5 text-[11px]">
-                  <Icons.MapPin size={12} className="text-[#E76F2E]" />
-                  <span>{site.city}</span>
-                </p>
-              </div>
-            )}
+          <div>
+            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
+              <Icons.Phone size={13} className="text-[#E76F2E]" />
+              <span>Design Helpline</span>
+            </h4>
+            <div className="space-y-2 text-white/75">
+              <p className="font-bold text-xs text-white">{site.phone}</p>
+              <p className="text-[10.5px] text-white/60">{site.operatingHours}</p>
+              <p className="pt-1 text-white/60 flex items-center gap-1.5 text-[11px]">
+                <Icons.Mail size={12} className="text-[#E76F2E]" />
+                <span>{site.email}</span>
+              </p>
+              <p className="text-white/60 flex items-center gap-1.5 text-[11px]">
+                <Icons.MapPin size={12} className="text-[#E76F2E]" />
+                <span>{site.city}</span>
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -481,21 +487,61 @@ export default function Footer() {
         </div>
       </section>
 
-      {/* Payment Partners */}
+      {/* Secure Payments Via Section */}
       <div className="border-t border-white/10 py-6">
         <div className="container-content flex flex-col md:flex-row items-center justify-between gap-4">
-          <span className="text-[11px] font-bold uppercase tracking-widest text-white flex items-center gap-1.5">
-            <Icons.ShieldCheck size={14} className="text-[#E76F2E]" /> Secure Payments via
+          <span className="text-[11px] font-bold uppercase tracking-widest text-[#EAE6DF] text-center md:text-left">
+            SECURE PAYMENTS VIA
           </span>
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {paymentPartners.map((p) => (
-              <span
-                key={p}
-                className="rounded-lg border border-white/20 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold text-white/90"
-              >
-                {p}
-              </span>
-            ))}
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-y-2.5 gap-x-3.5 sm:gap-x-4.5">
+            {/* UPI */}
+            <div className="flex items-center hover:opacity-80 transition-opacity shrink-0">
+              <img
+                src="/payment-logos/upi.svg"
+                alt="UPI"
+                className="h-5 sm:h-5.5 w-auto object-contain"
+                loading="lazy"
+              />
+            </div>
+
+            {/* Divider */}
+            <div className="h-4 w-px bg-white/15 shrink-0" aria-hidden="true" />
+
+            {/* Card Networks: Visa, Mastercard, RuPay */}
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+              <div className="flex items-center hover:opacity-80 transition-opacity">
+                <img
+                  src="/payment-logos/visa.svg"
+                  alt="Visa"
+                  className="h-3.5 sm:h-4 w-auto object-contain"
+                  loading="lazy"
+                />
+              </div>
+              <div className="flex items-center hover:opacity-80 transition-opacity">
+                <img
+                  src="/payment-logos/mastercard.svg"
+                  alt="Mastercard"
+                  className="h-4.5 sm:h-5 w-auto object-contain"
+                  loading="lazy"
+                />
+              </div>
+              <div className="flex items-center hover:opacity-80 transition-opacity">
+                <img
+                  src="/payment-logos/rupay.svg"
+                  alt="RuPay"
+                  className="h-4 sm:h-4.5 w-auto object-contain"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="h-4 w-px bg-white/15 shrink-0" aria-hidden="true" />
+
+            {/* Net Banking */}
+            <span className="text-xs font-semibold text-[#B9B2AB] hover:opacity-80 transition-opacity tracking-tight shrink-0">
+              Net Banking
+            </span>
           </div>
         </div>
       </div>
