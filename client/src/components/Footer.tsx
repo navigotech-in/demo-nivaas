@@ -339,7 +339,7 @@ export default function Footer() {
         </div>
 
         {/* ========================================================================= */}
-        {/* DESKTOP VIEW: 6-Column Full Directory with Detailed Rich Sub-Options       */}
+        {/* DESKTOP VIEW: 6-Column Full Directory (Clean & Standard)                  */}
         {/* ========================================================================= */}
         <div className="hidden lg:grid grid-cols-6 gap-8 text-xs text-white/80">
           {/* Col 1: Architecture */}
@@ -358,32 +358,17 @@ export default function Footer() {
                 onClick={() => setFloatingMenu('architecture')}
                 className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
               >
-                View All ⊞
+                Explore ⊞
               </button>
             </h4>
-            <div className="space-y-3 text-white/75">
-              <div>
-                <div className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1">Architectural Styles</div>
-                <ul className="space-y-1">
-                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition flex items-center justify-between"><span>Modern Contemporary</span> <span className="text-[9px] text-[#E76F2E] font-bold">Hot</span></Link></li>
-                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">Kerala Traditional</Link></li>
-                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">Neo-Classical / European</Link></li>
-                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">Minimalist Zen &amp; Glass</Link></li>
-                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">Mediterranean Villa</Link></li>
-                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">Rajasthani Haveli</Link></li>
-                </ul>
-              </div>
-              <div className="pt-2 border-t border-white/5">
-                <div className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1">By Bedroom &amp; Vastu</div>
-                <ul className="space-y-1">
-                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">2 BHK Compact Homes</Link></li>
-                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition flex items-center justify-between"><span>3 BHK Modern Duplex</span> <span className="text-[9px] text-[#E76F2E] font-bold">Trending</span></Link></li>
-                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">4 BHK Luxury Villas</Link></li>
-                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition flex items-center justify-between"><span>East Facing (Purva)</span> <span className="text-[9px] text-[#E76F2E] font-bold">Vastu</span></Link></li>
-                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition flex items-center justify-between"><span>North Facing (Uttar)</span> <span className="text-[9px] text-[#E76F2E] font-bold">Vastu</span></Link></li>
-                </ul>
-              </div>
-            </div>
+            <ul className="space-y-2 text-white/75">
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">30 x 50 House Plans</Link></li>
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">20 x 40 House Plans</Link></li>
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">25 x 40 House Plans</Link></li>
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">40 x 60 Luxury Villas</Link></li>
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">G+1 Duplex Plans</Link></li>
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">100% Vastu Blueprints</Link></li>
+            </ul>
           </div>
 
           {/* Col 2: Interior */}
@@ -402,31 +387,17 @@ export default function Footer() {
                 onClick={() => setFloatingMenu('interior')}
                 className="text-[10px] text-[#E76F2E] hover:underline font-normal cursor-pointer"
               >
-                View All ⊞
+                Explore ⊞
               </button>
             </h4>
-            <div className="space-y-3 text-white/75">
-              <div>
-                <div className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1">Living &amp; Kitchen</div>
-                <ul className="space-y-1">
-                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Modular Kitchens</Link></li>
-                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Luxury Living Rooms</Link></li>
-                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">TV Unit &amp; Paneling</Link></li>
-                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Lobby &amp; Foyer Entry</Link></li>
-                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">False Ceiling &amp; Light</Link></li>
-                </ul>
-              </div>
-              <div className="pt-2 border-t border-white/5">
-                <div className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1">Bedrooms &amp; Pooja</div>
-                <ul className="space-y-1">
-                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Master Bedroom Suites</Link></li>
-                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Pooja Mandir Vastu</Link></li>
-                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Walk-in Wardrobes</Link></li>
-                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Kids &amp; Study Rooms</Link></li>
-                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Modern Bathrooms</Link></li>
-                </ul>
-              </div>
-            </div>
+            <ul className="space-y-2 text-white/75">
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Modular Kitchens</Link></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Luxury Living Rooms</Link></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Master Bedroom Suites</Link></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Pooja Room Mandirs</Link></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Wardrobe &amp; Storage</Link></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">3D Interior Renders</Link></li>
+            </ul>
           </div>
 
           {/* Col 3: Designs */}
