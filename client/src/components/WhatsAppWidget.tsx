@@ -31,7 +31,7 @@ export default function WhatsAppWidget({ onOpenAiStudio }: WhatsAppWidgetProps) 
   return (
     <>
       {/* Unified Floating Sticky Actions (AI + WhatsApp) */}
-      <div className="fixed bottom-4 right-3 sm:bottom-6 sm:right-5 z-[999999] flex flex-col items-end gap-2.5 pointer-events-auto select-none">
+      <div id="floating-whatsapp-actions" className="fixed bottom-4 right-3 sm:bottom-6 sm:right-5 z-[999999] flex flex-col items-end gap-2.5 pointer-events-auto select-none">
         {/* Chat Popover Window */}
         {openChat && (
           <div className="w-[300px] sm:w-[360px] rounded-2xl bg-white shadow-2xl border border-[#E7E0D7] overflow-hidden animate-fadeIn text-[#292826] mb-1">

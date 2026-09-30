@@ -32,6 +32,30 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+      document.body.classList.add('mobile-menu-open')
+    } else {
+      document.body.style.overflow = ''
+      document.body.classList.remove('mobile-menu-open')
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false)
+        setSearchOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = ''
+      document.body.classList.remove('mobile-menu-open')
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [mobileMenuOpen])
+
   const sampleSearchSuggestions = [
     '30x50 East Facing House Plan',
     '20x40 2 BHK Modern Duplex',
@@ -372,25 +396,17 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 </span>
               </a>
 
-              {/* Right Side: Dashboard Button + Hamburger Menu */}
+              {/* Right Side: Hamburger Icon + Menu Button */}
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] text-xs font-bold text-[#E76F2E] hover:bg-[#E76F2E] hover:text-white transition shadow-xs whitespace-nowrap"
-                  title="Open Categories Dashboard"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] text-xs font-bold text-[#292826] hover:text-[#E76F2E] hover:border-[#E76F2E] transition shadow-xs whitespace-nowrap cursor-pointer active:scale-95"
+                  aria-label="Open Navigation Menu"
+                  title="Open Menu"
                 >
-                  <Icons.Layers size={13} className="text-[#E76F2E]" />
-                  <span>Dashboard</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="flex items-center justify-center h-8.5 w-8.5 rounded-lg text-[#292826] hover:bg-[#FFF6E8] border border-[#E7E0D7] transition"
-                  aria-label="Toggle navigation menu"
-                >
-                  {mobileMenuOpen ? <Icons.Close size={18} /> : <Icons.Menu size={18} />}
+                  <Icons.Menu size={16} className="text-[#E76F2E]" />
+                  <span>Menu</span>
                 </button>
               </div>
             </div>
@@ -521,217 +537,301 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
           </div>
         )}
 
-        {/* Mobile Dashboard & Navigation Drawer (Headings only by default, click to expand data) */}
-        {mobileMenuOpen && (
-          <div className="xl:hidden bg-white text-[#292826] border-t border-[#E7E0D7] px-4 py-4 space-y-3 max-h-[85vh] overflow-y-auto">
-            {/* Dashboard Categories Header */}
-            <div className="flex items-center justify-between border-b border-[#EEE9E3] pb-2.5">
-              <div className="flex items-center gap-2">
-                <Icons.Layers size={16} className="text-[#E76F2E]" />
-                <h3 className="font-display font-bold text-xs sm:text-sm text-[#292826] uppercase tracking-wide">
-                  Categories Dashboard
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-xs font-bold text-[#54504A] hover:text-[#E76F2E] px-2 py-1"
-              >
-                Close ✕
-              </button>
-            </div>
+      </header>
 
-            {/* Accordion Categories: Only Heading visible, click expands */}
-            <div className="space-y-2">
-              {/* 1. Architecture */}
-              <div className="rounded-lg border border-[#EEE9E3] overflow-hidden bg-[#FDFCF9]">
-                <button
-                  type="button"
-                  onClick={() => setExpandedCategory(expandedCategory === 'arch' ? null : 'arch')}
-                  className="w-full flex items-center justify-between p-3 text-xs font-bold uppercase tracking-wider text-[#292826] hover:bg-[#FFF6E8] transition text-left cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <Icons.Blueprint size={15} className="text-[#E76F2E]" />
-                    <span>Architecture &amp; House Plans</span>
-                  </span>
-                  <Icons.ChevronDown
-                    size={15}
-                    className={`text-[#54504A] transition-transform duration-200 ${
-                      expandedCategory === 'arch' ? 'rotate-180 text-[#E76F2E]' : ''
-                    }`}
-                  />
-                </button>
-                {expandedCategory === 'arch' && (
-                  <div className="p-3 bg-white border-t border-[#EEE9E3] grid grid-cols-2 gap-2 text-xs text-[#54504A] animate-fadeIn">
-                    <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">30 x 50 House Plans</a>
-                    <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">20 x 40 House Plans</a>
-                    <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">25 x 40 House Plans</a>
-                    <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">40 x 60 House Plans</a>
-                    <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">G+1 Duplex Plans</a>
-                    <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">100% Vastu Plans</a>
-                  </div>
-                )}
-              </div>
+      {/* ========================================================================= */}
+      {/* MOBILE RIGHT-SIDE SLIDE-IN ACCORDION DRAWER & DARK BACKDROP OVERLAY       */}
+      {/* ========================================================================= */}
+      {/* 1. Dark Transparent Overlay Backdrop */}
+      <div
+        className={`fixed inset-0 z-[99990] bg-black/60 backdrop-blur-[2px] transition-opacity duration-250 ease-out xl:hidden ${
+          mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
 
-              {/* 2. Interior */}
-              <div className="rounded-lg border border-[#EEE9E3] overflow-hidden bg-[#FDFCF9]">
-                <button
-                  type="button"
-                  onClick={() => setExpandedCategory(expandedCategory === 'interior' ? null : 'interior')}
-                  className="w-full flex items-center justify-between p-3 text-xs font-bold uppercase tracking-wider text-[#292826] hover:bg-[#FFF6E8] transition text-left cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <Icons.Sofa size={15} className="text-[#E76F2E]" />
-                    <span>Interior Designs &amp; Rooms</span>
-                  </span>
-                  <Icons.ChevronDown
-                    size={15}
-                    className={`text-[#54504A] transition-transform duration-200 ${
-                      expandedCategory === 'interior' ? 'rotate-180 text-[#E76F2E]' : ''
-                    }`}
-                  />
-                </button>
-                {expandedCategory === 'interior' && (
-                  <div className="p-3 bg-white border-t border-[#EEE9E3] grid grid-cols-2 gap-2 text-xs text-[#54504A] animate-fadeIn">
-                    <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Living Rooms</a>
-                    <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Modular Kitchens</a>
-                    <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Master Bedrooms</a>
-                    <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Pooja Rooms</a>
-                    <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Wardrobe Design</a>
-                    <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Dining &amp; Hall</a>
-                  </div>
-                )}
+      {/* 2. Slide Drawer from Right (Width: 88%, max 360px, Duration 200-250ms) */}
+      <aside
+        id="mobile-nav-drawer"
+        aria-label="Mobile Navigation Menu"
+        className={`fixed top-0 right-0 bottom-0 z-[99995] w-[88%] max-w-[360px] bg-white text-[#292826] shadow-2xl flex flex-col justify-between transition-transform duration-250 ease-out transform xl:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Top: Header & Search */}
+        <div className="shrink-0 bg-white border-b border-[#EEE9E3]">
+          {/* Drawer Brand Header */}
+          <div className="p-4 flex items-center justify-between">
+            <a
+              href="#top"
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-flex items-center gap-2 min-w-0"
+            >
+              <Icons.NivaasMark className="h-6 w-6 text-[#C94F36] shrink-0" />
+              <div className="flex flex-col min-w-0">
+                <span className="font-display font-black text-sm sm:text-base text-[#292725] tracking-tight leading-tight truncate">
+                  {site.name}
+                </span>
+                <span className="text-[7.5px] font-bold text-[#54504A] tracking-wider mt-0.5 leading-none">
+                  AI-POWERED ARCHITECTURE
+                </span>
               </div>
+            </a>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="h-8 w-8 rounded-lg flex items-center justify-center text-[#54504A] hover:text-[#292826] hover:bg-[#FFF6E8] border border-[#E7E0D7] transition cursor-pointer shrink-0"
+              aria-label="Close navigation menu"
+              title="Close Menu"
+            >
+              <Icons.Close size={18} />
+            </button>
+          </div>
 
-              {/* 3. 3D Elevation */}
-              <div className="rounded-lg border border-[#EEE9E3] overflow-hidden bg-[#FDFCF9]">
-                <button
-                  type="button"
-                  onClick={() => setExpandedCategory(expandedCategory === 'elevation' ? null : 'elevation')}
-                  className="w-full flex items-center justify-between p-3 text-xs font-bold uppercase tracking-wider text-[#292826] hover:bg-[#FFF6E8] transition text-left cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <Icons.Sparkles size={15} className="text-[#E76F2E]" />
-                    <span>3D Elevation Designs</span>
-                  </span>
-                  <Icons.ChevronDown
-                    size={15}
-                    className={`text-[#54504A] transition-transform duration-200 ${
-                      expandedCategory === 'elevation' ? 'rotate-180 text-[#E76F2E]' : ''
-                    }`}
-                  />
-                </button>
-                {expandedCategory === 'elevation' && (
-                  <div className="p-3 bg-white border-t border-[#EEE9E3] grid grid-cols-2 gap-2 text-xs text-[#54504A] animate-fadeIn">
-                    <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Modern Duplex</a>
-                    <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Tropical / Kerala</a>
-                    <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Contemporary Jaali</a>
-                    <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Neo-Classical Villa</a>
-                    <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Glass Facade</a>
-                    <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="py-1.5 px-2 rounded-md hover:bg-[#FFF6E8] hover:text-[#E76F2E] font-medium">Wooden Texture</a>
-                  </div>
-                )}
-              </div>
-
-              {/* 4. Services & Contractors */}
-              <div className="rounded-lg border border-[#EEE9E3] overflow-hidden bg-[#FDFCF9]">
-                <button
-                  type="button"
-                  onClick={() => setExpandedCategory(expandedCategory === 'services' ? null : 'services')}
-                  className="w-full flex items-center justify-between p-3 text-xs font-bold uppercase tracking-wider text-[#292826] hover:bg-[#FFF6E8] transition text-left cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <Icons.HardHat size={15} className="text-[#E76F2E]" />
-                    <span>Services &amp; Contractors</span>
-                  </span>
-                  <Icons.ChevronDown
-                    size={15}
-                    className={`text-[#54504A] transition-transform duration-200 ${
-                      expandedCategory === 'services' ? 'rotate-180 text-[#E76F2E]' : ''
-                    }`}
-                  />
-                </button>
-                {expandedCategory === 'services' && (
-                  <div className="p-3 bg-white border-t border-[#EEE9E3] flex flex-col gap-2 text-xs text-[#54504A] animate-fadeIn">
-                    <a href="#services" onClick={() => setMobileMenuOpen(false)} className="py-1 px-2 rounded hover:bg-[#FFF6E8] hover:text-[#E76F2E]">2D Architectural &amp; Working Drawings</a>
-                    <a href="#services" onClick={() => setMobileMenuOpen(false)} className="py-1 px-2 rounded hover:bg-[#FFF6E8] hover:text-[#E76F2E]">Structural CAD &amp; Engineering Layouts</a>
-                    <a href="#contractors" onClick={() => setMobileMenuOpen(false)} className="py-1 px-2 rounded hover:bg-[#FFF6E8] hover:text-[#E76F2E]">Verified Contractor &amp; Trade Network</a>
-                    <a href="#services" onClick={() => setMobileMenuOpen(false)} className="py-1 px-2 rounded hover:bg-[#FFF6E8] hover:text-[#E76F2E]">PMC &amp; On-Site Construction Supervision</a>
-                  </div>
-                )}
-              </div>
-
-              {/* 5. About & Guides */}
-              <div className="rounded-lg border border-[#EEE9E3] overflow-hidden bg-[#FDFCF9]">
-                <button
-                  type="button"
-                  onClick={() => setExpandedCategory(expandedCategory === 'about' ? null : 'about')}
-                  className="w-full flex items-center justify-between p-3 text-xs font-bold uppercase tracking-wider text-[#292826] hover:bg-[#FFF6E8] transition text-left cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <Icons.Building size={15} className="text-[#E76F2E]" />
-                    <span>About &amp; Guides</span>
-                  </span>
-                  <Icons.ChevronDown
-                    size={15}
-                    className={`text-[#54504A] transition-transform duration-200 ${
-                      expandedCategory === 'about' ? 'rotate-180 text-[#E76F2E]' : ''
-                    }`}
-                  />
-                </button>
-                {expandedCategory === 'about' && (
-                  <div className="p-3 bg-white border-t border-[#EEE9E3] flex flex-col gap-2 text-xs text-[#54504A] animate-fadeIn">
-                    <a href="#about" onClick={() => setMobileMenuOpen(false)} className="py-1 px-2 rounded hover:bg-[#FFF6E8] hover:text-[#E76F2E]">About Indore House Maker's</a>
-                    <a href="#calculator" onClick={() => setMobileMenuOpen(false)} className="py-1 px-2 rounded hover:bg-[#FFF6E8] hover:text-[#E76F2E]">Real-Time Cost Estimator 2026</a>
-                    <a href="#blog" onClick={() => setMobileMenuOpen(false)} className="py-1 px-2 rounded hover:bg-[#FFF6E8] hover:text-[#E76F2E]">Vastu Rules &amp; Construction Guides</a>
-                    <a href="#reviews" onClick={() => setMobileMenuOpen(false)} className="py-1 px-2 rounded hover:bg-[#FFF6E8] hover:text-[#E76F2E]">Client Testimonial Stories</a>
-                    <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="py-1 px-2 rounded hover:bg-[#FFF6E8] hover:text-[#E76F2E]">Frequently Asked Questions</a>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Mobile Action CTAs */}
-            <div className="border-t border-[#EEE9E3] pt-3 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false)
-                  if (onOpenAiStudio) onOpenAiStudio()
-                  else {
-                    setAiStudioMode('generator')
-                    setAiStudioOpen(true)
+          {/* Search Box */}
+          <div className="px-4 pb-3">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setMobileMenuOpen(false)
+                    setSearchOpen(true)
                   }
                 }}
-                className="w-full py-2.5 rounded-lg border-2 border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E] font-bold text-xs text-center flex items-center justify-center gap-2 hover:bg-[#E76F2E] hover:text-white transition shadow-xs cursor-pointer"
-              >
-                <Icons.Sparkles size={14} />
-                <span>Ask AI Studio Floor Plan Generator</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false)
-                  onOpenConsult()
-                }}
-                className="w-full py-2.5 rounded-lg border border-[#E76F2E] bg-[#E76F2E] text-white font-bold text-xs text-center hover:bg-[#C65320] transition shadow-xs cursor-pointer"
-              >
-                Book Free Architect Consultation
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false)
-                  onOpenLogin()
-                }}
-                className="w-full py-2 rounded-lg border border-[#E7E0D7] bg-white text-[#292826] font-bold text-xs text-center hover:bg-[#FFF6E8] transition cursor-pointer"
-              >
-                User Login / Register
-              </button>
+                placeholder="Search house plans, 30x50, Vastu…"
+                className="w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] pl-9 pr-3 py-2 text-xs text-[#292826] placeholder:text-[#54504A]/70 outline-none focus:border-[#E76F2E] focus:ring-1 focus:ring-[#E76F2E]"
+              />
+              <div className="absolute left-3 top-2.5 text-[#E76F2E]">
+                <Icons.Search size={14} />
+              </div>
             </div>
           </div>
-        )}
-      </header>
+        </div>
+
+        {/* Middle: Scrollable Accordion Rows (Full-width, Single-open at a time) */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 divide-y divide-[#EEE9E3]/70">
+          {/* 1. Architecture Accordion */}
+          <div className="py-1">
+            <button
+              type="button"
+              onClick={() => setExpandedCategory(expandedCategory === 'arch' ? null : 'arch')}
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left cursor-pointer"
+            >
+              <span className="flex items-center gap-2.5">
+                <Icons.Blueprint size={16} className="text-[#E76F2E]" />
+                <span>Architecture</span>
+              </span>
+              <Icons.ChevronRight
+                size={15}
+                className={`text-[#54504A] transition-transform duration-200 ${
+                  expandedCategory === 'arch' ? 'rotate-90 text-[#E76F2E]' : ''
+                }`}
+              />
+            </button>
+            {expandedCategory === 'arch' && (
+              <div className="pl-8 pr-2 py-1 space-y-1 animate-fadeIn text-xs text-[#54504A]">
+                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">30 x 50 House Plans</a>
+                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">20 x 40 House Plans</a>
+                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">25 x 40 House Plans</a>
+                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">40 x 60 House Plans</a>
+                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">G+1 Duplex Plans</a>
+                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">100% Vastu Blueprints</a>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Interior Accordion */}
+          <div className="py-1">
+            <button
+              type="button"
+              onClick={() => setExpandedCategory(expandedCategory === 'interior' ? null : 'interior')}
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left cursor-pointer"
+            >
+              <span className="flex items-center gap-2.5">
+                <Icons.Sofa size={16} className="text-[#E76F2E]" />
+                <span>Interior</span>
+              </span>
+              <Icons.ChevronRight
+                size={15}
+                className={`text-[#54504A] transition-transform duration-200 ${
+                  expandedCategory === 'interior' ? 'rotate-90 text-[#E76F2E]' : ''
+                }`}
+              />
+            </button>
+            {expandedCategory === 'interior' && (
+              <div className="pl-8 pr-2 py-1 space-y-1 animate-fadeIn text-xs text-[#54504A]">
+                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Modular Kitchens</a>
+                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Luxury Living Rooms</a>
+                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Master Bedroom Suites</a>
+                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Pooja Room Mandirs</a>
+                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Wardrobe &amp; Storage</a>
+                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">3D Interior Renders</a>
+              </div>
+            )}
+          </div>
+
+          {/* 3. 3D Elevation Accordion */}
+          <div className="py-1">
+            <button
+              type="button"
+              onClick={() => setExpandedCategory(expandedCategory === 'elevation' ? null : 'elevation')}
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left cursor-pointer"
+            >
+              <span className="flex items-center gap-2.5">
+                <Icons.Sparkles size={16} className="text-[#E76F2E]" />
+                <span>3D Elevation</span>
+              </span>
+              <Icons.ChevronRight
+                size={15}
+                className={`text-[#54504A] transition-transform duration-200 ${
+                  expandedCategory === 'elevation' ? 'rotate-90 text-[#E76F2E]' : ''
+                }`}
+              />
+            </button>
+            {expandedCategory === 'elevation' && (
+              <div className="pl-8 pr-2 py-1 space-y-1 animate-fadeIn text-xs text-[#54504A]">
+                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Modern Duplex Elevations</a>
+                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Tropical Kerala Roofs</a>
+                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Contemporary CNC Jaali</a>
+                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Neo-Classical Villa</a>
+                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Glass Facade Elevations</a>
+                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Exterior Lighting</a>
+              </div>
+            )}
+          </div>
+
+          {/* 4. Services Accordion */}
+          <div className="py-1">
+            <button
+              type="button"
+              onClick={() => setExpandedCategory(expandedCategory === 'services' ? null : 'services')}
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left cursor-pointer"
+            >
+              <span className="flex items-center gap-2.5">
+                <Icons.HardHat size={16} className="text-[#E76F2E]" />
+                <span>Services</span>
+              </span>
+              <Icons.ChevronRight
+                size={15}
+                className={`text-[#54504A] transition-transform duration-200 ${
+                  expandedCategory === 'services' ? 'rotate-90 text-[#E76F2E]' : ''
+                }`}
+              />
+            </button>
+            {expandedCategory === 'services' && (
+              <div className="pl-8 pr-2 py-1 space-y-1 animate-fadeIn text-xs text-[#54504A]">
+                <a href="#services" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">2D Architectural CAD</a>
+                <a href="#services" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Structural Drawings</a>
+                <a href="#contractors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Verified Contractor Network</a>
+                <a href="#services" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">PMC &amp; Site Supervision</a>
+                <a href="#services" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Vastu Consultation</a>
+              </div>
+            )}
+          </div>
+
+          {/* 5. Flat Direct Link: Cost Estimator */}
+          <div className="py-1">
+            <a
+              href="#calculator"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left"
+            >
+              <span className="flex items-center gap-2.5">
+                <Icons.Calculator size={16} className="text-[#E76F2E]" />
+                <span>Cost Estimator</span>
+              </span>
+            </a>
+          </div>
+
+          {/* 6. Flat Direct Link: About NIVAAS */}
+          <div className="py-1">
+            <a
+              href="#about"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left"
+            >
+              <span className="flex items-center gap-2.5">
+                <Icons.Building size={16} className="text-[#E76F2E]" />
+                <span>About NIVAAS</span>
+              </span>
+            </a>
+          </div>
+
+          {/* 7. Flat Direct Link: Guides */}
+          <div className="py-1">
+            <a
+              href="#blog"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left"
+            >
+              <span className="flex items-center gap-2.5">
+                <Icons.FileText size={16} className="text-[#E76F2E]" />
+                <span>Guides</span>
+              </span>
+            </a>
+          </div>
+
+          {/* 8. Flat Direct Link: FAQ */}
+          <div className="py-1">
+            <a
+              href="#faq"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left"
+            >
+              <span className="flex items-center gap-2.5">
+                <Icons.HelpCircle size={16} className="text-[#E76F2E]" />
+                <span>Frequently Asked Questions</span>
+              </span>
+            </a>
+          </div>
+        </div>
+
+        {/* Bottom Actions: Fixed at Drawer Bottom */}
+        <div className="p-4 border-t border-[#EEE9E3] bg-[#FDFCF9] shrink-0 space-y-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false)
+              if (onOpenAiStudio) onOpenAiStudio()
+              else {
+                setAiStudioMode('generator')
+                setAiStudioOpen(true)
+              }
+            }}
+            className="w-full py-2.5 rounded-lg border border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E] font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#E76F2E] hover:text-white transition shadow-xs cursor-pointer active:scale-[0.98]"
+          >
+            <Icons.Sparkles size={14} />
+            <span>Ask AI Studio</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false)
+              onOpenConsult()
+            }}
+            className="w-full py-2.5 rounded-lg border border-[#E76F2E] bg-[#E76F2E] text-white font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#C65320] transition shadow-xs cursor-pointer active:scale-[0.98]"
+          >
+            <Icons.Phone size={13} />
+            <span>Book Free Consultation</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false)
+              onOpenLogin()
+            }}
+            className="w-full py-2 rounded-lg border border-[#E7E0D7] bg-white text-[#54504A] hover:text-[#292826] font-semibold text-xs text-center hover:bg-[#FFF6E8] transition cursor-pointer"
+          >
+            User Login / Register
+          </button>
+        </div>
+      </aside>
 
       {/* News & Spotlight Modal */}
       {newsOpen && (

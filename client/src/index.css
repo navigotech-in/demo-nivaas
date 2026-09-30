@@ -111,3 +111,8 @@
   backface-visibility: hidden;
   will-change: transform;
 }
+
+/* Hide floating sticky buttons when mobile navigation drawer is active */
+body.mobile-menu-open #floating-whatsapp-actions {
+  display: none !important;
+}
