@@ -296,15 +296,15 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {filteredProjects.map((plan) => (
               <article
                 key={plan.id}
-                className="bg-white rounded-lg border border-[#E7E0D7] overflow-hidden flex flex-col group transition hover:border-[#C94F36]/50 shadow-xs"
+                className="bg-white rounded-xl border border-[#E7E0D7] overflow-hidden flex flex-col group transition hover:border-[#C94F36]/50 shadow-xs hover:shadow-sm"
               >
-                {/* Large Clickable House Image */}
+                {/* Clickable House Image - Compact 16:11 aspect ratio */}
                 <div
-                  className="relative aspect-[4/3] overflow-hidden bg-[#FAF8F5] cursor-pointer"
+                  className="relative aspect-[16/11] overflow-hidden bg-[#FAF8F5] cursor-pointer"
                   onClick={() => onOpenConsult(plan.title)}
                 >
                   <img
@@ -315,19 +315,19 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
                   />
                   {/* Maximum one clean badge */}
                   {plan.tag && (
-                    <div className="absolute top-3 left-3 bg-[#292826]/90 text-white text-[10px] font-bold px-2.5 py-1 rounded backdrop-blur-xs">
+                    <div className="absolute top-2.5 left-2.5 bg-[#292826]/90 text-white text-[9px] font-bold px-2 py-0.5 rounded backdrop-blur-xs">
                       {plan.tag}
                     </div>
                   )}
                 </div>
 
                 {/* Content */}
-                <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+                <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
                   <div>
-                    <h2 className="font-display font-bold text-base sm:text-lg text-[#292826] group-hover:text-[#C94F36] transition line-clamp-1">
+                    <h2 className="font-display font-bold text-sm sm:text-base text-[#292826] group-hover:text-[#C94F36] transition line-clamp-1">
                       {plan.title}
                     </h2>
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#54504A]">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] sm:text-xs text-[#54504A]">
                       <span className="font-semibold text-[#292826]">{plan.dimension || plan.size}</span>
                       <span>·</span>
                       <span>{plan.bhk}</span>
@@ -345,24 +345,24 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
                       )}
                     </div>
                     {plan.plotDetails && (
-                      <p className="mt-2 text-[11px] text-[#74706A] line-clamp-2 leading-relaxed">
+                      <p className="mt-1.5 text-[11px] text-[#74706A] line-clamp-2 leading-relaxed">
                         {plan.plotDetails}
                       </p>
                     )}
                   </div>
 
                   {/* CTA Action: Request Plan Details */}
-                  <div className="mt-4 pt-3.5 border-t border-[#EEE9E3] flex items-center justify-between">
+                  <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center justify-between">
                     <span className="text-xs font-bold text-[#292826]">
                       {plan.price || 'Custom Estimate'}
                     </span>
                     <button
                       type="button"
                       onClick={() => onOpenConsult(plan.title)}
-                      className="text-xs font-bold text-[#C94F36] hover:text-[#B33E26] flex items-center gap-1.5 transition cursor-pointer group-hover:translate-x-0.5"
+                      className="text-xs font-bold text-[#C94F36] hover:text-[#B33E26] flex items-center gap-1 transition cursor-pointer group-hover:translate-x-0.5"
                     >
-                      <span>Request Plan Details</span>
-                      <Icons.ChevronRight size={14} />
+                      <span>Request Details</span>
+                      <Icons.ChevronRight size={13} />
                     </button>
                   </div>
                 </div>

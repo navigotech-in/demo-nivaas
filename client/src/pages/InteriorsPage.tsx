@@ -23,7 +23,7 @@ export default function InteriorsPage({ onOpenConsult }: InteriorsPageProps) {
   useSeoMeta({
     title: 'Luxury Interior Designs & Modular Kitchens for Indian Homes | NIVAAS',
     description: 'Explore curated Indian interior designs including modular kitchens, living room TV units, master bedroom suites, pooja mandirs, and custom wardrobes.',
-    canonicalUrl: 'https://indorehousemakers.in/interiors',
+    canonicalUrl: 'https://nivaas.in/interiors',
   })
 
   const filteredItems = useMemo(() => {
@@ -65,7 +65,7 @@ export default function InteriorsPage({ onOpenConsult }: InteriorsPageProps) {
               key={pill}
               type="button"
               onClick={() => setSelectedRoom(pill)}
-              className={`shrink-0 px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer border ${
+              className={`shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer border ${
                 selectedRoom === pill
                   ? 'bg-[#C94F36] text-white border-[#C94F36] shadow-xs'
                   : 'bg-white text-[#54504A] border-[#E7E0D7] hover:border-[#C94F36] hover:text-[#292826]'
@@ -86,16 +86,16 @@ export default function InteriorsPage({ onOpenConsult }: InteriorsPageProps) {
         </div>
       </div>
 
-      {/* Interiors Grid */}
+      {/* Interiors Grid - Compact 4-column */}
       <div className="container-content pb-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
           {filteredItems.map((item) => (
             <article
               key={item.id}
-              className="bg-white rounded-lg border border-[#E7E0D7] overflow-hidden flex flex-col group transition hover:border-[#C94F36]/50 shadow-xs"
+              className="bg-white rounded-xl border border-[#E7E0D7] overflow-hidden flex flex-col group transition hover:border-[#C94F36]/50 shadow-xs hover:shadow-sm"
             >
               <div
-                className="relative aspect-[4/3] overflow-hidden bg-[#FAF8F5] cursor-pointer"
+                className="relative aspect-[16/11] overflow-hidden bg-[#FAF8F5] cursor-pointer"
                 onClick={() => onOpenConsult(`Interior Design: ${item.title}`)}
               >
                 <img
@@ -105,29 +105,29 @@ export default function InteriorsPage({ onOpenConsult }: InteriorsPageProps) {
                   className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 {item.items && (
-                  <div className="absolute top-3 left-3 bg-[#292826]/90 text-white text-[10px] font-bold px-2.5 py-1 rounded backdrop-blur-xs">
+                  <div className="absolute top-2.5 left-2.5 bg-[#292826]/90 text-white text-[9px] font-bold px-2 py-0.5 rounded backdrop-blur-xs">
                     {item.items}
                   </div>
                 )}
               </div>
-              <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+              <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
                 <div>
-                  <h2 className="font-display font-bold text-base sm:text-lg text-[#292826] group-hover:text-[#C94F36] transition">
+                  <h2 className="font-display font-bold text-sm sm:text-base text-[#292826] group-hover:text-[#C94F36] transition line-clamp-1">
                     {item.title}
                   </h2>
-                  <p className="mt-2 text-xs text-[#54504A] leading-relaxed line-clamp-3">
+                  <p className="mt-1.5 text-[11px] sm:text-xs text-[#54504A] leading-relaxed line-clamp-2">
                     {item.text}
                   </p>
                 </div>
-                <div className="mt-4 pt-3.5 border-t border-[#EEE9E3] flex items-center justify-between">
-                  <span className="text-xs text-[#74706A] font-medium">Custom 3D Interior Plan</span>
+                <div className="mt-3.5 pt-3 border-t border-[#EEE9E3] flex items-center justify-between">
+                  <span className="text-[11px] text-[#74706A] font-medium">3D Interior Plan</span>
                   <button
                     type="button"
                     onClick={() => onOpenConsult(`Interior Design: ${item.title}`)}
                     className="text-xs font-bold text-[#C94F36] hover:text-[#B33E26] flex items-center gap-1 transition cursor-pointer"
                   >
-                    <span>Request Design Details</span>
-                    <Icons.ChevronRight size={14} />
+                    <span>Request Details</span>
+                    <Icons.ChevronRight size={13} />
                   </button>
                 </div>
               </div>

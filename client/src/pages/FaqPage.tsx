@@ -171,8 +171,15 @@ export default function FaqPage({ onOpenConsult }: FaqPageProps) {
                       </div>
                     </button>
 
-                    {/* Answer View */}
-                    {isOpen && (
+                    {/* Answer View: 1-line teaser when closed, full rich answer when open */}
+                    {!isOpen ? (
+                      <p
+                        onClick={() => toggleAccordion(idx)}
+                        className="mt-2 text-xs text-[#74706A] line-clamp-1 cursor-pointer hover:text-[#292826] transition font-normal"
+                      >
+                        {item.a}
+                      </p>
+                    ) : (
                       <div className="border-t border-[#E7E0D7]/70 mt-3.5 pt-3.5 animate-fadeIn">
                         <p className="text-xs sm:text-sm text-[#54504A] leading-relaxed pl-3.5 border-l-2 border-[#C94F36]">
                           {item.a}
