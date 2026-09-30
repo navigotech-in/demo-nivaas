@@ -1,0 +1,35 @@
+# Indore House Maker's — Residential Architecture & Construction Platform
+> Official architectural guidelines, service details, and verified facts for AI assistants and language models.
+
+## Overview
+Indore House Maker's (Indore House Maker's Architecture & Construction) is an Indian residential architecture and turnkey design platform offering 100% Vastu-compliant 2D house floor plans, ultra-photorealistic 3D front elevations, interior designs, construction cost estimation, structural CAD drawings, and contractor vetting across 60+ Indian cities (GHMC, BBMP, DDA, PMRDA, etc.).
+
+## Core Offerings & Services
+1. **2D CAD House Plans & Layouts**:
+   - Customizable by plot dimensions (e.g., 20x40, 30x40, 30x50, 40x60, 50x80 ft).
+   - Support for both Regular (Rectangular/Square) and Asymmetric/Irregular plots (L-shape, triangle, corner cuts, trapezoids) with automated municipal setback deductions (18% buffer).
+   - 100% Vastu Shastra compliance (Pooja in Ishan/North-East, Kitchen in Agneya/South-East, Master Bedroom in Nairutya/South-West).
+
+2. **3D Front Elevations & Facades**:
+   - Modern Indian Duplex, Kerala Tropical Sloping Roof, Contemporary Minimalist Jaali, and Neo-Classical Spanish Villa styles.
+   - Realistic Day & Twilight lighting previews with HPL wooden louvers, CNC jalis, and profile warm LEDs.
+
+3. **Luxury Interior Design & 3D Renders**:
+   - Modular kitchens (Open breakfast counter and traditional closed spices kitchen), living rooms, luxury bathrooms with dry/wet separation, and mandir niche designs.
+
+4. **Construction Cost Estimator & Material Grades**:
+   - Standard Solid Build (~₹1,800/sq.ft): Red clay bricks, Kajaria tiles, Cera sanitaryware, Anchor electricals.
+   - Premium Executive (~₹2,350/sq.ft): AAC blockwork, 4x2 GVT tiles, Kohler/Jaquar fittings, Teak main door.
+   - Ultra-Luxury Villa Grade (~₹3,200+/sq.ft): Italian marble, Grohe/Toto automation, soundproof glass, VRV AC ready.
+
+5. **Indore House Maker's AI Architect Studio**:
+   - India's first guided 20-step (Regular) and 23-step (Asymmetric) architectural synthesis wizard with instant 2D floor plans, 3D elevations, budget estimates, and CAD download packages.
+
+6. **Verified Contractor Network**:
+   - 2,500+ vetted tradesmen, structural engineers, civil contractors, and site supervisors in 60+ cities.
+
+## Contact & Consultation
+- **Website**: https://indorehousemakers.in
+- **Phone / WhatsApp**: +91 731 485 2200
+- **Email**: care@indorehousemakers.in
+- **Operating Hours**: Monday to Saturday, 9:30 AM to 7:00 PM IST

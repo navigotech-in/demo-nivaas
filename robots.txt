@@ -1,0 +1,28 @@
+# Indore House Maker's Robots.txt
+# https://indorehousemakers.in
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /*?*bhk=
+Disallow: /*?*direction=
+
+# AI Crawlers & Scrapers
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /llms.txt
+
+# XML Sitemaps
+Sitemap: https://indorehousemakers.in/sitemap.xml
+Sitemap: https://indorehousemakers.in/sitemaps/house-plans.xml
+Sitemap: https://indorehousemakers.in/sitemaps/elevations.xml
+Sitemap: https://indorehousemakers.in/sitemaps/cities.xml
