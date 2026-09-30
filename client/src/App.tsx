@@ -142,7 +142,11 @@ function App() {
       </div>
 
       {/* Global Footer */}
-      <Footer />
+      <Footer
+        onOpenConsult={handleOpenConsult}
+        onOpenLogin={() => setLoginOpen(true)}
+        onOpenAiStudio={() => handleOpenAiStudio('generator')}
+      />
 
       {/* Responsive Bottom Navigation (0–767px Mobile Full-Width Bar, 768–1023px Tablet Dock, Hidden on Desktop 1024px+) */}
       <ResponsiveBottomNav

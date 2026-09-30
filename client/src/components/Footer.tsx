@@ -120,7 +120,13 @@ const rawSocialPlatforms: SocialPlatform[] = [
 
 const socialPlatforms: SocialPlatform[] = rawSocialPlatforms
 
-export default function Footer() {
+interface FooterProps {
+  onOpenConsult?: (query?: string) => void
+  onOpenLogin?: () => void
+  onOpenAiStudio?: () => void
+}
+
+export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: FooterProps) {
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null)
 
   const handleAiClick = async (platform: AiPlatform) => {
@@ -145,7 +151,7 @@ export default function Footer() {
       <div className="border-b border-white/10 py-10 lg:py-12">
         <div className="container-content flex flex-col lg:flex-row items-center justify-between gap-6">
           <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-[#E76F2E] flex items-center gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#C94F36] flex items-center gap-1.5">
               <Icons.Sparkles size={14} /> Stay Inspired &amp; Informed
             </span>
             <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white mt-1">
@@ -167,15 +173,15 @@ export default function Footer() {
                 type="email"
                 required
                 placeholder="Enter your email address"
-                className="w-full rounded-lg border border-white/15 bg-white/10 pl-10 pr-4 py-3 text-xs text-white placeholder:text-white/50 outline-none focus:border-[#E76F2E] transition"
+                className="w-full rounded-lg border border-white/15 bg-white/10 pl-10 pr-4 py-3 text-xs text-white placeholder:text-white/50 outline-none focus:border-[#C94F36] transition"
               />
-              <div className="absolute left-3.5 top-3.5 text-[#E76F2E]">
+              <div className="absolute left-3.5 top-3.5 text-[#C94F36]">
                 <Icons.Mail size={15} />
               </div>
             </div>
             <button
               type="submit"
-              className="shrink-0 rounded-lg bg-[#E76F2E] px-6 py-3 text-xs font-bold text-white hover:bg-[#C65320] transition active:scale-[0.98] cursor-pointer"
+              className="shrink-0 rounded-lg bg-[#C94F36] px-6 py-3 text-xs font-bold text-white hover:bg-[#B33E26] transition active:scale-[0.98] cursor-pointer"
             >
               Subscribe
             </button>
@@ -186,11 +192,11 @@ export default function Footer() {
       {/* Main Footer Links Container: Editorial Index Layout */}
       <div className="container-content py-10 lg:py-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-          {/* Brand Column & Quick Contact (5 Cols on Desktop) */}
+          {/* Brand Column & Quick Actions (5 Cols on Desktop) */}
           <div className="lg:col-span-5 space-y-6">
             <div>
               <div className="flex items-center gap-2.5">
-                <Icons.NivaasMark className="h-6 w-6 text-[#E76F2E] shrink-0" />
+                <Icons.NivaasMark className="h-6 w-6 text-[#C94F36] shrink-0" />
                 <h4 className="font-display font-black text-xl text-white tracking-tight">
                   {site.name}
                 </h4>
@@ -200,35 +206,63 @@ export default function Footer() {
               </p>
             </div>
 
-            {/* Helpline / Direct Contact Card */}
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2.5 text-xs text-white/80 max-w-md">
+            {/* Helpline / Direct Contact & Quick Actions Card */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3 text-xs text-white/80 max-w-md">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E76F2E]">Design Helpline</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#C94F36]">Design Helpline</span>
                 <span className="text-[10px] text-white/50">{site.operatingHours}</span>
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-white/90">
                 <span className="font-bold text-white flex items-center gap-1.5">
-                  <Icons.Phone size={13} className="text-[#E76F2E]" />
+                  <Icons.Phone size={13} className="text-[#C94F36]" />
                   <span>{site.phone}</span>
                 </span>
                 <span className="flex items-center gap-1.5 text-white/70">
-                  <Icons.MapPin size={13} className="text-[#E76F2E]" />
+                  <Icons.MapPin size={13} className="text-[#C94F36]" />
                   <span>{site.city}</span>
                 </span>
               </div>
-              <div className="pt-1 flex items-center gap-2">
-                <Link
-                  to="/contact"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E76F2E] text-white text-[11px] font-bold hover:bg-[#C65320] transition cursor-pointer"
+
+              {/* Quick Header Actions in Footer (Consult, Profile/Login, AI Studio, Cost Estimator) */}
+              <div className="pt-1.5 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenConsult) onOpenConsult('Footer Free Consultation')
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C94F36] text-white text-[11px] font-bold hover:bg-[#B33E26] transition cursor-pointer shadow-xs active:scale-[0.98]"
                 >
                   <Icons.Sparkles size={12} />
                   <span>Book Free Consultation</span>
-                </Link>
+                </button>
+
+                {onOpenLogin && (
+                  <button
+                    type="button"
+                    onClick={onOpenLogin}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white text-[11px] font-semibold hover:bg-white/20 transition cursor-pointer border border-white/10 active:scale-[0.98]"
+                  >
+                    <Icons.User size={12} className="text-[#C94F36]" />
+                    <span>Profile (Login / Sign Up)</span>
+                  </button>
+                )}
+
+                {onOpenAiStudio && (
+                  <button
+                    type="button"
+                    onClick={onOpenAiStudio}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white text-[11px] font-semibold hover:bg-white/20 transition cursor-pointer border border-white/10 active:scale-[0.98]"
+                  >
+                    <Icons.Sparkles size={12} className="text-[#FFA366]" />
+                    <span>AI Studio</span>
+                  </button>
+                )}
+
                 <Link
                   to="/cost-estimator"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white text-[11px] font-medium hover:bg-white/15 transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white text-[11px] font-medium hover:bg-white/15 transition cursor-pointer border border-white/10"
                 >
-                  <Icons.Calculator size={12} />
+                  <Icons.Calculator size={12} className="text-[#C94F36]" />
                   <span>Cost Estimator</span>
                 </Link>
               </div>
@@ -236,21 +270,33 @@ export default function Footer() {
 
             {/* Popular Links */}
             <div className="pt-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#E76F2E] block mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#C94F36] block mb-2">
                 POPULAR LINKS
               </span>
               <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs text-white/75 font-medium">
-                <Link to="/house-plans" className="hover:text-[#E76F2E] transition">House Plans</Link>
+                <Link to="/house-plans" className="hover:text-[#C94F36] transition">House Plans</Link>
                 <span className="text-white/30">·</span>
-                <Link to="/cost-estimator" className="hover:text-[#E76F2E] transition">Cost Estimator</Link>
+                <Link to="/cost-estimator" className="hover:text-[#C94F36] transition">Cost Estimator</Link>
                 <span className="text-white/30">·</span>
-                <Link to="/guides" className="hover:text-[#E76F2E] transition">Guides</Link>
+                <Link to="/guides" className="hover:text-[#C94F36] transition">Guides</Link>
                 <span className="text-white/30">·</span>
-                <Link to="/about" className="hover:text-[#E76F2E] transition">About Us</Link>
+                <Link to="/about" className="hover:text-[#C94F36] transition">About Us</Link>
                 <span className="text-white/30">·</span>
-                <Link to="/faq" className="hover:text-[#E76F2E] transition">FAQs</Link>
+                <Link to="/faq" className="hover:text-[#C94F36] transition">FAQs</Link>
                 <span className="text-white/30">·</span>
-                <Link to="/contact" className="hover:text-[#E76F2E] transition">Contact</Link>
+                <Link to="/contact" className="hover:text-[#C94F36] transition">Contact</Link>
+                {onOpenLogin && (
+                  <>
+                    <span className="text-white/30">·</span>
+                    <button
+                      type="button"
+                      onClick={onOpenLogin}
+                      className="hover:text-[#C94F36] transition cursor-pointer font-semibold"
+                    >
+                      Login / Sign Up
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>

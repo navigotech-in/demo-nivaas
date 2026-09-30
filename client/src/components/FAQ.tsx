@@ -35,19 +35,24 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
             return (
               <div
                 key={idx}
-                className={`overflow-hidden rounded-xl border transition-all ${
+                onClick={() => toggle(idx)}
+                className={`overflow-hidden rounded-xl border transition-all cursor-pointer select-none ${
                   isOpen
                     ? 'border-[#292826] bg-[#FFF6E8]/40 shadow-sm ring-1 ring-[#54504A]/20'
                     : 'border-[#E7E0D7] bg-[#FDFCF9] hover:border-[#C94F36]/60'
                 }`}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    toggle(idx)
+                  }
+                }}
+                aria-expanded={isOpen}
               >
                 <div className={`p-4 sm:p-5 flex flex-col justify-center ${!isOpen ? 'min-h-[84px] sm:min-h-[88px]' : ''}`}>
-                  <button
-                    type="button"
-                    onClick={() => toggle(idx)}
-                    className="flex w-full items-center justify-between text-left transition cursor-pointer gap-3"
-                    aria-expanded={isOpen}
-                  >
+                  <div className="flex w-full items-center justify-between text-left gap-3">
                     <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#C94F36] bg-[#FFF6E8] border border-[#E7E0D7] px-2.5 py-0.5 rounded-md shrink-0">
                         {item.tag}
@@ -63,14 +68,11 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
                     >
                       +
                     </div>
-                  </button>
+                  </div>
 
                   {/* Teaser line when closed vs Full Answer when open */}
                   {!isOpen ? (
-                    <p
-                      onClick={() => toggle(idx)}
-                      className="mt-1.5 text-xs text-[#54504A]/90 truncate cursor-pointer hover:text-[#292826] transition font-medium"
-                    >
+                    <p className="mt-1.5 text-xs text-[#54504A]/90 truncate font-medium">
                       {item.a}
                     </p>
                   ) : (
