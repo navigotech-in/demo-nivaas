@@ -147,18 +147,18 @@ export default function FaqPage({ onOpenConsult }: FaqPageProps) {
                       : 'border-[#E7E0D7] bg-white hover:border-[#C94F36]/60'
                   }`}
                 >
-                  <div className="p-4 sm:p-5">
+                  <div className={`p-4 sm:p-5 flex flex-col justify-center ${!isOpen ? 'min-h-[84px] sm:min-h-[88px]' : ''}`}>
                     <button
                       type="button"
                       onClick={() => toggleAccordion(idx)}
                       className="flex w-full items-center justify-between text-left transition cursor-pointer gap-3"
                       aria-expanded={isOpen}
                     >
-                      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[#C94F36] bg-[#FFF6E8] border border-[#E7E0D7] px-2 py-0.5 rounded shrink-0">
                           {item.tag}
                         </span>
-                        <h2 className="font-display text-sm sm:text-base font-bold text-[#292826] leading-snug">
+                        <h2 className={`font-display text-sm sm:text-base font-bold text-[#292826] leading-snug ${!isOpen ? 'truncate' : ''}`}>
                           {item.q}
                         </h2>
                       </div>
@@ -175,7 +175,7 @@ export default function FaqPage({ onOpenConsult }: FaqPageProps) {
                     {!isOpen ? (
                       <p
                         onClick={() => toggleAccordion(idx)}
-                        className="mt-2 text-xs text-[#74706A] line-clamp-1 cursor-pointer hover:text-[#292826] transition font-normal"
+                        className="mt-1.5 text-xs text-[#74706A] truncate cursor-pointer hover:text-[#292826] transition font-normal"
                       >
                         {item.a}
                       </p>

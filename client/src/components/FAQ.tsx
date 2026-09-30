@@ -38,26 +38,26 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
                 className={`overflow-hidden rounded-xl border transition-all ${
                   isOpen
                     ? 'border-[#292826] bg-[#FFF6E8]/40 shadow-sm ring-1 ring-[#54504A]/20'
-                    : 'border-[#E7E0D7] bg-[#FDFCF9] hover:border-[#E76F2E]/60'
+                    : 'border-[#E7E0D7] bg-[#FDFCF9] hover:border-[#C94F36]/60'
                 }`}
               >
-                <div className="p-4 sm:p-5">
+                <div className={`p-4 sm:p-5 flex flex-col justify-center ${!isOpen ? 'min-h-[84px] sm:min-h-[88px]' : ''}`}>
                   <button
                     type="button"
                     onClick={() => toggle(idx)}
-                    className="flex w-full items-center justify-between text-left transition cursor-pointer"
+                    className="flex w-full items-center justify-between text-left transition cursor-pointer gap-3"
                     aria-expanded={isOpen}
                   >
-                    <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pr-3">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#F1ECE5] px-2.5 py-0.5 rounded-md shrink-0">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#C94F36] bg-[#FFF6E8] border border-[#E7E0D7] px-2.5 py-0.5 rounded-md shrink-0">
                         {item.tag}
                       </span>
-                      <span className="font-display text-base sm:text-lg font-bold text-[#292826]">
+                      <span className={`font-display text-base sm:text-lg font-bold text-[#292826] ${!isOpen ? 'truncate' : ''}`}>
                         {item.q}
                       </span>
                     </div>
                     <div
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base font-bold transition-transform bg-[#E76F2E] text-white shadow-sm border border-[#E76F2E] ${
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base font-bold transition-transform bg-[#C94F36] text-white shadow-sm ${
                         isOpen ? 'rotate-45' : ''
                       }`}
                     >
@@ -69,13 +69,13 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
                   {!isOpen ? (
                     <p
                       onClick={() => toggle(idx)}
-                      className="mt-2 text-xs text-[#54504A]/90 line-clamp-1 cursor-pointer hover:text-[#292826] transition font-medium"
+                      className="mt-1.5 text-xs text-[#54504A]/90 truncate cursor-pointer hover:text-[#292826] transition font-medium"
                     >
                       {item.a}
                     </p>
                   ) : (
                     <div className="border-t border-[#E7E0D7]/60 mt-3.5 pt-3.5 animate-fadeIn">
-                      <p className="text-xs sm:text-sm text-[#54504A] leading-relaxed pl-3.5 border-l-2 border-[#E76F2E]">
+                      <p className="text-xs sm:text-sm text-[#54504A] leading-relaxed pl-3.5 border-l-2 border-[#C94F36]">
                         {item.a}
                       </p>
                     </div>
