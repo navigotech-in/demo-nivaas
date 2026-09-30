@@ -13,7 +13,13 @@ export interface MegaMenuItem {
   items: { label: string; href: string; badge?: string }[]
 }
 
-export const megaMenus = {
+export const megaMenus: {
+  architecture: MegaMenuItem[]
+  interior: MegaMenuItem[]
+  designIdeas: { label: string; href: string; desc: string }[]
+  otherServices: { label: string; href: string; desc: string }[]
+  resources: { label: string; href: string }[]
+} = {
   architecture: [
     {
       title: 'Architectural Styles',

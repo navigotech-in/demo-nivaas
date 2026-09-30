@@ -633,13 +633,40 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
               />
             </button>
             {expandedCategory === 'arch' && (
-              <div className="pl-8 pr-2 py-1 space-y-1 animate-fadeIn text-xs text-[#54504A]">
-                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">30 x 50 House Plans</a>
-                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">20 x 40 House Plans</a>
-                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">25 x 40 House Plans</a>
-                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">40 x 60 House Plans</a>
-                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">G+1 Duplex Plans</a>
-                <a href="#plans" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">100% Vastu Blueprints</a>
+              <div className="pl-4 pr-1 py-2 space-y-3.5 animate-fadeIn text-xs">
+                {megaMenus.architecture.map((col) => (
+                  <div key={col.title} className="bg-[#FAF8F5] rounded-lg p-2.5 border border-[#EEE9E3]">
+                    <h5 className="font-bold text-[11px] uppercase tracking-wider text-[#292826] pb-1.5 mb-1.5 border-b border-[#E7E0D7] flex items-center gap-1.5">
+                      {col.title.includes('Style') ? (
+                        <Icons.Building size={12} className="text-[#E76F2E]" />
+                      ) : col.title.includes('Storey') || col.title.includes('Elevation') ? (
+                        <Icons.Layers size={12} className="text-[#E76F2E]" />
+                      ) : col.title.includes('Bedroom') ? (
+                        <Icons.Bed size={12} className="text-[#E76F2E]" />
+                      ) : (
+                        <Icons.Compass size={12} className="text-[#E76F2E]" />
+                      )}
+                      <span>{col.title}</span>
+                    </h5>
+                    <div className="space-y-1">
+                      {col.items.map((item) => (
+                        <a
+                          key={item.label}
+                          href={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center justify-between py-1 px-1.5 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] text-[#54504A] font-medium transition"
+                        >
+                          <span>{item.label}</span>
+                          {item.badge && (
+                            <span className="text-[9px] bg-[#FFF6E8] text-[#E76F2E] border border-[#E7E0D7] px-1.5 py-0.5 rounded font-bold">
+                              {item.badge}
+                            </span>
+                          )}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -663,18 +690,37 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
               />
             </button>
             {expandedCategory === 'interior' && (
-              <div className="pl-8 pr-2 py-1 space-y-1 animate-fadeIn text-xs text-[#54504A]">
-                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Modular Kitchens</a>
-                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Luxury Living Rooms</a>
-                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Master Bedroom Suites</a>
-                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Pooja Room Mandirs</a>
-                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Wardrobe &amp; Storage</a>
-                <a href="#interiors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">3D Interior Renders</a>
+              <div className="pl-4 pr-1 py-2 space-y-3.5 animate-fadeIn text-xs">
+                {megaMenus.interior.map((col) => (
+                  <div key={col.title} className="bg-[#FAF8F5] rounded-lg p-2.5 border border-[#EEE9E3]">
+                    <h5 className="font-bold text-[11px] uppercase tracking-wider text-[#292826] pb-1.5 mb-1.5 border-b border-[#E7E0D7] flex items-center gap-1.5">
+                      <Icons.Home size={12} className="text-[#E76F2E]" />
+                      <span>{col.title}</span>
+                    </h5>
+                    <div className="space-y-1">
+                      {col.items.map((item) => (
+                        <a
+                          key={item.label}
+                          href={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center justify-between py-1 px-1.5 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] text-[#54504A] font-medium transition"
+                        >
+                          <span>{item.label}</span>
+                          {item.badge && (
+                            <span className="text-[9px] bg-[#FFF6E8] text-[#E76F2E] border border-[#E7E0D7] px-1.5 py-0.5 rounded font-bold">
+                              {item.badge}
+                            </span>
+                          )}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* 3. 3D Elevation Accordion */}
+          {/* 3. Designs / 3D Elevation Accordion */}
           <div className="py-1">
             <button
               type="button"
@@ -683,7 +729,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
             >
               <span className="flex items-center gap-2.5">
                 <Icons.Sparkles size={16} className="text-[#E76F2E]" />
-                <span>3D Elevation</span>
+                <span>Designs &amp; Elevations</span>
               </span>
               <Icons.ChevronRight
                 size={15}
@@ -693,13 +739,21 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
               />
             </button>
             {expandedCategory === 'elevation' && (
-              <div className="pl-8 pr-2 py-1 space-y-1 animate-fadeIn text-xs text-[#54504A]">
-                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Modern Duplex Elevations</a>
-                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Tropical Kerala Roofs</a>
-                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Contemporary CNC Jaali</a>
-                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Neo-Classical Villa</a>
-                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Glass Facade Elevations</a>
-                <a href="#elevations" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Exterior Lighting</a>
+              <div className="pl-4 pr-1 py-2 space-y-2 animate-fadeIn text-xs">
+                {megaMenus.designIdeas.map((idea) => (
+                  <a
+                    key={idea.label}
+                    href={idea.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block p-2.5 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:bg-[#FFF6E8] transition"
+                  >
+                    <div className="font-bold text-[#292826] flex items-center gap-1.5 text-xs">
+                      <Icons.Layers size={13} className="text-[#E76F2E]" />
+                      <span>{idea.label}</span>
+                    </div>
+                    <p className="text-[11px] text-[#54504A] mt-0.5 leading-snug">{idea.desc}</p>
+                  </a>
+                ))}
               </div>
             )}
           </div>
@@ -723,12 +777,21 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
               />
             </button>
             {expandedCategory === 'services' && (
-              <div className="pl-8 pr-2 py-1 space-y-1 animate-fadeIn text-xs text-[#54504A]">
-                <a href="#services" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">2D Architectural CAD</a>
-                <a href="#services" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Structural Drawings</a>
-                <a href="#contractors" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Verified Contractor Network</a>
-                <a href="#services" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">PMC &amp; Site Supervision</a>
-                <a href="#services" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 px-2 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] font-medium transition">Vastu Consultation</a>
+              <div className="pl-4 pr-1 py-2 space-y-2 animate-fadeIn text-xs">
+                {megaMenus.otherServices.map((srv) => (
+                  <a
+                    key={srv.label}
+                    href={srv.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block p-2.5 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:bg-[#FFF6E8] transition"
+                  >
+                    <div className="font-bold text-[#292826] flex items-center gap-1.5 text-xs">
+                      <Icons.ShieldCheck size={13} className="text-[#E76F2E]" />
+                      <span>{srv.label}</span>
+                    </div>
+                    <p className="text-[11px] text-[#54504A] mt-0.5 leading-snug">{srv.desc}</p>
+                  </a>
+                ))}
               </div>
             )}
           </div>
