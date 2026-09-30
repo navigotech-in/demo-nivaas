@@ -24,7 +24,7 @@ export default function OneStop({ onOpenConsult }: OneStopProps) {
             Everything you need to build, finance & supervise
           </h2>
           <p className="mt-2 text-sm text-[#54504A]">
-            Indore House Maker's is more than a plan store — we connect you to trusted builders, contractors and lenders to take the project to completion.
+            NIVAAS is more than a plan store — we connect you to trusted builders, contractors and lenders to take the project to completion.
           </p>
         </div>
 

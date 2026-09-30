@@ -10,10 +10,10 @@ export default function Achievements() {
             <Icons.HardHat size={14} /> Celebrating Achievements
           </span>
           <h2 className="section-title mt-2">
-            Awards, offices & the Indore House Maker's family
+            Awards, offices &amp; the NIVAAS family
           </h2>
           <p className="mt-2 text-sm text-[#54504A]">
-            Recognitions that validate our engineering, and the sibling brands that extend Indore House Maker's beyond design.
+            Recognitions that validate our engineering, and the sibling initiatives that extend NIVAAS beyond design.
           </p>
         </div>
 
@@ -32,7 +32,7 @@ export default function Achievements() {
         <div className="mt-12">
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="h-px flex-1 bg-[#E2DCD5] max-w-24" />
-            <span className="text-xs font-bold uppercase tracking-widest text-[#54504A]">The Indore House Maker's Family</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-[#54504A]">The NIVAAS Ecosystem</span>
             <div className="h-px flex-1 bg-[#E2DCD5] max-w-24" />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">

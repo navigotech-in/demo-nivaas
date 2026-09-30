@@ -157,6 +157,7 @@ function App() {
         onOpenConsult={handleOpenConsult}
         onOpenAiStudio={() => handleOpenAiStudio('generator')}
         sheetOpen={exploreSheetOpen}
+        modalOpen={consultOpen || loginOpen || estimateOpen || aiStudioOpen || exploreSheetOpen}
       />
 
       {/* Modals Loaded On-Demand */}

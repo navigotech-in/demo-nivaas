@@ -9,9 +9,9 @@ export interface SeoMetaProps {
   ogType?: 'website' | 'article'
 }
 
-const DEFAULT_TITLE = 'Indore House Maker\'s — House Plans, 3D Front Elevations & Interior Designs'
-const DEFAULT_DESC = 'Discover 12,000+ 100% Vastu-compliant Indian house plans, photorealistic 3D front elevations, luxury modular interior designs, and construction cost estimates across Indore and 60+ Indian cities.'
-const DEFAULT_CANONICAL = 'https://indorehousemakers.in/'
+const DEFAULT_TITLE = 'NIVAAS — AI-Powered Architecture, House Plans & 3D Elevations'
+const DEFAULT_DESC = 'Discover 480+ 100% Vastu-compliant Indian house plans, photorealistic 3D front elevations, luxury modular interior designs, and construction cost estimates across 60+ Indian cities.'
+const DEFAULT_CANONICAL = 'https://nivaas.in/'
 const DEFAULT_OG_IMAGE = 'https://images.pexels.com/photos/31737861/pexels-photo-31737861.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop'
 
 export function useSeoMeta({
@@ -24,7 +24,7 @@ export function useSeoMeta({
 }: SeoMetaProps) {
   useEffect(() => {
     // 1. Title Tag
-    const resolvedTitle = title ? `${title} | Indore House Maker's` : DEFAULT_TITLE
+    const resolvedTitle = title ? `${title} | NIVAAS` : DEFAULT_TITLE
     document.title = resolvedTitle
 
     // 2. Meta Description

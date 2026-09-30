@@ -84,7 +84,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
             </span>
             <span className="text-[#54504A]">|</span>
             <span className="flex items-center gap-1.5 text-[#292826]">
-              <Icons.Blueprint size={14} className="text-[#292826]" /> 12,000+ Verified Floor Plans
+              <Icons.Blueprint size={14} className="text-[#292826]" /> 480+ Verified House Plans
             </span>
           </div>
           <div className="flex items-center gap-5">
@@ -918,7 +918,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
             <div className="flex items-center justify-between border-b border-[#EEE9E3] pb-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📰</span>
-                <h3 className="font-display text-lg font-bold text-[#292826]">Indore House Maker's in the News</h3>
+                <h3 className="font-display text-lg font-bold text-[#292826]">NIVAAS in the News</h3>
               </div>
               <button
                 type="button"
@@ -934,7 +934,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                   Press Release · 2026
                 </span>
                 <h4 className="font-display text-sm font-bold text-[#292826]">
-                  Indore House Maker's crosses 12,000 verified residential plans milestone across India
+                  NIVAAS crosses 1,200+ delivered architectural projects across India
                 </h4>
                 <p className="mt-1 text-xs text-[#54504A]">
                   Empowering independent home builders across Tier 1, 2 and 3 cities with instant CAD working drawings and 3D architectural elevations.

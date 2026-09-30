@@ -24,7 +24,7 @@ export default function Blogs({ onOpenConsult }: BlogsProps) {
           </div>
           <button
             type="button"
-            onClick={() => onOpenConsult('Subscribe to Indore House Maker\'s Magazine')}
+            onClick={() => onOpenConsult('Subscribe to NIVAAS Journal')}
             className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-white border border-[#E76F2E] text-[#E76F2E] hover:bg-[#F1ECE5] hover:border-[#C65320] transition shadow-sm"
           >
             <Icons.FileText size={15} />

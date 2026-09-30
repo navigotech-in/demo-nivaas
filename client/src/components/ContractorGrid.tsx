@@ -27,7 +27,7 @@ export default function ContractorGrid({ onOpenConsult }: ContractorGridProps) {
               <Icons.HardHat size={14} /> Verified Contractor Network
             </span>
             <h2 className="section-title mt-2">
-              Skilled workers &amp; trade contractors, vetted by Indore House Maker's
+              Skilled workers &amp; trade contractors, vetted by NIVAAS
             </h2>
             <p className="mt-2 text-sm text-[#54504A]">
               Over 80 partner offices and 2,500+ verified tradesmen ready to execute your drawings — from foundation to finishing.

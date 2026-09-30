@@ -55,7 +55,7 @@ export default function Contact() {
             Tell us about your home, and we'll take it from there
           </h2>
           <p className="mt-3 max-w-lg leading-relaxed text-sm text-[#54504A]">
-            Share your plot size and the kind of home you have in mind. An Indore House Maker's chief architect gets back to you within two hours with layout concepts and estimates.
+            Share your plot size and the kind of home you have in mind. A NIVAAS chief architect gets back to you within two hours with layout concepts and estimates.
           </p>
 
           <div className="mt-[27px] space-y-[17px] text-sm">

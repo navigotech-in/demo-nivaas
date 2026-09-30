@@ -11,7 +11,7 @@ export default function AboutNivaas() {
           <div className="overflow-hidden rounded-3xl border border-slate-300 shadow-card">
             <Img
               src="https://images.pexels.com/photos/37129015/pexels-photo-37129015.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop"
-              alt="Indore House Maker's designed modern Indian duplex"
+              alt="NIVAAS designed modern Indian duplex"
               className="aspect-[4/3] w-full object-cover"
             />
           </div>
@@ -34,7 +34,7 @@ export default function AboutNivaas() {
 
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { icon: Icons.Blueprint, label: '12,000+ ready house plans', sub: 'Vastu & by-law compliant' },
+              { icon: Icons.Blueprint, label: '480+ ready house plans', sub: 'Vastu & by-law compliant' },
               { icon: Icons.HardHat, label: 'End-to-end construction', sub: 'PMC, contractors & loans' },
               { icon: Icons.ShieldCheck, label: 'Certified engineers', sub: 'Structural safety guaranteed' },
               { icon: Icons.Sparkles, label: 'AI design assistance', sub: 'Instant plan suggestions' },

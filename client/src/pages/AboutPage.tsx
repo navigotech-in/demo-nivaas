@@ -8,8 +8,8 @@ import { useSeoMeta } from '../components/useSeoMeta'
 export default function AboutPage() {
   useSeoMeta({
     title: 'About NIVAAS - India\'s Premier AI-Powered Architecture & Design Studio',
-    description: 'Learn about NIVAAS (Indore House Maker\'s) — 12,000+ completed house plans, certified structural engineers, and pan-India construction solutions.',
-    canonicalUrl: 'https://indorehousemakers.in/about',
+    description: 'Learn about NIVAAS — 480+ completed house plans, certified structural engineers, and pan-India construction solutions.',
+    canonicalUrl: 'https://nivaas.in/about',
   })
 
   return (

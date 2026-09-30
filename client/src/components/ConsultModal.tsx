@@ -116,7 +116,7 @@ export default function ConsultModal({
                 Consultation Booked!
               </h4>
               <p className="mt-2 text-xs sm:text-sm text-[#54504A] max-w-sm mx-auto">
-                Thank you, <span className="font-bold text-[#292826]">{form.name}</span>. A senior Indore House Maker's architect will contact you on <span className="font-bold text-[#292826]">{form.phone}</span> within 2 hours.
+                Thank you, <span className="font-bold text-[#292826]">{form.name}</span>. A senior NIVAAS architect will contact you on <span className="font-bold text-[#292826]">{form.phone}</span> within 2 hours.
               </p>
               <button
                 type="button"

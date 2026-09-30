@@ -15,13 +15,13 @@ interface ChatAiProps {
 const getBotReply = (input: string): string => {
   const q = input.toLowerCase()
   if (/(hi|hello|namaste|hey)\b/.test(q))
-    return 'Namaste! 🙏 I am your Indore House Maker\'s AI assistant. Ask me anything about house plans, pricing, Vastu, 3D elevations or interiors.'
+    return 'Namaste! 🙏 I am your NIVAAS AI assistant. Ask me anything about house plans, pricing, Vastu, 3D elevations or interiors.'
   if (/(price|cost|charge|pricing|rates?|fee|budget)/.test(q))
     return 'Our pricing bundles are:\n• 2D Layout + Working Drawings — ₹4,999\n• 3D Front Elevation — ₹2,499\n• Full Structural CAD Set — ₹6,999\nAll plans include unlimited revisions and municipal file ready drawings.'
   if (/(30x50|30 x 50|plot|dimension|siz|sq\.? ?ft|plot depth|width)/.test(q))
     return 'For a 30x50 ft East Facing plot we recommend our G+1 Duplex (3 BHK + Pooja, ~2,175 sq.ft built-up). You can explore or customize it from the House Plans section below.'
   if (/(vastu|vaastu|east facing|purva|direction)/.test(q))
-    return 'Every Indore House Maker\'s plan is 100% Vastu compliant — East (Purva) and North (Uttaraya) facing layouts are the most preferred. Our AI engine auto-checks room placements, main door direction and setback compliance.'
+    return 'Every NIVAAS plan is 100% Vastu compliant — East (Purva) and North (Uttaraya) facing layouts are the most preferred. Our AI engine auto-checks room placements, main door direction and setback compliance.'
   if (/(3d|elevation|exterior|facade)/.test(q))
     return 'Our 3D Front Elevations come in ultra-modern, traditional, and heritage styles with material-wise colour renderings. You get a photorealistic front façade + street view at ₹2,499.'
   if (/(interior|kitchen|pooja|bedroom|wardrobe|modular)/.test(q))
@@ -44,7 +44,7 @@ export default function ChatAi({ open, onClose }: ChatAiProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       from: 'bot',
-      text: 'Namaste! 🙏 I am your Indore House Maker\'s AI assistant. Ask anything about house plans, Vastu, 3D elevations or pricing.',
+      text: 'Namaste! 🙏 I am your NIVAAS AI assistant. Ask anything about house plans, Vastu, 3D elevations or pricing.',
     },
   ])
   const [input, setInput] = useState('')

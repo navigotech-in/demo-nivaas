@@ -51,7 +51,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <Icons.User size={16} />
             </span>
             <h3 className="font-display text-lg font-bold text-[#292826]">
-              {loggedIn ? 'Welcome to Indore House Maker\'s' : otpSent ? 'Enter OTP Verification' : 'Sign In / Register'}
+              {loggedIn ? 'Welcome to NIVAAS' : otpSent ? 'Enter OTP Verification' : 'Sign In / Register'}
             </h3>
           </div>
           <button

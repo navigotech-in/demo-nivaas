@@ -6,13 +6,13 @@ export default function AppCta() {
       <div className="container-content flex flex-col lg:flex-row items-center justify-between gap-8">
         <div className="max-w-2xl text-center lg:text-left">
           <span className="text-xs font-bold uppercase tracking-widest text-[#E76F2E] flex items-center justify-center lg:justify-start gap-1.5">
-            <Icons.Sparkles size={14} /> Indore House Maker's App
+            <Icons.Sparkles size={14} /> NIVAAS App
           </span>
           <h2 className="mt-2 font-display text-2xl sm:text-3xl font-extrabold text-[#292826]">
             House construction, in one click
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-[#54504A] max-w-xl">
-            Browse 35,000+ ready plans, run instant cost estimates, track your construction milestones and talk to your design supervisor — all from your phone.
+            Browse 480+ ready plans, run instant cost estimates, track your construction milestones and talk to your design supervisor — all from your phone.
           </p>
 
           {/* Official Standard Black App Store & Google Play Download Badges */}

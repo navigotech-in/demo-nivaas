@@ -6,20 +6,21 @@ interface WhatsAppWidgetProps {
   onOpenConsult?: (query?: string) => void
   onOpenAiStudio?: () => void
   sheetOpen?: boolean
+  modalOpen?: boolean
 }
 
-export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false }: WhatsAppWidgetProps) {
+export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false, modalOpen = false }: WhatsAppWidgetProps) {
   const [openChat, setOpenChat] = useState(false)
   const [chatMessage, setChatMessage] = useState('')
 
-  if (sheetOpen) {
+  if (sheetOpen || modalOpen) {
     return null
   }
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
     if (!chatMessage.trim()) return
-    const text = encodeURIComponent(`Hi Indore House Maker's team, ${chatMessage}`)
+    const text = encodeURIComponent(`Hi NIVAAS team, ${chatMessage}`)
     const phone = site.whatsapp.replace(/\D/g, '')
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank')
     setChatMessage('')
@@ -38,7 +39,7 @@ export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false }: Wh
       {/* Unified Floating Sticky Actions (AI + WhatsApp) */}
       <div
         id="floating-whatsapp-actions"
-        className="fixed bottom-[calc(72px+env(safe-area-inset-bottom))] md:bottom-22 lg:bottom-6 right-3 sm:right-5 z-[99970] flex flex-col items-end gap-2.5 pointer-events-auto select-none transition-all duration-200"
+        className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-24 lg:bottom-6 right-3 sm:right-5 z-[99970] flex flex-col items-end gap-2.5 pointer-events-auto select-none transition-all duration-200"
       >
         {/* Chat Popover Window */}
         {openChat && (
@@ -50,7 +51,7 @@ export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false }: Wh
                   <Icons.WhatsApp size={20} />
                 </div>
                 <div>
-                  <div className="font-bold text-sm leading-tight">Indore House Maker's Desk</div>
+                  <div className="font-bold text-sm leading-tight">NIVAAS Design Desk</div>
                   <div className="text-[10.5px] text-emerald-100 flex items-center gap-1.5 font-medium mt-0.5">
                     <span className="h-2 w-2 rounded-full bg-emerald-200" />
                     Architects Online Now
@@ -60,7 +61,7 @@ export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false }: Wh
               <button
                 type="button"
                 onClick={() => setOpenChat(false)}
-                className="h-7 w-7 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center text-white transition font-bold"
+                className="h-7 w-7 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center text-white transition font-bold cursor-pointer"
                 aria-label="Close WhatsApp chat"
               >
                 <Icons.Close size={15} />
@@ -70,7 +71,7 @@ export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false }: Wh
             {/* Body */}
             <div className="p-3.5 space-y-2.5 bg-[#FFF6E8]/60 max-h-[300px] overflow-y-auto text-xs">
               <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm border border-[#EEE9E3] text-[#292826] leading-relaxed font-medium">
-                Namaste! 🙏 Welcome to Indore House Maker's. Share your plot dimensions or ask any question regarding house plans, Vastu or 3D elevation.
+                Namaste! 🙏 Welcome to NIVAAS. Share your plot dimensions or ask any question regarding house plans, Vastu or 3D elevation.
               </div>
 
               <div className="text-[10px] font-bold uppercase text-[#54504A] tracking-wider pt-0.5 flex items-center gap-1">

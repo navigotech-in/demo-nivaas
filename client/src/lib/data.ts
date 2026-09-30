@@ -1,9 +1,9 @@
 export const site = {
-  name: "Indore House Maker's",
-  tagline: "House plans, elevations & interiors by Indore's top architects",
+  name: 'NIVAAS',
+  tagline: "India's premier AI-powered architecture & residential home design platform",
   phone: '+91 731-6533888',
   whatsapp: '+91 91111 22334',
-  email: 'care@indorehousemakers.in',
+  email: 'care@nivaas.in',
   city: 'Indore, MP & Pan-India',
   operatingHours: 'Mon-Sat, 9:30 AM - 7:00 PM IST',
 }
@@ -652,8 +652,8 @@ export const interiorCategories = [
 
 export const faqList = [
   {
-    q: 'What is Indore House Maker\'s and how does it work?',
-    a: 'Indore House Maker\'s is India\'s leading residential architecture and engineering platform. You can discover ready-to-build house plans, 3D front elevations, and interior designs or commission our licensed architects for full custom drawings tailored to your exact plot dimensions and budget.',
+    q: 'What is NIVAAS and how does it work?',
+    a: 'NIVAAS is India\'s premier residential architecture and engineering platform. You can discover ready-to-build house plans, 3D front elevations, and interior designs or commission our licensed architects for full custom drawings tailored to your exact plot dimensions and budget.',
     tag: 'General',
   },
   {
@@ -662,7 +662,7 @@ export const faqList = [
     tag: 'Delivery',
   },
   {
-    q: 'What is included in a complete Indore House Maker\'s Architectural Package?',
+    q: 'What is included in a complete NIVAAS Architectural Package?',
     a: 'Our standard packages include: 2D Furniture Layout Plan, Detailed Room Dimensions, North Orientation & Vastu Analysis, 3D Elevation Views, Column Centerline Drawings, Footing & Beam Structural Reinforcement Schedules, and Electrical & Plumbing working drawings.',
     tag: 'Deliverables',
   },
@@ -677,17 +677,17 @@ export const faqList = [
     tag: 'Customization',
   },
   {
-    q: 'Does Indore House Maker\'s provide on-site supervision and construction support?',
-    a: 'Yes. Through our PMC (Project Management Consultancy) and verified contractor network across Indore and 60+ Indian cities, we provide milestone-based on-site engineering supervision, material quality verification, and contractor matchmaking.',
+    q: 'Does NIVAAS provide on-site supervision and construction support?',
+    a: 'Yes. Through our PMC (Project Management Consultancy) and verified contractor network across Indore, Bhopal, Delhi NCR, Jaipur, Hyderabad and 60+ Indian cities, we provide milestone-based on-site engineering supervision, material quality verification, and contractor matchmaking.',
     tag: 'Construction',
   },
   {
-    q: 'How much does a house plan cost at Indore House Maker\'s?',
+    q: 'How much does a house plan cost at NIVAAS?',
     a: 'Ready 2D floor plans start from ₹2,999. Complete custom architectural packages (2D Layout + 3D Elevation + Structural drawings) range from ₹7,999 to ₹24,999 depending on plot area, number of floors, and structural complexity.',
     tag: 'Pricing',
   },
   {
-    q: 'How do I speak with an Indore House Maker\'s architect or design advisor?',
+    q: 'How do I speak with a NIVAAS architect or design advisor?',
     a: 'You can click "Consult Online Now" in the top bar, call us at +91 731-6533888 (Mon-Sat, 9:30 AM - 7:00 PM IST), or message our design desk on WhatsApp for immediate assistance.',
     tag: 'Support',
   },

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { fallbackProjects } from '../lib/data'
 import { Icons } from '../components/Icons'
@@ -20,7 +20,6 @@ const bhkOptions = [
 const areaOptions = [
   'All Areas',
   'Under 1,000 sq.ft',
-  '1,000 - 1,500 sq.ft',
   '1,000 - 1,500 sq.ft',
   '1,500 - 2,000 sq.ft',
   '2,000 - 3,000 sq.ft',
@@ -48,15 +47,28 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
   const [selectedCity, setSelectedCity] = useState('All Cities')
   const [citySearch, setCitySearch] = useState('')
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false)
+  const cityDropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target as Node)) {
+        setCityDropdownOpen(false)
+      }
+    }
+    if (cityDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [cityDropdownOpen])
 
   useSeoMeta({
     title: 'House Plans for Indian Plots - 2D & 3D Vastu Floor Blueprints | NIVAAS',
-    description: 'Browse 12,000+ modern Indian house plans & working blueprints. Filter by 2 BHK, 3 BHK, 4 BHK, plot size, East/North Vastu direction & 60+ Indian cities.',
-    canonicalUrl: 'https://indorehousemakers.in/house-plans',
+    description: 'Browse verified modern Indian house plans & working blueprints. Filter by 2 BHK, 3 BHK, 4 BHK, plot size, East/North Vastu direction & 60+ Indian cities.',
+    canonicalUrl: 'https://nivaas.in/house-plans',
   })
 
   const filteredCities = useMemo(() => {
-    if (!citySearch.trim()) return masterIndianCities.slice(0, 15)
+    if (!citySearch.trim()) return masterIndianCities
     const q = citySearch.toLowerCase()
     return masterIndianCities.filter(
       (c) =>
@@ -207,7 +219,7 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
               <label className="block text-[10px] font-bold uppercase text-[#74706A] mb-1">
                 Major City
               </label>
-              <div className="relative">
+              <div ref={cityDropdownRef} className="relative">
                 <button
                   type="button"
                   onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
