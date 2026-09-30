@@ -178,18 +178,18 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
             )}
           </div>
 
-          {/* 2. Secondary Dropdowns Row: Area, Direction, City */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          {/* 2. Secondary Dropdowns Row: Area, Direction, City (Side by Side on All Devices: Mobile, Tablet, Desktop) */}
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 text-xs">
             {/* Built-up Area */}
-            <div className="relative">
-              <label className="block text-[10px] font-bold uppercase text-[#74706A] mb-1">
+            <div className="relative min-w-0">
+              <label className="block text-[9px] sm:text-[10px] font-bold uppercase text-[#74706A] mb-1 truncate">
                 Built-up Area
               </label>
               <select
                 value={selectedArea}
                 onChange={(e) => setSelectedArea(e.target.value)}
                 aria-label="Filter by Built-up Area"
-                className="w-full bg-white border border-[#E7E0D7] rounded-lg px-3 py-2.5 text-xs text-[#292826] font-medium outline-none focus:border-[#C94F36] transition cursor-pointer"
+                className="w-full bg-white border border-[#E7E0D7] rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 text-[11px] sm:text-xs text-[#292826] font-medium outline-none focus:border-[#C94F36] transition cursor-pointer truncate"
               >
                 {areaOptions.map((opt) => (
                   <option key={opt} value={opt}>{opt}</option>
@@ -198,15 +198,15 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
             </div>
 
             {/* Vastu Direction */}
-            <div className="relative">
-              <label className="block text-[10px] font-bold uppercase text-[#74706A] mb-1">
+            <div className="relative min-w-0">
+              <label className="block text-[9px] sm:text-[10px] font-bold uppercase text-[#74706A] mb-1 truncate">
                 Vastu Direction
               </label>
               <select
                 value={selectedDirection}
                 onChange={(e) => setSelectedDirection(e.target.value)}
                 aria-label="Filter by Vastu Direction"
-                className="w-full bg-white border border-[#E7E0D7] rounded-lg px-3 py-2.5 text-xs text-[#292826] font-medium outline-none focus:border-[#C94F36] transition cursor-pointer"
+                className="w-full bg-white border border-[#E7E0D7] rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 text-[11px] sm:text-xs text-[#292826] font-medium outline-none focus:border-[#C94F36] transition cursor-pointer truncate"
               >
                 {directionOptions.map((opt) => (
                   <option key={opt} value={opt}>{opt}</option>
@@ -215,8 +215,8 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
             </div>
 
             {/* Major City with Searchable Input */}
-            <div className="relative">
-              <label className="block text-[10px] font-bold uppercase text-[#74706A] mb-1">
+            <div className="relative min-w-0">
+              <label className="block text-[9px] sm:text-[10px] font-bold uppercase text-[#74706A] mb-1 truncate">
                 Major City
               </label>
               <div ref={cityDropdownRef} className="relative">
@@ -224,30 +224,30 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
                   type="button"
                   onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
                   aria-label="Filter by Major City"
-                  className="w-full bg-white border border-[#E7E0D7] rounded-lg px-3 py-2.5 text-xs text-left text-[#292826] font-medium flex items-center justify-between outline-none focus:border-[#C94F36] transition cursor-pointer"
+                  className="w-full bg-white border border-[#E7E0D7] rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 text-[11px] sm:text-xs text-left text-[#292826] font-medium flex items-center justify-between outline-none focus:border-[#C94F36] transition cursor-pointer"
                 >
                   <span className="truncate">{selectedCity}</span>
-                  <Icons.ChevronDown size={13} className="text-[#74706A]" />
+                  <Icons.ChevronDown size={12} className="text-[#74706A] shrink-0 ml-1" />
                 </button>
 
                 {cityDropdownOpen && (
-                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#E7E0D7] rounded-lg shadow-lg z-50 p-2 text-xs">
+                  <div className="absolute left-0 right-0 sm:right-auto sm:w-56 top-full mt-1 bg-white border border-[#E7E0D7] rounded-lg shadow-lg z-50 p-2 text-xs">
                     <input
                       type="text"
                       value={citySearch}
                       onChange={(e) => setCitySearch(e.target.value)}
-                      placeholder="Search city (e.g. Indore, Pune)…"
-                      className="w-full bg-[#FAF8F5] border border-[#E7E0D7] rounded px-2.5 py-1.5 text-xs text-[#292826] outline-none focus:border-[#C94F36] mb-2"
+                      placeholder="Search city…"
+                      className="w-full bg-[#FAF8F5] border border-[#E7E0D7] rounded px-2 py-1.5 text-xs text-[#292826] outline-none focus:border-[#C94F36] mb-1.5"
                       autoFocus
                     />
-                    <div className="max-h-48 overflow-y-auto space-y-0.5">
+                    <div className="max-h-48 overflow-y-auto space-y-0.5 no-scrollbar">
                       <button
                         type="button"
                         onClick={() => {
                           setSelectedCity('All Cities')
                           setCityDropdownOpen(false)
                         }}
-                        className="w-full text-left px-2 py-1.5 rounded hover:bg-[#FFF6E8] hover:text-[#C94F36] font-medium text-xs cursor-pointer"
+                        className="w-full text-left px-2 py-1 rounded hover:bg-[#FFF6E8] hover:text-[#C94F36] font-medium text-xs cursor-pointer"
                       >
                         All Cities
                       </button>
@@ -259,12 +259,12 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
                             setSelectedCity(c.name)
                             setCityDropdownOpen(false)
                           }}
-                          className={`w-full text-left px-2 py-1.5 rounded hover:bg-[#FFF6E8] hover:text-[#C94F36] font-medium text-xs cursor-pointer flex items-center justify-between ${
+                          className={`w-full text-left px-2 py-1 rounded hover:bg-[#FFF6E8] hover:text-[#C94F36] font-medium text-xs cursor-pointer flex items-center justify-between ${
                             selectedCity === c.name ? 'bg-[#FFF6E8] text-[#C94F36] font-bold' : 'text-[#292826]'
                           }`}
                         >
-                          <span>{c.name}</span>
-                          <span className="text-[10px] text-[#74706A] font-normal">{c.state}</span>
+                          <span className="truncate">{c.name}</span>
+                          <span className="text-[10px] text-[#74706A] font-normal ml-1 shrink-0">{c.state}</span>
                         </button>
                       ))}
                     </div>
