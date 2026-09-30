@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { site } from '../lib/data'
+import { site, megaMenus } from '../lib/data'
 import { Icons } from './Icons'
 
 const AI_PROMPT = `Using the official Indore House Maker's website at https://indorehousemakers.in and its verified services, explain its house plans, 3D elevations, interior-design services, construction-cost estimator, 3D walkthroughs and consultation options. Summarise the services and tell me how to get started. Use only information available on the official website.`
@@ -129,6 +129,11 @@ const socialPlatforms: SocialPlatform[] = rawSocialPlatforms.filter((s) => Boole
 
 export default function Footer() {
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null)
+  const [mobileExpanded, setMobileExpanded] = useState<string | null>(null)
+
+  const toggleMobileCategory = (cat: string) => {
+    setMobileExpanded((prev) => (prev === cat ? null : cat))
+  }
 
   const handleAiClick = async (platform: AiPlatform) => {
     try {
@@ -193,7 +198,7 @@ export default function Footer() {
       {/* Main Footer Links Container */}
       <div className="container-content py-12 lg:py-16">
         {/* ========================================================================= */}
-        {/* MOBILE VIEW: "Editorial Index" (Short, readable, numbered full-width rows) */}
+        {/* MOBILE VIEW: "Editorial Index" with Rich Interactive Sub-Options Accordion */}
         {/* ========================================================================= */}
         <div className="block lg:hidden">
           {/* Brand Header */}
@@ -209,68 +214,272 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Numbered Full-Width Editorial Rows */}
+          {/* Numbered Interactive Editorial Accordion Rows */}
           <div className="divide-y divide-white/10 border-y border-white/10">
-            <Link
-              to="/house-plans"
-              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">01</span>
-                <span>Architecture</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </Link>
-            <Link
-              to="/interiors"
-              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">02</span>
-                <span>Interiors</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </Link>
-            <Link
-              to="/designs"
-              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">03</span>
-                <span>Designs</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </Link>
-            <Link
-              to="/services"
-              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">04</span>
-                <span>Services</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </Link>
-            <Link
-              to="/about"
-              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">05</span>
-                <span>About NIVAAS</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </Link>
-            <Link
-              to="/faq"
-              className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
-            >
-              <span className="flex items-center gap-3">
-                <span className="font-mono text-xs font-semibold text-[#E76F2E]">06</span>
-                <span>Help &amp; FAQs</span>
-              </span>
-              <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </Link>
+            {/* 01 Architecture */}
+            <div className="py-2">
+              <button
+                type="button"
+                onClick={() => toggleMobileCategory('architecture')}
+                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">01</span>
+                  <span>Architecture</span>
+                </span>
+                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'architecture' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
+                  →
+                </span>
+              </button>
+
+              {mobileExpanded === 'architecture' && (
+                <div className="pt-3 pb-4 px-2 space-y-4 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">House Plans &amp; Blueprints</span>
+                    <Link to="/house-plans" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
+                      <span>Open Page</span>
+                      <Icons.ChevronRight size={12} />
+                    </Link>
+                  </div>
+                  {megaMenus.architecture.map((group) => (
+                    <div key={group.title} className="space-y-1.5">
+                      <h5 className="text-[11px] font-bold text-white/90 uppercase tracking-wide flex items-center gap-1.5">
+                        <Icons.Layers size={11} className="text-[#E76F2E]" />
+                        <span>{group.title}</span>
+                      </h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-3">
+                        {group.items.map((item) => (
+                          <Link
+                            key={item.label}
+                            to={item.href}
+                            className="text-xs text-white/70 hover:text-white flex items-center justify-between py-1 transition"
+                          >
+                            <span>{item.label}</span>
+                            {item.badge && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#E76F2E]/20 text-[#E76F2E] border border-[#E76F2E]/30">
+                                {item.badge}
+                              </span>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 02 Interiors */}
+            <div className="py-2">
+              <button
+                type="button"
+                onClick={() => toggleMobileCategory('interiors')}
+                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">02</span>
+                  <span>Interiors</span>
+                </span>
+                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'interiors' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
+                  →
+                </span>
+              </button>
+
+              {mobileExpanded === 'interiors' && (
+                <div className="pt-3 pb-4 px-2 space-y-4 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">Interior Design Studio</span>
+                    <Link to="/interiors" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
+                      <span>Open Page</span>
+                      <Icons.ChevronRight size={12} />
+                    </Link>
+                  </div>
+                  {megaMenus.interior.map((group) => (
+                    <div key={group.title} className="space-y-1.5">
+                      <h5 className="text-[11px] font-bold text-white/90 uppercase tracking-wide flex items-center gap-1.5">
+                        <Icons.Sofa size={11} className="text-[#E76F2E]" />
+                        <span>{group.title}</span>
+                      </h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-3">
+                        {group.items.map((item) => (
+                          <Link
+                            key={item.label}
+                            to={item.href}
+                            className="text-xs text-white/70 hover:text-white flex items-center justify-between py-1 transition"
+                          >
+                            <span>{item.label}</span>
+                            {item.badge && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#E76F2E]/20 text-[#E76F2E] border border-[#E76F2E]/30">
+                                {item.badge}
+                              </span>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 03 Designs */}
+            <div className="py-2">
+              <button
+                type="button"
+                onClick={() => toggleMobileCategory('designs')}
+                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">03</span>
+                  <span>Designs</span>
+                </span>
+                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'designs' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
+                  →
+                </span>
+              </button>
+
+              {mobileExpanded === 'designs' && (
+                <div className="pt-3 pb-4 px-2 space-y-3 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">3D Elevations &amp; Concepts</span>
+                    <Link to="/designs" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
+                      <span>Open Page</span>
+                      <Icons.ChevronRight size={12} />
+                    </Link>
+                  </div>
+                  <div className="space-y-2">
+                    {megaMenus.designIdeas.map((item) => (
+                      <Link
+                        key={item.label}
+                        to={item.href}
+                        className="block py-1.5 px-2 rounded hover:bg-white/10 transition"
+                      >
+                        <div className="text-xs font-bold text-white flex items-center justify-between">
+                          <span>{item.label}</span>
+                          <span className="text-[#E76F2E]">→</span>
+                        </div>
+                        <p className="text-[10.5px] text-white/60">{item.desc}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 04 Services */}
+            <div className="py-2">
+              <button
+                type="button"
+                onClick={() => toggleMobileCategory('services')}
+                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">04</span>
+                  <span>Services</span>
+                </span>
+                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'services' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
+                  →
+                </span>
+              </button>
+
+              {mobileExpanded === 'services' && (
+                <div className="pt-3 pb-4 px-2 space-y-3 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">Architectural &amp; Site Services</span>
+                    <Link to="/services" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
+                      <span>Open Page</span>
+                      <Icons.ChevronRight size={12} />
+                    </Link>
+                  </div>
+                  <div className="space-y-2">
+                    {megaMenus.otherServices.map((item) => (
+                      <Link
+                        key={item.label}
+                        to={item.href}
+                        className="block py-1.5 px-2 rounded hover:bg-white/10 transition"
+                      >
+                        <div className="text-xs font-bold text-white flex items-center justify-between">
+                          <span>{item.label}</span>
+                          <span className="text-[#E76F2E]">→</span>
+                        </div>
+                        <p className="text-[10.5px] text-white/60">{item.desc}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 05 About NIVAAS */}
+            <div className="py-2">
+              <button
+                type="button"
+                onClick={() => toggleMobileCategory('about')}
+                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">05</span>
+                  <span>About NIVAAS</span>
+                </span>
+                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'about' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
+                  →
+                </span>
+              </button>
+
+              {mobileExpanded === 'about' && (
+                <div className="pt-3 pb-4 px-2 space-y-2 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">About &amp; Credentials</span>
+                    <Link to="/about" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
+                      <span>Open Page</span>
+                      <Icons.ChevronRight size={12} />
+                    </Link>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Link to="/about" className="text-xs text-white/80 hover:text-white block py-1">About Indore House Maker's Story</Link>
+                    <Link to="/cost-estimator" className="text-xs text-white/80 hover:text-white block py-1">Cost Estimator Calculator</Link>
+                    <Link to="/guides" className="text-xs text-white/80 hover:text-white block py-1">Architectural Insights &amp; Vastu Guides</Link>
+                    <Link to="/contact" className="text-xs text-white/80 hover:text-white block py-1">Architect Consultation &amp; Booking</Link>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 06 Help & FAQs */}
+            <div className="py-2">
+              <button
+                type="button"
+                onClick={() => toggleMobileCategory('faq')}
+                className="w-full flex items-center justify-between py-2 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group cursor-pointer"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="font-mono text-xs font-semibold text-[#E76F2E]">06</span>
+                  <span>Help &amp; FAQs</span>
+                </span>
+                <span className={`text-white/40 group-hover:text-[#E76F2E] transition-transform ${mobileExpanded === 'faq' ? 'rotate-90 text-[#E76F2E]' : ''}`}>
+                  →
+                </span>
+              </button>
+
+              {mobileExpanded === 'faq' && (
+                <div className="pt-3 pb-4 px-2 space-y-2 animate-fadeIn bg-white/5 rounded-lg my-1 p-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                    <span className="text-[11px] font-bold text-[#E76F2E] uppercase tracking-wider">Help Desk &amp; FAQs</span>
+                    <Link to="/faq" className="text-xs font-bold text-[#E76F2E] hover:underline flex items-center gap-1">
+                      <span>Open Page</span>
+                      <Icons.ChevronRight size={12} />
+                    </Link>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Link to="/faq" className="text-xs text-white/80 hover:text-white block py-1">Frequently Asked Questions</Link>
+                    <Link to="/contact" className="text-xs text-white/80 hover:text-white block py-1">Contact Customer Support</Link>
+                    <a href={`tel:${site.phone.replace(/\D/g, '')}`} className="text-xs text-[#E76F2E] hover:underline block py-1 font-semibold">
+                      Helpline: {site.phone}
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Popular Links */}
@@ -291,46 +500,84 @@ export default function Footer() {
         </div>
 
         {/* ========================================================================= */}
-        {/* DESKTOP VIEW: 6-Column Full Directory                                     */}
+        {/* DESKTOP VIEW: 6-Column Full Directory with Detailed Rich Sub-Options       */}
         {/* ========================================================================= */}
         <div className="hidden lg:grid grid-cols-6 gap-8 text-xs text-white/80">
           {/* Col 1: Architecture */}
           <div>
-            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
-              <Icons.Blueprint size={13} className="text-[#E76F2E]" />
-              <span>Architecture</span>
+            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
+              <Link to="/house-plans" className="flex items-center gap-1.5 hover:text-[#E76F2E] transition">
+                <Icons.Blueprint size={13} className="text-[#E76F2E]" />
+                <span>Architecture</span>
+              </Link>
+              <Link to="/house-plans" className="text-[10px] text-[#E76F2E] hover:underline font-normal">All →</Link>
             </h4>
-            <ul className="space-y-2 text-white/75">
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">30 x 50 House Plans</Link></li>
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">20 x 40 House Plans</Link></li>
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">25 x 40 House Plans</Link></li>
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">40 x 60 Luxury Villas</Link></li>
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">G+1 Duplex Plans</Link></li>
-              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">100% Vastu Blueprints</Link></li>
-            </ul>
+            <div className="space-y-3 text-white/75">
+              <div>
+                <div className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1">Architectural Styles</div>
+                <ul className="space-y-1">
+                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition flex items-center justify-between"><span>Modern Contemporary</span> <span className="text-[9px] text-[#E76F2E] font-bold">Hot</span></Link></li>
+                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">Kerala Traditional</Link></li>
+                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">Neo-Classical / European</Link></li>
+                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">Minimalist Zen &amp; Glass</Link></li>
+                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">Mediterranean Villa</Link></li>
+                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">Rajasthani Haveli</Link></li>
+                </ul>
+              </div>
+              <div className="pt-2 border-t border-white/5">
+                <div className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1">By Bedroom &amp; Vastu</div>
+                <ul className="space-y-1">
+                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">2 BHK Compact Homes</Link></li>
+                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition flex items-center justify-between"><span>3 BHK Modern Duplex</span> <span className="text-[9px] text-[#E76F2E] font-bold">Trending</span></Link></li>
+                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">4 BHK Luxury Villas</Link></li>
+                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition flex items-center justify-between"><span>East Facing (Purva)</span> <span className="text-[9px] text-[#E76F2E] font-bold">Vastu</span></Link></li>
+                  <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition flex items-center justify-between"><span>North Facing (Uttar)</span> <span className="text-[9px] text-[#E76F2E] font-bold">Vastu</span></Link></li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           {/* Col 2: Interior */}
           <div>
-            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
-              <Icons.Sofa size={13} className="text-[#E76F2E]" />
-              <span>Interior</span>
+            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
+              <Link to="/interiors" className="flex items-center gap-1.5 hover:text-[#E76F2E] transition">
+                <Icons.Sofa size={13} className="text-[#E76F2E]" />
+                <span>Interior</span>
+              </Link>
+              <Link to="/interiors" className="text-[10px] text-[#E76F2E] hover:underline font-normal">All →</Link>
             </h4>
-            <ul className="space-y-2 text-white/75">
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Modular Kitchens</Link></li>
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Luxury Living Rooms</Link></li>
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Master Bedroom Suites</Link></li>
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Pooja Room Mandirs</Link></li>
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Wardrobe &amp; Storage</Link></li>
-              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">3D Interior Renders</Link></li>
-            </ul>
+            <div className="space-y-3 text-white/75">
+              <div>
+                <div className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1">Living &amp; Kitchen</div>
+                <ul className="space-y-1">
+                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Modular Kitchens</Link></li>
+                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Luxury Living Rooms</Link></li>
+                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">TV Unit &amp; Paneling</Link></li>
+                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Lobby &amp; Foyer Entry</Link></li>
+                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">False Ceiling &amp; Light</Link></li>
+                </ul>
+              </div>
+              <div className="pt-2 border-t border-white/5">
+                <div className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1">Bedrooms &amp; Pooja</div>
+                <ul className="space-y-1">
+                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Master Bedroom Suites</Link></li>
+                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Pooja Mandir Vastu</Link></li>
+                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Walk-in Wardrobes</Link></li>
+                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Kids &amp; Study Rooms</Link></li>
+                  <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Modern Bathrooms</Link></li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           {/* Col 3: Designs */}
           <div>
-            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
-              <Icons.Sparkles size={13} className="text-[#E76F2E]" />
-              <span>Designs</span>
+            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
+              <Link to="/designs" className="flex items-center gap-1.5 hover:text-[#E76F2E] transition">
+                <Icons.Sparkles size={13} className="text-[#E76F2E]" />
+                <span>Designs</span>
+              </Link>
+              <Link to="/designs" className="text-[10px] text-[#E76F2E] hover:underline font-normal">All →</Link>
             </h4>
             <ul className="space-y-2 text-white/75">
               <li><Link to="/designs" className="hover:text-[#E76F2E] transition">3D Front Elevations</Link></li>
@@ -338,31 +585,41 @@ export default function Footer() {
               <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Tropical Kerala Roofs</Link></li>
               <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Contemporary CNC Jaali</Link></li>
               <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Neoclassical Villas</Link></li>
-              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Exterior Lighting</Link></li>
+              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Exterior Facade Lighting</Link></li>
+              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">3D Walkthrough Videos</Link></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Terrace Garden Layouts</Link></li>
             </ul>
           </div>
 
           {/* Col 4: Services */}
           <div>
-            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
-              <Icons.HardHat size={13} className="text-[#E76F2E]" />
-              <span>Services</span>
+            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
+              <Link to="/services" className="flex items-center gap-1.5 hover:text-[#E76F2E] transition">
+                <Icons.HardHat size={13} className="text-[#E76F2E]" />
+                <span>Services</span>
+              </Link>
+              <Link to="/services" className="text-[10px] text-[#E76F2E] hover:underline font-normal">All →</Link>
             </h4>
             <ul className="space-y-2 text-white/75">
               <li><Link to="/services" className="hover:text-[#E76F2E] transition">2D Architectural CAD</Link></li>
-              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Structural Drawings</Link></li>
+              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Structural Working Drawings</Link></li>
               <li><Link to="/services" className="hover:text-[#E76F2E] transition">PMC &amp; Site Supervision</Link></li>
-              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Vastu Consultation</Link></li>
-              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Municipal By-Laws</Link></li>
-              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Contractor Network</Link></li>
+              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Astro-Vastu Consultation</Link></li>
+              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Municipal By-Laws Support</Link></li>
+              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Verified Contractor Network</Link></li>
+              <li><Link to="/contact" className="hover:text-[#E76F2E] transition">Turnkey Construction</Link></li>
+              <li><Link to="/contact" className="hover:text-[#E76F2E] transition">Home Loan Assistance</Link></li>
             </ul>
           </div>
 
           {/* Col 5: About & Guides */}
           <div>
-            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center gap-1.5">
-              <Icons.Building size={13} className="text-[#E76F2E]" />
-              <span>About &amp; Guides</span>
+            <h4 className="font-bold uppercase tracking-wider text-white mb-3 text-[11px] border-b border-white/10 pb-2 flex items-center justify-between">
+              <Link to="/about" className="flex items-center gap-1.5 hover:text-[#E76F2E] transition">
+                <Icons.Building size={13} className="text-[#E76F2E]" />
+                <span>About &amp; Guides</span>
+              </Link>
+              <Link to="/guides" className="text-[10px] text-[#E76F2E] hover:underline font-normal">More →</Link>
             </h4>
             <ul className="space-y-2 text-white/75">
               <li><Link to="/about" className="hover:text-[#E76F2E] transition font-medium text-white">About Indore House Maker's</Link></li>
@@ -371,6 +628,7 @@ export default function Footer() {
               <li><Link to="/about" className="hover:text-[#E76F2E] transition">Client Video Stories</Link></li>
               <li><Link to="/faq" className="hover:text-[#E76F2E] transition">Help &amp; FAQs</Link></li>
               <li><Link to="/contact" className="hover:text-[#E76F2E] transition">Contact Architects</Link></li>
+              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Architect Directory</Link></li>
             </ul>
           </div>
 
@@ -391,6 +649,15 @@ export default function Footer() {
                 <Icons.MapPin size={12} className="text-[#E76F2E]" />
                 <span>{site.city}</span>
               </p>
+              <div className="pt-2">
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#E76F2E] text-white text-[11px] font-bold hover:bg-[#C65320] transition"
+                >
+                  <Icons.Sparkles size={12} />
+                  <span>Book Free Consultation</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
