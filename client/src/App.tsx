@@ -86,7 +86,7 @@ function App() {
 
       {/* Main Routed Content */}
       <div className="flex-1">
-        <Suspense fallback={<div className="min-h-[50vh] bg-[#FDFCF9] flex items-center justify-center text-xs text-[#74706A]">Loading NIVAAS Studio...</div>}>
+        <Suspense fallback={<div className="min-h-[50vh] bg-[#FDFCF9] flex items-center justify-center text-xs text-[#74706A]">Loading Indore House Makers Studio...</div>}>
           <Routes>
             <Route
               path="/"

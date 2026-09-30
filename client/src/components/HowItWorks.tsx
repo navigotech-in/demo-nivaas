@@ -17,7 +17,7 @@ export default function HowItWorks({ onOpenConsult }: HowItWorksProps) {
       <div className="container-content">
         <div className="text-center max-w-2xl mx-auto">
           <span className="eyebrow flex items-center justify-center gap-1.5">
-            <Icons.TrendUp size={14} /> How NIVAAS Works
+            <Icons.TrendUp size={14} /> How Indore House Makers Works
           </span>
           <h2 className="section-title mt-2">
             From empty plot to finished home in 3 steps

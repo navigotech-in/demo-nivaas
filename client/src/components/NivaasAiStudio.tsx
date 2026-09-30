@@ -184,7 +184,7 @@ export default function NivaasAiStudio({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       from: 'bot',
-      text: 'Namaste! 🙏 I am your NIVAAS AI Architecture Assistant. Ask me anything about floor plans, irregular plot layouts, municipal bylaws, Vastu directions, 3D elevation styles, or construction estimates.',
+      text: 'Namaste! 🙏 I am your Indore House Makers AI Architecture Assistant. Ask me anything about floor plans, irregular plot layouts, municipal bylaws, Vastu directions, 3D elevation styles, or construction estimates.',
       time: 'Just now',
     },
   ])
@@ -382,9 +382,9 @@ export default function NivaasAiStudio({
       let reply = 'I can help you customize floor plans, calculate setbacks, review Vastu directions, or recommend 3D front elevations. You can also generate your complete plan in 30 seconds using the "AI Plan Generator" tab!'
 
       if (/(price|cost|budget|rate|lakh)/i.test(qLower)) {
-        reply = `For your ${isRegular ? `${plotWidth}x${plotDepth} ft` : 'irregular'} plot (~${builtUpArea} sq.ft built-up), the estimated construction budget is ₹${estimatedCostLakhs} Lakhs at ${materialGrade.split(' ')[0]} grade${!isRegular ? ' (including irregular geometry framing adjustments)' : ''}. NIVAAS design packages start at ₹4,999 for full 2D CAD working drawings.`
+        reply = `For your ${isRegular ? `${plotWidth}x${plotDepth} ft` : 'irregular'} plot (~${builtUpArea} sq.ft built-up), the estimated construction budget is ₹${estimatedCostLakhs} Lakhs at ${materialGrade.split(' ')[0]} grade${!isRegular ? ' (including irregular geometry framing adjustments)' : ''}. Indore House Makers design packages start at ₹4,999 for full 2D CAD working drawings.`
       } else if (/(irregular|asymmetric|cut|shape|l-shape|corner|trap)/i.test(qLower)) {
-        reply = `For irregular plots, NIVAAS AI calculates an 18% standard setback buffer and suggests placing utility or landscaping buffers in non-90° corner cuts. This ensures 100% Vastu compliance and optimal room proportions!`
+        reply = `For irregular plots, Indore House Makers AI calculates an 18% standard setback buffer and suggests placing utility or landscaping buffers in non-90° corner cuts. This ensures 100% Vastu compliance and optimal room proportions!`
       } else if (/(vastu|vaastu|direction|mandir|pooja|kitchen)/i.test(qLower)) {
         reply = `For ${plotDirection} facing plots, Vastu recommends placing the Pooja Mandir in the North-East (Ishan), Kitchen in South-East (Agneya), and the Master Bedroom in South-West (Nairutya). Our AI engine auto-aligns all these zones!`
       } else if (/(3d|elevation|facade|exterior|render)/i.test(qLower)) {
@@ -453,7 +453,7 @@ export default function NivaasAiStudio({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-display font-extrabold text-base tracking-tight text-[#292826]">
-                  NIVAAS <span className="text-[#E76F2E]">AI Architect</span> Studio
+                  Indore House Makers <span className="text-[#C94F36]">AI Architect</span> Studio
                 </span>
                 <span className="hidden sm:inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#FFF6E8] text-[#C65320] border border-[#E76F2E]/20 rounded-full">
                   {isRegular ? '20-Step Regular Flow' : '23-Step Asymmetric Engine'}
@@ -2185,7 +2185,7 @@ export default function NivaasAiStudio({
                         Ready to Synthesize Your Custom Blueprint
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
-                        Review your configured parameters below before triggering the NIVAAS AI Architecture Synthesis Engine.
+                        Review your configured parameters below before triggering the Indore House Makers AI Architecture Synthesis Engine.
                       </p>
                     </div>
 
@@ -2258,7 +2258,7 @@ export default function NivaasAiStudio({
 
                     <div className="space-y-2 max-w-md mx-auto">
                       <h4 className="font-display text-xl font-bold text-[#292826]">
-                        Synthesizing Custom NIVAAS Plan...
+                        Synthesizing Custom Indore House Makers Plan...
                       </h4>
                       <p className="text-xs text-[#54504A] animate-pulse">
                         {processingStatus}

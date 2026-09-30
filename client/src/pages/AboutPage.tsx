@@ -7,9 +7,9 @@ import { useSeoMeta } from '../components/useSeoMeta'
 
 export default function AboutPage() {
   useSeoMeta({
-    title: 'About NIVAAS - India\'s Premier AI-Powered Architecture & Design Studio',
-    description: 'Learn about NIVAAS — 480+ completed house plans, certified structural engineers, and pan-India construction solutions.',
-    canonicalUrl: 'https://nivaas.in/about',
+    title: 'About Indore House Makers - India\'s Premier AI-Powered Architecture & Design Studio',
+    description: 'Learn about Indore House Makers — 480+ completed house plans, certified structural engineers, and pan-India construction solutions.',
+    canonicalUrl: 'https://indorehousemakers.in/about',
   })
 
   return (
@@ -20,7 +20,7 @@ export default function AboutPage() {
           <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[#74706A]">
             <Link to="/" className="hover:text-[#C94F36] transition">Home</Link>
             <span>/</span>
-            <span className="text-[#292826] font-semibold">About NIVAAS</span>
+            <span className="text-[#292826] font-semibold">About Indore House Makers</span>
           </nav>
         </div>
       </div>

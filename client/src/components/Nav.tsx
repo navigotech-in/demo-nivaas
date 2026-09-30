@@ -811,16 +811,16 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
             </Link>
           </div>
 
-          {/* 6. Flat Direct Link: About NIVAAS */}
+          {/* 6. Flat Direct Link: About Indore House Makers */}
           <div className="py-1">
             <Link
               to="/about"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left"
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#C94F36] transition text-left"
             >
               <span className="flex items-center gap-2.5">
-                <Icons.Building size={16} className="text-[#E76F2E]" />
-                <span>About NIVAAS</span>
+                <Icons.Building size={16} className="text-[#C94F36]" />
+                <span>About Indore House Makers</span>
               </span>
             </Link>
           </div>
@@ -918,7 +918,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
             <div className="flex items-center justify-between border-b border-[#EEE9E3] pb-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📰</span>
-                <h3 className="font-display text-lg font-bold text-[#292826]">NIVAAS in the News</h3>
+                <h3 className="font-display text-lg font-bold text-[#292826]">Indore House Makers in the News</h3>
               </div>
               <button
                 type="button"
@@ -934,7 +934,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                   Press Release · 2026
                 </span>
                 <h4 className="font-display text-sm font-bold text-[#292826]">
-                  NIVAAS crosses 1,200+ delivered architectural projects across India
+                  Indore House Makers crosses 1,200+ delivered architectural projects across India
                 </h4>
                 <p className="mt-1 text-xs text-[#54504A]">
                   Empowering independent home builders across Tier 1, 2 and 3 cities with instant CAD working drawings and 3D architectural elevations.

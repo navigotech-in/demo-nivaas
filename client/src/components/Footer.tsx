@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { site } from '../lib/data'
 import { Icons } from './Icons'
 
-const AI_PROMPT = `Using the official NIVAAS website at https://nivaas.in and its verified services, explain its house plans, 3D elevations, interior-design services, construction-cost estimator, 3D walkthroughs and consultation options. Summarise the services and tell me how to get started. Use only information available on the official website.`
+const AI_PROMPT = `Using the official Indore House Makers website at https://indorehousemakers.in and its verified services, explain its house plans, 3D elevations, interior-design services, construction-cost estimator, 3D walkthroughs and consultation options. Summarise the services and tell me how to get started. Use only information available on the official website.`
 
 interface AiPlatform {
   name: string
@@ -373,16 +373,16 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
                 </span>
               </Link>
 
-              {/* 05 About NIVAAS */}
+              {/* 05 About Indore House Makers */}
               <Link
                 to="/about"
-                className="w-full flex items-center justify-between py-4 px-2 text-sm sm:text-base font-bold text-white hover:text-[#E76F2E] hover:bg-white/[0.02] transition group text-left"
+                className="w-full flex items-center justify-between py-4 px-2 text-sm sm:text-base font-bold text-white hover:text-[#C94F36] hover:bg-white/[0.02] transition group text-left"
               >
                 <span className="flex items-center gap-3.5">
-                  <span className="font-mono text-xs font-semibold text-[#E76F2E] w-6">05</span>
-                  <span>About NIVAAS</span>
+                  <span className="font-mono text-xs font-semibold text-[#C94F36] w-6">05</span>
+                  <span>About Indore House Makers</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-xs text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">
+                <span className="flex items-center gap-1.5 text-xs text-white/40 group-hover:text-[#C94F36] group-hover:translate-x-1 transition-all">
                   <span>Our Story</span>
                   <span>→</span>
                 </span>
@@ -407,18 +407,18 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
         </div>
       </div>
 
-      {/* Warm-White Inset Band: Ask AI About NIVAAS + Connect With NIVAAS */}
+      {/* Warm-White Inset Band: Ask AI About Indore House Makers + Connect With Indore House Makers */}
       <section
         aria-label="AI and Social Connections"
         className="bg-[#FDFCF9] text-[#292725] border-y border-[#E7E0D7] py-4 sm:py-5 px-3 sm:px-4"
       >
         <div className="container-content">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-5 lg:gap-8">
-            {/* Left Column: Ask AI About NIVAAS */}
+            {/* Left Column: Ask AI About Indore House Makers */}
             <div className="w-full lg:w-auto flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2.5 sm:gap-3.5">
               <h4 className="text-xs sm:text-sm font-extrabold text-black tracking-tight flex items-center gap-1.5 shrink-0">
                 <Icons.Sparkles size={14} className="text-[#C94F36]" />
-                <span className="text-black font-extrabold">Ask AI About NIVAAS:</span>
+                <span className="text-black font-extrabold">Ask AI About Indore House Makers:</span>
               </h4>
 
               {/* 6 AI Logo Buttons */}
@@ -431,8 +431,8 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
                       type="button"
                       onClick={() => handleAiClick(ai)}
                       className="h-7 w-7 sm:h-7.5 sm:w-7.5 flex items-center justify-center rounded-lg hover:scale-110 transition-transform bg-transparent hover:bg-black/5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C94F36]/30 group p-0.5"
-                      title={`Ask ${ai.name} about NIVAAS (Prompt copied automatically)`}
-                      aria-label={`Ask ${ai.name} about NIVAAS`}
+                      title={`Ask ${ai.name} about Indore House Makers (Prompt copied automatically)`}
+                      aria-label={`Ask ${ai.name} about Indore House Makers`}
                     >
                       {ai.imageSrc ? (
                         <img
@@ -463,11 +463,11 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
             <div className="hidden lg:block w-px h-7 bg-[#E7E0D7] self-center shrink-0" aria-hidden="true" />
             <div className="block lg:hidden w-full h-px bg-[#E7E0D7]/70 my-1" aria-hidden="true" />
 
-            {/* Right Column: Connect With NIVAAS */}
+            {/* Right Column: Connect With Indore House Makers */}
             <div className="w-full lg:w-auto flex flex-col sm:flex-row items-center justify-center lg:justify-end gap-2.5 sm:gap-3.5">
               <h4 className="text-xs sm:text-sm font-extrabold text-black tracking-tight flex items-center gap-1.5 shrink-0">
                 <Icons.Share size={14} className="text-[#C94F36]" />
-                <span className="text-black font-extrabold">Connect With NIVAAS:</span>
+                <span className="text-black font-extrabold">Connect With Indore House Makers:</span>
               </h4>
 
               {/* 8 Social Logo Buttons */}
@@ -481,8 +481,8 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
                       target="_blank"
                       rel="noopener noreferrer"
                       className="h-7 w-7 sm:h-7.5 sm:w-7.5 flex items-center justify-center rounded-lg hover:scale-110 transition-transform bg-transparent hover:bg-black/5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C94F36]/30 group"
-                      title={`Follow NIVAAS on ${soc.name}`}
-                      aria-label={`Follow NIVAAS on ${soc.name}`}
+                      title={`Follow Indore House Makers on ${soc.name}`}
+                      aria-label={`Follow Indore House Makers on ${soc.name}`}
                     >
                       <span
                         style={{ color: soc.color }}

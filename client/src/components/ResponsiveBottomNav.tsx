@@ -101,7 +101,7 @@ export default function ResponsiveBottomNav({
     { label: 'Services & Contractors', href: '/services', icon: Icons.HardHat },
     { label: 'Cost Estimator', href: '/cost-estimator', icon: Icons.Calculator },
     { label: 'Guides & Articles', href: '/guides', icon: Icons.FileText },
-    { label: 'About NIVAAS', href: '/about', icon: Icons.Building },
+    { label: 'About Us', href: '/about', icon: Icons.Building },
     { label: 'Help & FAQs', href: '/faq', icon: Icons.HelpCircle },
     { label: 'Contact & Support', href: '/contact', icon: Icons.Phone },
   ]
@@ -110,14 +110,14 @@ export default function ResponsiveBottomNav({
     { id: 'home' as NavTab, label: 'Home', icon: Icons.House, ariaLabel: 'Go to home page' },
     { id: 'designs' as NavTab, label: 'Designs', icon: Icons.LayoutGrid, ariaLabel: 'Explore house designs & blueprints' },
     { id: 'estimate' as NavTab, label: 'Estimate', icon: Icons.Calculator, ariaLabel: 'Construction cost estimator' },
-    { id: 'ai' as NavTab, label: 'AI', icon: Icons.Sparkles, ariaLabel: 'Open NIVAAS AI planner' },
-    { id: 'menu' as NavTab, label: 'Menu', icon: Icons.Menu, ariaLabel: 'Open Explore NIVAAS menu' },
+    { id: 'ai' as NavTab, label: 'AI', icon: Icons.Sparkles, ariaLabel: 'Open Indore House Makers AI planner' },
+    { id: 'menu' as NavTab, label: 'Menu', icon: Icons.Menu, ariaLabel: 'Open Explore menu' },
   ]
 
   return (
     <>
       {/* ========================================================================= */}
-      {/* 1. EXPLORE NIVAAS BOTTOM SHEET & BACKDROP (Mobile & Tablet)                */}
+      {/* 1. EXPLORE BOTTOM SHEET & BACKDROP (Mobile & Tablet)                       */}
       {/* ========================================================================= */}
       {exploreSheetOpen && (
         <div
@@ -135,7 +135,7 @@ export default function ResponsiveBottomNav({
         ref={sheetRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Explore NIVAAS Menu"
+        aria-label="Explore Menu"
         className={`fixed z-[99995] bg-[#FDFCF9] text-[#292826] transition-transform duration-250 ease-out lg:hidden flex flex-col shadow-2xl ${
           // Mobile: Full width bottom sheet
           'inset-x-0 bottom-0 w-full max-h-[85dvh] rounded-t-lg border-t border-[#E7E0D7] ' +
@@ -150,7 +150,7 @@ export default function ResponsiveBottomNav({
             <div className="flex items-center gap-2">
               <Icons.NivaasMark className="h-5 w-5 text-[#C94F36] shrink-0" />
               <h3 className="font-display font-black text-base sm:text-lg text-[#292725] tracking-tight">
-                Explore NIVAAS
+                Explore Indore House Makers
               </h3>
             </div>
             <button
@@ -160,7 +160,7 @@ export default function ResponsiveBottomNav({
                 menuButtonRef.current?.focus()
               }}
               className="h-8 w-8 rounded-lg flex items-center justify-center text-[#54504A] hover:text-[#292826] hover:bg-[#FFF6E8] border border-[#E7E0D7] transition cursor-pointer"
-              aria-label="Close Explore NIVAAS menu"
+              aria-label="Close Explore menu"
             >
               <Icons.Close size={18} />
             </button>
