@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import Projects from './Projects'
 import Elevations from './Elevations'
 import Interiors from './Interiors'
+import { Icons } from './Icons'
 
 interface DesignStudioProps {
   onOpenConsult: (details?: string) => void
@@ -34,7 +36,7 @@ export default function DesignStudio({ onOpenConsult }: DesignStudioProps) {
   const [activeTab, setActiveTab] = useState<StudioTab>('plans')
 
   return (
-    <section id="design-studio" className="bg-[#FAF8F5] pt-12 pb-6 border-b border-[#E7E0D7]">
+    <section id="design-studio" className="bg-[#FAF8F5] pt-12 pb-10 border-b border-[#E7E0D7]">
       <div className="container-content">
         {/* Top Header */}
         <div className="text-center max-w-3xl mx-auto mb-8">
@@ -43,7 +45,7 @@ export default function DesignStudio({ onOpenConsult }: DesignStudioProps) {
             <span>Interactive Design Studio</span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-extrabold text-[#292826] font-display tracking-tight">
-            Explore Curated Architectural Blueprints & Designs
+            Explore Curated Architectural Blueprints &amp; Designs
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-[#54504A]">
             Switch between House Floor Plans, 3D Elevations, and Interior Themes — customized for Indian plot dimensions and Vastu norms.
@@ -86,9 +88,48 @@ export default function DesignStudio({ onOpenConsult }: DesignStudioProps) {
 
       {/* Render Active Tab Content */}
       <div className="transition-opacity duration-300">
-        {activeTab === 'plans' && <Projects onOpenConsult={onOpenConsult} />}
-        {activeTab === 'elevations' && <Elevations onOpenConsult={onOpenConsult} />}
-        {activeTab === 'interiors' && <Interiors onOpenConsult={onOpenConsult} />}
+        {activeTab === 'plans' && (
+          <div>
+            <Projects onOpenConsult={onOpenConsult} />
+            <div className="container-content text-center pt-8 pb-4">
+              <Link
+                to="/house-plans"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#C94F36] hover:bg-[#B33E26] text-white font-bold text-xs sm:text-sm transition shadow-sm"
+              >
+                <span>Browse All 12,000+ House Plans</span>
+                <Icons.ChevronRight size={15} />
+              </Link>
+            </div>
+          </div>
+        )}
+        {activeTab === 'elevations' && (
+          <div>
+            <Elevations onOpenConsult={onOpenConsult} />
+            <div className="container-content text-center pt-8 pb-4">
+              <Link
+                to="/designs"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#C94F36] hover:bg-[#B33E26] text-white font-bold text-xs sm:text-sm transition shadow-sm"
+              >
+                <span>View All 3D Front Elevations</span>
+                <Icons.ChevronRight size={15} />
+              </Link>
+            </div>
+          </div>
+        )}
+        {activeTab === 'interiors' && (
+          <div>
+            <Interiors onOpenConsult={onOpenConsult} />
+            <div className="container-content text-center pt-8 pb-4">
+              <Link
+                to="/interiors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#C94F36] hover:bg-[#B33E26] text-white font-bold text-xs sm:text-sm transition shadow-sm"
+              >
+                <span>Explore Full Interior Design Gallery</span>
+                <Icons.ChevronRight size={15} />
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )

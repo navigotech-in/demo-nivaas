@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import Img from './Img'
 import { Icons } from './Icons'
 import { site } from '../lib/data'
@@ -51,20 +52,20 @@ export default function AboutNivaas() {
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-4">
-            <a
-              href="#plans"
+            <Link
+              to="/house-plans"
               className="inline-flex items-center gap-2 rounded-xl bg-[#E76F2E] px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#C65320] transition"
             >
               <span>Browse House Plans</span>
               <Icons.ChevronRight size={14} />
-            </a>
-            <a
-              href="#contact"
+            </Link>
+            <Link
+              to="/contact"
               className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-xs font-bold text-slate-900 shadow-sm hover:border-slate-500 transition"
             >
               <Icons.Phone size={14} />
               <span>Talk to a Designer · {site.phone}</span>
-            </a>
+            </Link>
           </div>
         </div>
       </div>

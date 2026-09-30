@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { commercialTabs } from '../lib/data'
 import { Icons } from './Icons'
 
@@ -76,12 +77,12 @@ export default function CommercialDesigns({ onOpenConsult }: CommercialDesignsPr
                   <span>Request a Quote</span>
                   <Icons.ChevronRight size={14} />
                 </button>
-                <a
-                  href="#interiors"
-                  className="inline-flex items-center gap-2 rounded-lg border border-white/40 bg-[#292826]/90 px-5 py-2.5 text-xs font-bold text-white hover:bg-[#292826] transition transition"
+                <Link
+                  to="/designs"
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/40 bg-[#292826]/90 px-5 py-2.5 text-xs font-bold text-white hover:bg-[#292826] transition"
                 >
                   <span>See Reference Images</span>
-                </a>
+                </Link>
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
+import { Link } from 'react-router-dom'
 import { megaMenus, site } from '../lib/data'
 import { Icons } from './Icons'
 
@@ -116,7 +117,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
         <div className="hidden xl:block bg-white py-3">
           <div className="container-content flex items-center justify-between gap-6" style={{ paddingLeft: 'clamp(0.25rem, 1.25vw, 1.25rem)', paddingRight: 'clamp(0.25rem, 1.25vw, 1.25rem)' }}>
             {/* Brand Logo & Tagline */}
-            <a href="#top" className="inline-flex shrink-0 flex-col items-start">
+            <Link to="/" className="inline-flex shrink-0 flex-col items-start">
               <div className="flex h-6.5 items-center gap-2 sm:gap-2.5">
                 <Icons.NivaasMark className="h-5 w-5 sm:h-5.5 sm:w-5.5 shrink-0 text-[#C94F36]" />
                 <span className="whitespace-nowrap text-[16px] xl:text-[17px] font-black leading-6 text-[#292725] tracking-tight">
@@ -126,7 +127,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
               <span className="mt-0.5 w-full whitespace-nowrap text-left text-[7.5px] sm:text-[8px] font-bold leading-none tracking-[0.09em] text-[#54504A]">
                 AI-POWERED ARCHITECTURE &amp; DESIGNS
               </span>
-            </a>
+            </Link>
 
             {/* Desktop Mega Nav Menu */}
             <nav className="flex items-center gap-4 xl:gap-5 text-[13px] font-medium">
@@ -157,8 +158,8 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                           <ul className="space-y-1.5 text-xs">
                             {col.items.map((item) => (
                               <li key={item.label}>
-                                <a
-                                  href={item.href}
+                                <Link
+                                  to={item.href}
                                   onClick={() => setActiveDropdown(null)}
                                   className="text-[#54504A] hover:text-[#292826] hover:font-semibold flex items-center justify-between py-0.5 transition"
                                 >
@@ -168,7 +169,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                                       {item.badge}
                                     </span>
                                   )}
-                                </a>
+                                </Link>
                               </li>
                             ))}
                           </ul>
@@ -206,13 +207,13 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                           <ul className="space-y-1.5 text-xs">
                             {col.items.map((item) => (
                               <li key={item.label}>
-                                <a
-                                  href={item.href}
+                                <Link
+                                  to={item.href}
                                   onClick={() => setActiveDropdown(null)}
                                   className="text-[#54504A] hover:text-[#292826] hover:font-semibold py-0.5 block transition"
                                 >
                                   {item.label}
-                                </a>
+                                </Link>
                               </li>
                             ))}
                           </ul>
@@ -242,9 +243,9 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                   <div className="absolute left-0 top-full pt-2 w-[360px] animate-fadeIn">
                     <div className="bg-white rounded-lg shadow-sm border border-[#EEE9E3] p-4 text-[#292826] space-y-2">
                       {megaMenus.designIdeas.map((idea) => (
-                        <a
+                        <Link
                           key={idea.label}
-                          href={idea.href}
+                          to={idea.href}
                           onClick={() => setActiveDropdown(null)}
                           className="block p-2.5 rounded-lg hover:bg-[#FFF6E8] transition"
                         >
@@ -252,7 +253,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                             <Icons.Layers size={13} className="text-[#E76F2E]" /> {idea.label}
                           </div>
                           <div className="text-[11px] text-[#54504A] mt-0.5">{idea.desc}</div>
-                        </a>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -278,9 +279,9 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                   <div className="absolute left-0 top-full pt-2 w-[360px] animate-fadeIn">
                     <div className="bg-white rounded-lg shadow-sm border border-[#EEE9E3] p-4 text-[#292826] space-y-2">
                       {megaMenus.otherServices.map((srv) => (
-                        <a
+                        <Link
                           key={srv.label}
-                          href={srv.href}
+                          to={srv.href}
                           onClick={() => setActiveDropdown(null)}
                           className="block p-2.5 rounded-lg hover:bg-[#FFF6E8] transition"
                         >
@@ -288,7 +289,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                             <Icons.ShieldCheck size={13} className="text-[#E76F2E]" /> {srv.label}
                           </div>
                           <div className="text-[11px] text-[#54504A] mt-0.5">{srv.desc}</div>
-                        </a>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -296,31 +297,31 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
               </div>
 
               {/* About Section */}
-              <a
-                href="#about"
+              <Link
+                to="/about"
                 className="flex items-center gap-1.5 py-1.5 transition hover:text-[#E76F2E] font-semibold text-[#292826]"
               >
                 <Icons.Building size={16} className="text-[#292826] group-hover:text-[#E76F2E]" />
                 <span>About</span>
-              </a>
+              </Link>
 
               {/* Cost Estimator */}
-              <a
-                href="#calculator"
+              <Link
+                to="/cost-estimator"
                 className="flex items-center gap-1.5 py-1.5 transition hover:text-[#E76F2E] font-semibold text-[#292826]"
               >
                 <Icons.Calculator size={16} className="text-[#292826] group-hover:text-[#E76F2E]" />
                 <span>Cost Estimator</span>
-              </a>
+              </Link>
 
               {/* Guides / Blogs */}
-              <a
-                href="#blog"
+              <Link
+                to="/guides"
                 className="flex items-center gap-1.5 py-1.5 transition hover:text-[#E76F2E] font-semibold text-[#292826]"
               >
                 <Icons.FileText size={15} className="text-[#292826] group-hover:text-[#E76F2E]" />
                 <span>Guides</span>
-              </a>
+              </Link>
             </nav>
 
             {/* Desktop Action Buttons */}
@@ -384,7 +385,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
           <div className="bg-white border-b border-[#E7E0D7]/70 py-2.5 px-3 sm:px-4">
             <div className="flex items-center justify-between w-full gap-2">
               {/* Brand Logo + Title + Subtitle */}
-              <a href="#top" className="inline-flex shrink-0 flex-col items-start min-w-0">
+              <Link to="/" className="inline-flex shrink-0 flex-col items-start min-w-0">
                 <div className="flex h-6.5 items-center gap-2">
                   <Icons.NivaasMark className="h-5.5 w-5.5 sm:h-6 sm:w-6 shrink-0 text-[#C94F36]" />
                   <span className="whitespace-nowrap text-[15px] sm:text-[17px] font-black leading-tight text-[#292725] tracking-tight truncate">
@@ -394,7 +395,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 <span className="mt-0.5 w-full whitespace-nowrap text-left text-[7.5px] sm:text-[8px] font-bold leading-none tracking-[0.08em] text-[#54504A]">
                   AI-POWERED ARCHITECTURE &amp; DESIGNS
                 </span>
-              </a>
+              </Link>
 
               {/* Right Side: Hamburger Icon + Menu Button */}
               <div className="flex items-center gap-2 shrink-0">
@@ -521,15 +522,15 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                     <Icons.Sparkles size={11} className="text-[#E76F2E]" /> Quick Search Queries
                   </div>
                   {sampleSearchSuggestions.map((sug) => (
-                    <a
+                    <Link
                       key={sug}
-                      href="#plans"
+                      to="/house-plans"
                       onClick={() => setSearchOpen(false)}
                       className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#FFF6E8] text-[#292826] font-medium transition"
                     >
                       <Icons.Search size={13} className="text-[#E76F2E]" />
                       <span>{sug}</span>
-                    </a>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -563,8 +564,8 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
         <div className="shrink-0 bg-white border-b border-[#EEE9E3]">
           {/* Drawer Brand Header */}
           <div className="p-4 flex items-center justify-between">
-            <a
-              href="#top"
+            <Link
+              to="/"
               onClick={() => setMobileMenuOpen(false)}
               className="inline-flex items-center gap-2 min-w-0"
             >
@@ -577,7 +578,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                   AI-POWERED ARCHITECTURE
                 </span>
               </div>
-            </a>
+            </Link>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(false)}
@@ -650,9 +651,9 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                     </h5>
                     <div className="space-y-1">
                       {col.items.map((item) => (
-                        <a
+                        <Link
                           key={item.label}
-                          href={item.href}
+                          to={item.href}
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex items-center justify-between py-1 px-1.5 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] text-[#54504A] font-medium transition"
                         >
@@ -662,7 +663,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                               {item.badge}
                             </span>
                           )}
-                        </a>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -699,9 +700,9 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                     </h5>
                     <div className="space-y-1">
                       {col.items.map((item) => (
-                        <a
+                        <Link
                           key={item.label}
-                          href={item.href}
+                          to={item.href}
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex items-center justify-between py-1 px-1.5 rounded hover:text-[#E76F2E] hover:bg-[#FFF6E8] text-[#54504A] font-medium transition"
                         >
@@ -711,7 +712,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                               {item.badge}
                             </span>
                           )}
-                        </a>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -741,9 +742,9 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
             {expandedCategory === 'elevation' && (
               <div className="pl-4 pr-1 py-2 space-y-2 animate-fadeIn text-xs">
                 {megaMenus.designIdeas.map((idea) => (
-                  <a
+                  <Link
                     key={idea.label}
-                    href={idea.href}
+                    to={idea.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className="block p-2.5 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:bg-[#FFF6E8] transition"
                   >
@@ -752,7 +753,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                       <span>{idea.label}</span>
                     </div>
                     <p className="text-[11px] text-[#54504A] mt-0.5 leading-snug">{idea.desc}</p>
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}
@@ -779,9 +780,9 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
             {expandedCategory === 'services' && (
               <div className="pl-4 pr-1 py-2 space-y-2 animate-fadeIn text-xs">
                 {megaMenus.otherServices.map((srv) => (
-                  <a
+                  <Link
                     key={srv.label}
-                    href={srv.href}
+                    to={srv.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className="block p-2.5 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:bg-[#FFF6E8] transition"
                   >
@@ -790,7 +791,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                       <span>{srv.label}</span>
                     </div>
                     <p className="text-[11px] text-[#54504A] mt-0.5 leading-snug">{srv.desc}</p>
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}
@@ -798,8 +799,8 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
 
           {/* 5. Flat Direct Link: Cost Estimator */}
           <div className="py-1">
-            <a
-              href="#calculator"
+            <Link
+              to="/cost-estimator"
               onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left"
             >
@@ -807,13 +808,13 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 <Icons.Calculator size={16} className="text-[#E76F2E]" />
                 <span>Cost Estimator</span>
               </span>
-            </a>
+            </Link>
           </div>
 
           {/* 6. Flat Direct Link: About NIVAAS */}
           <div className="py-1">
-            <a
-              href="#about"
+            <Link
+              to="/about"
               onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left"
             >
@@ -821,13 +822,13 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 <Icons.Building size={16} className="text-[#E76F2E]" />
                 <span>About NIVAAS</span>
               </span>
-            </a>
+            </Link>
           </div>
 
           {/* 7. Flat Direct Link: Guides */}
           <div className="py-1">
-            <a
-              href="#blog"
+            <Link
+              to="/guides"
               onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left"
             >
@@ -835,13 +836,13 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 <Icons.FileText size={16} className="text-[#E76F2E]" />
                 <span>Guides</span>
               </span>
-            </a>
+            </Link>
           </div>
 
           {/* 8. Flat Direct Link: FAQ */}
           <div className="py-1">
-            <a
-              href="#faq"
+            <Link
+              to="/faq"
               onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left"
             >
@@ -849,7 +850,21 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 <Icons.HelpCircle size={16} className="text-[#E76F2E]" />
                 <span>Frequently Asked Questions</span>
               </span>
-            </a>
+            </Link>
+          </div>
+
+          {/* 9. Flat Direct Link: Contact */}
+          <div className="py-1">
+            <Link
+              to="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left"
+            >
+              <span className="flex items-center gap-2.5">
+                <Icons.Phone size={16} className="text-[#E76F2E]" />
+                <span>Contact &amp; Support</span>
+              </span>
+            </Link>
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { site } from '../lib/data'
 import { Icons } from './Icons'
 
@@ -210,8 +211,8 @@ export default function Footer() {
 
           {/* Numbered Full-Width Editorial Rows */}
           <div className="divide-y divide-white/10 border-y border-white/10">
-            <a
-              href="#plans"
+            <Link
+              to="/house-plans"
               className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
             >
               <span className="flex items-center gap-3">
@@ -219,9 +220,9 @@ export default function Footer() {
                 <span>Architecture</span>
               </span>
               <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </a>
-            <a
-              href="#interiors"
+            </Link>
+            <Link
+              to="/interiors"
               className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
             >
               <span className="flex items-center gap-3">
@@ -229,9 +230,9 @@ export default function Footer() {
                 <span>Interiors</span>
               </span>
               <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </a>
-            <a
-              href="#elevations"
+            </Link>
+            <Link
+              to="/designs"
               className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
             >
               <span className="flex items-center gap-3">
@@ -239,9 +240,9 @@ export default function Footer() {
                 <span>Designs</span>
               </span>
               <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </a>
-            <a
-              href="#services"
+            </Link>
+            <Link
+              to="/services"
               className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
             >
               <span className="flex items-center gap-3">
@@ -249,9 +250,9 @@ export default function Footer() {
                 <span>Services</span>
               </span>
               <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </a>
-            <a
-              href="#about"
+            </Link>
+            <Link
+              to="/about"
               className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
             >
               <span className="flex items-center gap-3">
@@ -259,9 +260,9 @@ export default function Footer() {
                 <span>About NIVAAS</span>
               </span>
               <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </a>
-            <a
-              href="#faq"
+            </Link>
+            <Link
+              to="/faq"
               className="flex items-center justify-between py-3 px-1 text-sm font-bold text-white hover:text-[#E76F2E] transition group"
             >
               <span className="flex items-center gap-3">
@@ -269,7 +270,7 @@ export default function Footer() {
                 <span>Help &amp; FAQs</span>
               </span>
               <span className="text-white/40 group-hover:text-[#E76F2E] group-hover:translate-x-1 transition-all">→</span>
-            </a>
+            </Link>
           </div>
 
           {/* Popular Links */}
@@ -278,13 +279,13 @@ export default function Footer() {
               POPULAR LINKS
             </span>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-white/75 font-medium">
-              <a href="#plans" className="hover:text-[#E76F2E] transition">House Plans</a>
+              <Link to="/house-plans" className="hover:text-[#E76F2E] transition">House Plans</Link>
               <span className="text-white/30">·</span>
-              <a href="#calculator" className="hover:text-[#E76F2E] transition">Cost Estimator</a>
+              <Link to="/cost-estimator" className="hover:text-[#E76F2E] transition">Cost Estimator</Link>
               <span className="text-white/30">·</span>
-              <a href="#blog" className="hover:text-[#E76F2E] transition">Guides</a>
+              <Link to="/guides" className="hover:text-[#E76F2E] transition">Guides</Link>
               <span className="text-white/30">·</span>
-              <a href="#contact" className="hover:text-[#E76F2E] transition">Contact</a>
+              <Link to="/contact" className="hover:text-[#E76F2E] transition">Contact</Link>
             </div>
           </div>
         </div>
@@ -300,12 +301,12 @@ export default function Footer() {
               <span>Architecture</span>
             </h4>
             <ul className="space-y-2 text-white/75">
-              <li><a href="#plans" className="hover:text-[#E76F2E] transition">30 x 50 House Plans</a></li>
-              <li><a href="#plans" className="hover:text-[#E76F2E] transition">20 x 40 House Plans</a></li>
-              <li><a href="#plans" className="hover:text-[#E76F2E] transition">25 x 40 House Plans</a></li>
-              <li><a href="#plans" className="hover:text-[#E76F2E] transition">40 x 60 Luxury Villas</a></li>
-              <li><a href="#plans" className="hover:text-[#E76F2E] transition">G+1 Duplex Plans</a></li>
-              <li><a href="#plans" className="hover:text-[#E76F2E] transition">100% Vastu Blueprints</a></li>
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">30 x 50 House Plans</Link></li>
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">20 x 40 House Plans</Link></li>
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">25 x 40 House Plans</Link></li>
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">40 x 60 Luxury Villas</Link></li>
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">G+1 Duplex Plans</Link></li>
+              <li><Link to="/house-plans" className="hover:text-[#E76F2E] transition">100% Vastu Blueprints</Link></li>
             </ul>
           </div>
 
@@ -316,12 +317,12 @@ export default function Footer() {
               <span>Interior</span>
             </h4>
             <ul className="space-y-2 text-white/75">
-              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">Modular Kitchens</a></li>
-              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">Luxury Living Rooms</a></li>
-              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">Master Bedroom Suites</a></li>
-              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">Pooja Room Mandirs</a></li>
-              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">Wardrobe &amp; Storage</a></li>
-              <li><a href="#interiors" className="hover:text-[#E76F2E] transition">3D Interior Renders</a></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Modular Kitchens</Link></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Luxury Living Rooms</Link></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Master Bedroom Suites</Link></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Pooja Room Mandirs</Link></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">Wardrobe &amp; Storage</Link></li>
+              <li><Link to="/interiors" className="hover:text-[#E76F2E] transition">3D Interior Renders</Link></li>
             </ul>
           </div>
 
@@ -332,12 +333,12 @@ export default function Footer() {
               <span>Designs</span>
             </h4>
             <ul className="space-y-2 text-white/75">
-              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">3D Front Elevations</a></li>
-              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">Modern Duplex Elevations</a></li>
-              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">Tropical Kerala Roofs</a></li>
-              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">Contemporary CNC Jaali</a></li>
-              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">Neoclassical Villas</a></li>
-              <li><a href="#elevations" className="hover:text-[#E76F2E] transition">Exterior Lighting</a></li>
+              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">3D Front Elevations</Link></li>
+              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Modern Duplex Elevations</Link></li>
+              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Tropical Kerala Roofs</Link></li>
+              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Contemporary CNC Jaali</Link></li>
+              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Neoclassical Villas</Link></li>
+              <li><Link to="/designs" className="hover:text-[#E76F2E] transition">Exterior Lighting</Link></li>
             </ul>
           </div>
 
@@ -348,12 +349,12 @@ export default function Footer() {
               <span>Services</span>
             </h4>
             <ul className="space-y-2 text-white/75">
-              <li><a href="#services" className="hover:text-[#E76F2E] transition">2D Architectural CAD</a></li>
-              <li><a href="#services" className="hover:text-[#E76F2E] transition">Structural Drawings</a></li>
-              <li><a href="#services" className="hover:text-[#E76F2E] transition">PMC &amp; Site Supervision</a></li>
-              <li><a href="#services" className="hover:text-[#E76F2E] transition">Vastu Consultation</a></li>
-              <li><a href="#services" className="hover:text-[#E76F2E] transition">Municipal By-Laws</a></li>
-              <li><a href="#contractors" className="hover:text-[#E76F2E] transition">Contractor Network</a></li>
+              <li><Link to="/services" className="hover:text-[#E76F2E] transition">2D Architectural CAD</Link></li>
+              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Structural Drawings</Link></li>
+              <li><Link to="/services" className="hover:text-[#E76F2E] transition">PMC &amp; Site Supervision</Link></li>
+              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Vastu Consultation</Link></li>
+              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Municipal By-Laws</Link></li>
+              <li><Link to="/services" className="hover:text-[#E76F2E] transition">Contractor Network</Link></li>
             </ul>
           </div>
 
@@ -364,12 +365,12 @@ export default function Footer() {
               <span>About &amp; Guides</span>
             </h4>
             <ul className="space-y-2 text-white/75">
-              <li><a href="#about" className="hover:text-[#E76F2E] transition font-medium text-white">About Indore House Maker's</a></li>
-              <li><a href="#calculator" className="hover:text-[#E76F2E] transition">Cost Estimator 2026</a></li>
-              <li><a href="#blog" className="hover:text-[#E76F2E] transition">Vastu Rules &amp; Guides</a></li>
-              <li><a href="#reviews" className="hover:text-[#E76F2E] transition">Client Video Stories</a></li>
-              <li><a href="#faq" className="hover:text-[#E76F2E] transition">Help &amp; FAQs</a></li>
-              <li><a href="#contact" className="hover:text-[#E76F2E] transition">Contact Architects</a></li>
+              <li><Link to="/about" className="hover:text-[#E76F2E] transition font-medium text-white">About Indore House Maker's</Link></li>
+              <li><Link to="/cost-estimator" className="hover:text-[#E76F2E] transition">Cost Estimator 2026</Link></li>
+              <li><Link to="/guides" className="hover:text-[#E76F2E] transition">Vastu Rules &amp; Guides</Link></li>
+              <li><Link to="/about" className="hover:text-[#E76F2E] transition">Client Video Stories</Link></li>
+              <li><Link to="/faq" className="hover:text-[#E76F2E] transition">Help &amp; FAQs</Link></li>
+              <li><Link to="/contact" className="hover:text-[#E76F2E] transition">Contact Architects</Link></li>
             </ul>
           </div>
 
@@ -551,11 +552,11 @@ export default function Footer() {
         <div className="container-content flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>© {new Date().getFullYear()} {site.name} — Residential Architecture & Home Design Platform. All rights reserved.</p>
           <div className="flex items-center gap-4 text-white/90">
-            <a href="#privacy" className="hover:text-[#E76F2E] transition">Privacy Policy</a>
+            <Link to="/about" className="hover:text-[#E76F2E] transition">Privacy Policy</Link>
             <span>·</span>
-            <a href="#terms" className="hover:text-[#E76F2E] transition">Terms & Conditions</a>
+            <Link to="/about" className="hover:text-[#E76F2E] transition">Terms &amp; Conditions</Link>
             <span>·</span>
-            <a href="#sitemap" className="hover:text-[#E76F2E] transition">Sitemap</a>
+            <Link to="/house-plans" className="hover:text-[#E76F2E] transition">Sitemap</Link>
           </div>
         </div>
       </div>

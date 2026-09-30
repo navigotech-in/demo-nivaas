@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Icons } from './Icons'
 
 export interface ResponsiveBottomNavProps {
@@ -16,17 +17,19 @@ export default function ResponsiveBottomNav({
   aiStudioOpen = false,
   onSheetStateChange,
 }: ResponsiveBottomNavProps) {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState<NavTab>('home')
   const [exploreSheetOpen, setExploreSheetOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
 
-  // Notify parent of sheet open/close state (e.g. to hide floating widgets)
+  // Notify parent of sheet open/close state
   useEffect(() => {
     onSheetStateChange?.(exploreSheetOpen)
   }, [exploreSheetOpen, onSheetStateChange])
 
-  // Track active navigation tab based on scroll position & open states
+  // Track active navigation tab based on route pathname
   useEffect(() => {
     if (exploreSheetOpen) {
       setActiveTab('menu')
@@ -37,40 +40,17 @@ export default function ResponsiveBottomNav({
       return
     }
 
-    const handleScroll = () => {
-      const scrollY = window.scrollY
-      if (scrollY < 250) {
-        setActiveTab('home')
-        return
-      }
-
-      const calcEl = document.getElementById('calculator')
-      if (calcEl) {
-        const rect = calcEl.getBoundingClientRect()
-        if (rect.top <= window.innerHeight * 0.5 && rect.bottom >= window.innerHeight * 0.2) {
-          setActiveTab('estimate')
-          return
-        }
-      }
-
-      const designEl =
-        document.getElementById('design-studio') ||
-        document.getElementById('plans') ||
-        document.getElementById('elevations') ||
-        document.getElementById('interiors')
-      if (designEl) {
-        const rect = designEl.getBoundingClientRect()
-        if (rect.top <= window.innerHeight * 0.6 && rect.bottom >= window.innerHeight * 0.2) {
-          setActiveTab('designs')
-          return
-        }
-      }
+    const path = location.pathname
+    if (path === '/') {
+      setActiveTab('home')
+    } else if (path.startsWith('/designs') || path.startsWith('/house-plans') || path.startsWith('/interiors')) {
+      setActiveTab('designs')
+    } else if (path.startsWith('/cost-estimator')) {
+      setActiveTab('estimate')
+    } else {
+      setActiveTab('home')
     }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll()
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [exploreSheetOpen, aiStudioOpen])
+  }, [location.pathname, exploreSheetOpen, aiStudioOpen])
 
   // Sheet keyboard & body scroll management
   useEffect(() => {
@@ -94,28 +74,15 @@ export default function ResponsiveBottomNav({
 
   const handleNavClick = (tab: NavTab) => {
     if (tab === 'home') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      navigate('/')
       setActiveTab('home')
       setExploreSheetOpen(false)
     } else if (tab === 'designs') {
-      const el =
-        document.getElementById('design-studio') ||
-        document.getElementById('plans') ||
-        document.getElementById('elevations')
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' })
-      } else {
-        window.location.hash = '#plans'
-      }
+      navigate('/designs')
       setActiveTab('designs')
       setExploreSheetOpen(false)
     } else if (tab === 'estimate') {
-      const el = document.getElementById('calculator')
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' })
-      } else {
-        window.location.hash = '#calculator'
-      }
+      navigate('/cost-estimator')
       setActiveTab('estimate')
       setExploreSheetOpen(false)
     } else if (tab === 'ai') {
@@ -128,12 +95,15 @@ export default function ResponsiveBottomNav({
   }
 
   const sheetLinks = [
-    { label: 'Architecture', href: '#plans', icon: Icons.Blueprint },
-    { label: 'Interior', href: '#interiors', icon: Icons.Sofa },
-    { label: '3D Elevation', href: '#elevations', icon: Icons.Sparkles },
-    { label: 'Services', href: '#services', icon: Icons.HardHat },
-    { label: 'Guides', href: '#blog', icon: Icons.FileText },
-    { label: 'About NIVAAS', href: '#about', icon: Icons.Building },
+    { label: 'Architecture & House Plans', href: '/house-plans', icon: Icons.Blueprint },
+    { label: 'Interiors', href: '/interiors', icon: Icons.Sofa },
+    { label: '3D Elevation & Designs', href: '/designs', icon: Icons.Sparkles },
+    { label: 'Services & Contractors', href: '/services', icon: Icons.HardHat },
+    { label: 'Cost Estimator', href: '/cost-estimator', icon: Icons.Calculator },
+    { label: 'Guides & Articles', href: '/guides', icon: Icons.FileText },
+    { label: 'About NIVAAS', href: '/about', icon: Icons.Building },
+    { label: 'Help & FAQs', href: '/faq', icon: Icons.HelpCircle },
+    { label: 'Contact & Support', href: '/contact', icon: Icons.Phone },
   ]
 
   const navItems = [
@@ -202,9 +172,9 @@ export default function ResponsiveBottomNav({
           {sheetLinks.map((item) => {
             const IconComp = item.icon
             return (
-              <a
+              <Link
                 key={item.label}
-                href={item.href}
+                to={item.href}
                 onClick={() => setExploreSheetOpen(false)}
                 className="flex items-center justify-between py-3.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#C94F36] transition group"
               >
@@ -218,7 +188,7 @@ export default function ResponsiveBottomNav({
                   size={16}
                   className="text-[#74706A] group-hover:text-[#C94F36] group-hover:translate-x-0.5 transition-transform"
                 />
-              </a>
+              </Link>
             )
           })}
         </div>
