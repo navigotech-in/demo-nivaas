@@ -1,0 +1,267 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum PassType {
+  DESIGN_PASS_299
+  PROMOTIONAL_PASS
+}
+
+enum PassStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+enum CreditEventType {
+  GRANT
+  RESERVE
+  RELEASE
+  CONSUME
+  EXPIRE
+  ADJUSTMENT
+}
+
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  CLOSED
+}
+
+enum PurchaseStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  CREATED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id               String              @id @default(uuid())
+  email            String              @unique
+  passwordHash     String
+  name             String
+  phone            String?
+  role             UserRole            @default(USER)
+  isEmailVerified  Boolean             @default(false)
+  isPhoneVerified  Boolean             @default(false)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  
+  sessions         RefreshSession[]
+  passes           AccessPass[]
+  creditLedger     CreditTransaction[]
+  generationJobs   GenerationJob[]
+  purchases        Purchase[]
+  payments         Payment[]
+  leads            Lead[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+model RefreshSession {
+  id           String    @id @default(uuid())
+  userId       String
+  familyId     String    // For session family tracking and breach detection
+  tokenHash    String    @unique
+  userAgent    String
+  ipAddress    String
+  isRevoked    Boolean   @default(false)
+  rotatedAt    DateTime? // Timestamp when rotated (for 15s grace handling)
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([tokenHash])
+}
+
+model Product {
+  id             String     @id @default(uuid())
+  name           String
+  code           String     @unique // e.g. 'DESIGN_PASS_299'
+  description    String
+  priceInr       Int        // ₹299
+  creditsGranted Int        // 5 credits
+  durationDays   Int        // 30 days
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  
+  purchases      Purchase[]
+}
+
+model Purchase {
+  id         String         @id @default(uuid())
+  userId     String
+  productId  String
+  amountInr  Int
+  status     PurchaseStatus @default(PENDING)
+  paymentId  String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    Product        @relation(fields: [productId], references: [id])
+  payments   Payment[]
+  passes     AccessPass[]
+
+  @@index([userId])
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  purchaseId       String
+  userId           String
+  orderId          String        @unique
+  gatewayPaymentId String?       @unique
+  signature        String?
+  amountInr        Int
+  status           PaymentStatus @default(CREATED)
+  gateway          String        @default("RAZORPAY")
+  rawResponse      Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  purchase         Purchase      @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([orderId])
+}
+
+model AccessPass {
+  id             String              @id @default(uuid())
+  userId         String
+  purchaseId     String?
+  passType       PassType            @default(DESIGN_PASS_299)
+  status         PassStatus          @default(ACTIVE)
+  startsAt       DateTime            @default(now())
+  expiresAt      DateTime
+  creditsGranted Int                 @default(5)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purchase       Purchase?           @relation(fields: [purchaseId], references: [id])
+  ledgerEntries  CreditTransaction[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+// Immutable Credit Transaction Ledger (Single Source of Truth)
+model CreditTransaction {
+  id            String          @id @default(uuid())
+  userId        String
+  passId        String?
+  amount        Int             // +5 for GRANT, -1 for RESERVE, +1 for RELEASE, 0 for CONSUME
+  type          CreditEventType
+  description   String
+  referenceType String?         // e.g. 'PURCHASE', 'GENERATION_JOB', 'MANUAL'
+  referenceId   String?         // e.g. reservationId or jobId
+  createdAt     DateTime        @default(now())
+
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pass          AccessPass?     @relation(fields: [passId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([passId])
+  @@index([referenceId])
+  @@index([createdAt])
+}
+
+model GenerationJob {
+  id             String    @id @default(uuid())
+  userId         String
+  projectId      String?
+  jobType        String    // '2D_FLOOR_PLAN', '3D_ELEVATION', 'INTERIOR_RENDER'
+  status         JobStatus @default(QUEUED)
+  inputPayload   Json
+  resultPayload  Json?
+  errorMessage   String?
+  creditCost     Int       @default(1)
+  idempotencyKey String?   @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Lead {
+  id           String     @id @default(uuid())
+  userId       String?
+  type         String     @default("CONSULTATION")
+  name         String
+  phone        String
+  email        String?
+  city         String     @default("Indore")
+  plotSize     String?
+  budgetRange  String?
+  timeline     String?
+  requirement  String?
+  message      String?
+  wizardData   Json?
+  status       LeadStatus @default(NEW)
+  notes        String?
+  consentGiven Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user         User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([city])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorRole  String?  // 'USER', 'ADMIN', 'SYSTEM', 'ANONYMOUS'
+  action     String   // e.g. 'auth.signup', 'auth.token_reuse_detected', 'ledger.reserve'
+  entityType String   // e.g. 'User', 'RefreshSession', 'CreditTransaction'
+  entityId   String?
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+}

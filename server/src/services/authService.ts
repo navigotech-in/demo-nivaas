@@ -12,7 +12,7 @@ export class AuthService {
     return crypto.createHash('sha256').update(token).digest('hex')
   }
 
-  // Generate short-lived (15-min) Access Token
+  // Generate short-lived (15-min) Access Token with approved claims
   public generateAccessToken(user: User, sessionId: string): string {
     const payload: AccessTokenPayload = {
       sub: user.id,
@@ -183,7 +183,7 @@ export class AuthService {
     }
   }
 
-  // Refresh Token with Rotation & Reuse Detection
+  // Refresh Token with 15s Grace Window & Reuse Detection
   public async refresh(params: {
     rawRefreshToken: string
     ipAddress: string
@@ -200,8 +200,18 @@ export class AuthService {
       throw new Error('INVALID_REFRESH_TOKEN')
     }
 
-    // Token Reuse Detection: If an already revoked token is used, assume breach and revoke family
+    // 1. Check if session was already revoked
     if (session.isRevoked) {
+      const GRACE_PERIOD_MS = 15 * 1000 // 15 seconds grace window for concurrent browser tabs
+      const rotatedAtMs = session.rotatedAt ? new Date(session.rotatedAt).getTime() : 0
+      const isWithinGrace = rotatedAtMs > 0 && Date.now() - rotatedAtMs < GRACE_PERIOD_MS
+
+      if (isWithinGrace) {
+        // Legitimate concurrent tab race condition -> Do not revoke family!
+        throw new Error('TOKEN_ALREADY_ROTATED')
+      }
+
+      // True reuse attack detected outside grace period -> Revoke entire session family
       db.revokeSessionFamily(session.familyId)
       db.logAudit({
         actorId: session.userId,
@@ -210,12 +220,12 @@ export class AuthService {
         entityId: session.id,
         ipAddress: params.ipAddress,
         userAgent: params.userAgent,
-        metadata: { familyId: session.familyId, message: 'All family sessions revoked' },
+        metadata: { familyId: session.familyId, message: 'All family sessions revoked after breach' },
       })
       throw new Error('TOKEN_REUSE_DETECTED')
     }
 
-    // Check expiry
+    // 2. Check expiry
     if (new Date(session.expiresAt) < new Date()) {
       db.revokeSession(session.id)
       throw new Error('REFRESH_TOKEN_EXPIRED')
@@ -227,26 +237,39 @@ export class AuthService {
       throw new Error('USER_NOT_FOUND')
     }
 
-    // Rotate: Revoke the used session and issue a new one in the same family
-    db.revokeSession(session.id)
-    const { rawRefreshToken: newRawRefreshToken, session: newSession } = await this.createSession(
-      user,
-      params.ipAddress,
-      params.userAgent,
-      session.familyId
-    )
+    // 3. Rotate: Create new session in same family & mark old session rotated with timestamp
+    const rawRefreshToken = crypto.randomBytes(40).toString('hex')
+    const newTokenHash = this.hashToken(rawRefreshToken)
+    const newSessionId = 'ses_' + crypto.randomBytes(12).toString('hex')
+
+    const newSession: RefreshSession = {
+      id: newSessionId,
+      userId: user.id,
+      familyId: session.familyId,
+      tokenHash: newTokenHash,
+      userAgent: params.userAgent || 'Unknown Agent',
+      ipAddress: params.ipAddress || '127.0.0.1',
+      isRevoked: false,
+      expiresAt: new Date(
+        Date.now() + config.jwt.refreshTokenExpiresDays * 24 * 60 * 60 * 1000
+      ).toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    db.rotateSession(session.id, newSession)
 
     const accessToken = this.generateAccessToken(user, newSession.id)
     const userSummary = db.getUserSummary(user)
 
     return {
       accessToken,
-      newRawRefreshToken,
+      newRawRefreshToken: rawRefreshToken,
       user: userSummary,
     }
   }
 
-  // Logout: Revoke current session
+  // Logout
   public async logout(params: {
     sessionId?: string
     rawRefreshToken?: string

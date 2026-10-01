@@ -21,6 +21,7 @@ export interface RefreshSession {
   userAgent: string
   ipAddress: string
   isRevoked: boolean
+  rotatedAt?: string // Timestamp when rotated (for 15s grace handling)
   expiresAt: string
   createdAt: string
   updatedAt: string

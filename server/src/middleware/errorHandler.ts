@@ -48,6 +48,11 @@ export function errorHandler(
       code: ErrorCode.TOKEN_INVALID,
       message: 'Invalid or unrecognized refresh token.',
     },
+    TOKEN_ALREADY_ROTATED: {
+      status: 401,
+      code: ErrorCode.TOKEN_ALREADY_ROTATED,
+      message: 'Token was recently rotated by another concurrent request. Please retry.',
+    },
     TOKEN_REUSE_DETECTED: {
       status: 401,
       code: ErrorCode.SESSION_REVOKED,

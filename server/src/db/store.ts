@@ -27,11 +27,11 @@ class DatabaseStore {
   public auditLogs: AuditLog[] = []
 
   constructor() {
-    this.seedDefaults()
+    this.seedDefaultProduct()
   }
 
-  private seedDefaults() {
-    // 1. Seed Product: ₹299 — 30-Day Design Pass with 5 AI credits
+  // 1. Seed Product Definition (Always required for system operations)
+  public seedDefaultProduct() {
     const passProduct: Product = {
       id: 'prod_design_pass_299',
       name: '30-Day Design Pass (5 AI Credits)',
@@ -44,16 +44,79 @@ class DatabaseStore {
       createdAt: new Date().toISOString(),
     }
     this.products.set(passProduct.id, passProduct)
+  }
 
-    // 2. Seed Default Admin Account: admin@indorehousemakers.in
-    const adminId = 'usr_admin_001'
-    const adminPasswordHash = bcrypt.hashSync('Admin@IndoreHouse2026!', 10)
+  // 2. Explicit Development/Test Fixtures (Only called in dev or test runner)
+  public seedDevFixtures() {
+    // Seed Demo User
+    const demoUserId = 'usr_demo_002'
+    if (!this.users.has(demoUserId)) {
+      const demoPasswordHash = bcrypt.hashSync('User@IndoreHouse2026!', 10)
+      const demoUser: User = {
+        id: demoUserId,
+        email: 'user@indorehousemakers.in',
+        name: 'Rohit Sharma',
+        phone: '+919123456780',
+        passwordHash: demoPasswordHash,
+        role: 'USER',
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      this.users.set(demoUserId, demoUser)
+
+      // Seed Active Pass for demo user
+      const now = new Date()
+      const expiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+      const demoPass: AccessPass = {
+        id: 'pass_demo_001',
+        userId: demoUserId,
+        passType: 'DESIGN_PASS_299',
+        status: 'ACTIVE',
+        startsAt: now.toISOString(),
+        expiresAt: expiry.toISOString(),
+        creditsGranted: 5,
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      }
+      this.accessPasses.set(demoPass.id, demoPass)
+
+      this.creditTransactions.push({
+        id: 'tx_seed_001',
+        userId: demoUserId,
+        passId: demoPass.id,
+        amount: 5,
+        balanceAfter: 5,
+        type: 'PURCHASE_GRANT',
+        description: 'Welcome credit grant for ₹299 30-Day Design Pass',
+        referenceType: 'PURCHASE',
+        referenceId: 'purch_seed_001',
+        createdAt: now.toISOString(),
+      })
+    }
+  }
+
+  // 3. Explicit Bootstrap Admin Helper (Called by `npm run bootstrap:admin`)
+  public bootstrapAdmin(email: string, password: string, name = 'Indore House Makers Admin'): User {
+    const normalized = email.trim().toLowerCase()
+    const existing = this.findUserByEmail(normalized)
+    if (existing) {
+      if (existing.role !== 'ADMIN') {
+        existing.role = 'ADMIN'
+        existing.updatedAt = new Date().toISOString()
+      }
+      return existing
+    }
+
+    const adminId = 'usr_admin_' + crypto.randomBytes(6).toString('hex')
+    const passwordHash = bcrypt.hashSync(password, 10)
     const adminUser: User = {
       id: adminId,
-      email: 'admin@indorehousemakers.in',
-      name: 'Indore House Makers Admin',
+      email: normalized,
+      name,
       phone: '+919876543210',
-      passwordHash: adminPasswordHash,
+      passwordHash,
       role: 'ADMIN',
       isEmailVerified: true,
       isPhoneVerified: true,
@@ -61,53 +124,7 @@ class DatabaseStore {
       updatedAt: new Date().toISOString(),
     }
     this.users.set(adminId, adminUser)
-
-    // 3. Seed Demo Verified User with an active Design Pass: user@indorehousemakers.in
-    const demoUserId = 'usr_demo_002'
-    const demoPasswordHash = bcrypt.hashSync('User@IndoreHouse2026!', 10)
-    const demoUser: User = {
-      id: demoUserId,
-      email: 'user@indorehousemakers.in',
-      name: 'Rohit Sharma',
-      phone: '+919123456780',
-      passwordHash: demoPasswordHash,
-      role: 'USER',
-      isEmailVerified: true,
-      isPhoneVerified: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    this.users.set(demoUserId, demoUser)
-
-    // Seed Active Pass for demo user
-    const now = new Date()
-    const expiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-    const demoPass: AccessPass = {
-      id: 'pass_demo_001',
-      userId: demoUserId,
-      passType: 'DESIGN_PASS_299',
-      status: 'ACTIVE',
-      startsAt: now.toISOString(),
-      expiresAt: expiry.toISOString(),
-      creditsGranted: 5,
-      creditsRemaining: 5,
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-    }
-    this.accessPasses.set(demoPass.id, demoPass)
-
-    this.creditTransactions.push({
-      id: 'tx_seed_001',
-      userId: demoUserId,
-      passId: demoPass.id,
-      amount: 5,
-      balanceAfter: 5,
-      type: 'PURCHASE_GRANT',
-      description: 'Welcome credit grant for ₹299 30-Day Design Pass',
-      referenceType: 'PURCHASE',
-      referenceId: 'purch_seed_001',
-      createdAt: now.toISOString(),
-    })
+    return adminUser
   }
 
   // --- Users ---
@@ -152,15 +169,14 @@ class DatabaseStore {
     return updated
   }
 
-  // --- Access Pass & Credits ---
+  // --- Access Pass & Live Ledger Balance ---
   public getActivePass(userId: string): AccessPass | null {
     const now = new Date().toISOString()
     for (const pass of this.accessPasses.values()) {
       if (
         pass.userId === userId &&
         pass.status === 'ACTIVE' &&
-        pass.expiresAt > now &&
-        pass.creditsRemaining > 0
+        pass.expiresAt > now
       ) {
         return pass
       }
@@ -168,14 +184,13 @@ class DatabaseStore {
     return null
   }
 
-  public getUserTotalCredits(userId: string): number {
-    const pass = this.getActivePass(userId)
-    return pass ? pass.creditsRemaining : 0
-  }
-
   public getUserSummary(user: User): UserSummary {
     const activePass = this.getActivePass(user.id)
-    const totalCredits = activePass ? activePass.creditsRemaining : 0
+    // Pure calculation from immutable ledger transactions
+    const totalCredits = this.creditTransactions
+      .filter((tx) => tx.userId === user.id)
+      .reduce((sum, tx) => sum + tx.amount, 0)
+
     return {
       id: user.id,
       name: user.name,
@@ -185,12 +200,12 @@ class DatabaseStore {
       isEmailVerified: user.isEmailVerified,
       isPhoneVerified: user.isPhoneVerified,
       activePass,
-      totalCredits,
+      totalCredits: Math.max(0, totalCredits),
       createdAt: user.createdAt,
     }
   }
 
-  // --- Sessions & Token Rotation ---
+  // --- Sessions & Token Rotation with Grace Window ---
   public createSession(session: RefreshSession): RefreshSession {
     this.sessions.set(session.id, session)
     return session
@@ -207,6 +222,17 @@ class DatabaseStore {
       }
     }
     return undefined
+  }
+
+  public rotateSession(oldSessionId: string, newSession: RefreshSession): void {
+    const oldSession = this.sessions.get(oldSessionId)
+    if (oldSession) {
+      oldSession.isRevoked = true
+      oldSession.rotatedAt = new Date().toISOString()
+      oldSession.updatedAt = new Date().toISOString()
+      this.sessions.set(oldSessionId, oldSession)
+    }
+    this.sessions.set(newSession.id, newSession)
   }
 
   public revokeSession(sessionId: string): void {
@@ -235,7 +261,6 @@ class DatabaseStore {
       createdAt: new Date().toISOString(),
     }
     this.auditLogs.unshift(entry)
-    // Keep max 2000 in memory
     if (this.auditLogs.length > 2000) {
       this.auditLogs.pop()
     }
