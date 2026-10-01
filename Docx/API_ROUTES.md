@@ -1,115 +1,122 @@
-# REST API Routes
+# Indore House Makers — REST API Route Registry
 
-Base path: `/api/v1`
-Auth: `Bearer <accessToken>` header unless noted "public". Roles: `USER`, `ADMIN`.
+**Base URL**: `/api/v1`  
+**Authentication**: `Authorization: Bearer <accessToken>` header for protected routes.  
+**Refresh Token**: Set via secure `HttpOnly` cookie (`ihm_refresh_token`).  
+**Roles**: `USER`, `ADMIN`.
 
-## Auth
-| Method | Path | Auth | Description |
+---
+
+## 1. Authentication & Session (`/auth`)
+
+| Method | Endpoint | Access | Description |
 |---|---|---|---|
-| POST | /auth/register | public | Create account |
-| POST | /auth/login | public | Email+password login → access + refresh (cookie) |
-| POST | /auth/refresh | public (cookie) | Rotate refresh token, issue new access token |
-| POST | /auth/logout | USER | Revoke refresh session |
-| GET | /auth/me | USER | Current user profile |
+| `POST` | `/api/v1/auth/signup` | Public | Register new user account with name, email, password, and optional phone |
+| `POST` | `/api/v1/auth/login` | Public | Authenticate via email or phone + password; returns 15m JWT + sets HttpOnly cookie |
+| `POST` | `/api/v1/auth/refresh` | Public (Cookie) | Rotates refresh token with 15s grace window; revokes family on breach |
+| `POST` | `/api/v1/auth/logout` | Authenticated | Revokes current session or token family and clears refresh cookie |
+| `GET` | `/api/v1/auth/me` | `USER` / `ADMIN` | Fetches active profile, live credit balance, and active pass details |
+| `POST` | `/api/v1/auth/forgot-password` | Public | Dispatches password reset link (constant-time safe response) |
+| `GET` | `/api/v1/auth/setup-status` | Public | Checks if initial admin setup is allowed (`adminCount === 0`) |
+| `POST` | `/api/v1/auth/setup-admin` | Public (Secret) | One-time atomic admin account bootstrapping with `SETUP_SECRET` & `AdminSetupLock` |
 
-## Users (self-service)
-| Method | Path | Auth | Description |
+---
+
+## 2. Health & System (`/health`)
+
+| Method | Endpoint | Access | Description |
 |---|---|---|---|
-| PATCH | /users/me | USER | Update profile |
-| GET | /users/me/favorites | USER | List saved designs |
-| POST | /users/me/favorites/:designId | USER | Save a design |
-| DELETE | /users/me/favorites/:designId | USER | Remove saved design |
-| GET | /users/me/enquiries | USER | My enquiries |
-| GET | /users/me/consultations | USER | My consultation requests |
+| `GET` | `/api/v1/health` | Public | System status, service identity, and timestamp |
 
-## Designs (unified read API; house plans / elevations / interiors share shape)
-| Method | Path | Auth | Description |
+---
+
+## 3. Leads & Consultations (`/leads`)
+
+| Method | Endpoint | Access | Description |
 |---|---|---|---|
-| GET | /designs | public | List/search/filter (type, category, style, bhk, facing, floors, plotWidth/Depth, vastu, sort, page) |
-| GET | /designs/:slug | public | Design detail (includes type-specific details, media, similar designs) |
-| GET | /designs/:slug/similar | public | Related/similar designs |
+| `POST` | `/api/v1/leads` | Public (Rate Limited) | Submit general consultation enquiry or AI Studio custom plan lead |
 
-## House Plans / Elevations / Interiors (admin write; scoped convenience reads)
-| Method | Path | Auth | Description |
+---
+
+## 4. User Panel (`/users`) — *Phase 2*
+
+| Method | Endpoint | Access | Description |
 |---|---|---|---|
-| GET | /house-plans | public | Filtered list (thin wrapper over /designs?type=HOUSE_PLAN) |
-| GET | /elevations | public | Filtered list |
-| GET | /interiors | public | Filtered list |
-| POST | /admin/designs | ADMIN | Create design (any type) |
-| PATCH | /admin/designs/:id | ADMIN | Update design + type-specific details |
-| POST | /admin/designs/:id/publish | ADMIN | Publish (sets status, publishedAt, triggers ISR revalidation) |
-| DELETE | /admin/designs/:id | ADMIN | Soft delete / archive |
-| POST | /admin/designs/:id/media | ADMIN | Attach media (gallery/floor-plan/cover) |
-| DELETE | /admin/designs/:id/media/:mediaId | ADMIN | Remove media |
+| `GET` | `/api/v1/users/me/dashboard` | `USER` | Overview stats, active pass status, remaining credits, latest projects |
+| `GET` | `/api/v1/users/me/projects` | `USER` | List user's created house plans and 3D elevation projects |
+| `GET` | `/api/v1/users/me/credits/history` | `USER` | Full immutable transaction history (grant, reserve, consume, refund) |
+| `GET` | `/api/v1/users/me/consultations` | `USER` | Status of booked architect consultation requests |
+| `PATCH` | `/api/v1/users/me/profile` | `USER` | Update name, phone, or notification preferences |
 
-## Taxonomy (Category / Style / Amenity / Tag)
-| Method | Path | Auth | Description |
+---
+
+## 5. Admin Panel (`/admin`) — *Phase 3*
+
+| Method | Endpoint | Access | Description |
 |---|---|---|---|
-| GET | /categories, /styles, /amenities, /tags | public | List for filters |
-| POST /PATCH /DELETE | /admin/categories(/:id), /admin/styles(/:id), /admin/amenities(/:id), /admin/tags(/:id) | ADMIN | CRUD |
+| `GET` | `/api/v1/admin/overview` | `ADMIN` | High-level metrics: total users, active passes, revenue, pending leads |
+| `GET` | `/api/v1/admin/leads` | `ADMIN` | List and search all consultation and AI synthesis leads with filters |
+| `PATCH` | `/api/v1/admin/leads/:id` | `ADMIN` | Update lead status (`NEW`, `CONTACTED`, `QUALIFIED`, `CONVERTED`, `CLOSED`) and notes |
+| `GET` | `/api/v1/admin/users` | `ADMIN` | User directory with pass status, credit balance, and activity history |
+| `GET` | `/api/v1/admin/audit-log` | `ADMIN` | Security audit trail (logins, token breaches, ledger events) |
 
-## Services
-| Method | Path | Auth | Description |
+---
+
+## 6. AI Generation Jobs (`/ai`) — *Phase 4*
+
+| Method | Endpoint | Access | Description |
 |---|---|---|---|
-| GET | /services | public | List active services |
-| GET | /services/:slug | public | Service detail + packages |
-| POST /PATCH /DELETE | /admin/services(/:id) | ADMIN | CRUD services & packages |
+| `POST` | `/api/v1/ai/generate` | `USER` | Reserves credit and queues async 2D/3D generation job (`idempotencyKey`) |
+| `GET` | `/api/v1/ai/jobs/:id` | `USER` | Polls job status (`QUEUED` → `PROCESSING` → `COMPLETED` / `FAILED`) |
+| `GET` | `/api/v1/ai/jobs/:id/download` | `USER` | High-definition PDF/CAD download (verified active pass) |
 
-## Enquiries & Consultations
-| Method | Path | Auth | Description |
+---
+
+## 7. Payments & Razorpay (`/payments`) — *Phase 5*
+
+| Method | Endpoint | Access | Description |
 |---|---|---|---|
-| POST | /enquiries | public (rate-limited) | Submit enquiry (design or service context) |
-| POST | /consultations | public (rate-limited) | Submit consultation request |
-| GET | /admin/enquiries | ADMIN | List/filter enquiries |
-| PATCH | /admin/enquiries/:id | ADMIN | Update status/notes |
-| GET | /admin/consultations | ADMIN | List/filter consultation requests |
-| PATCH | /admin/consultations/:id | ADMIN | Update status/notes |
+| `POST` | `/api/v1/payments/create-order` | `USER` | Creates Razorpay order for ₹299 30-Day Design Pass |
+| `POST` | `/api/v1/payments/verify` | `USER` | Verifies checkout signature and creates `AccessPass` + credit `GRANT` |
+| `POST` | `/api/v1/payments/webhook` | Public (Signature) | Server-to-server Razorpay webhook handler for instant settlement |
 
-## Projects (v1.1 candidate)
-| Method | Path | Auth | Description |
+---
+
+## 8. Catalog & Designs (`/designs`) — *Phase 6*
+
+| Method | Endpoint | Access | Description |
 |---|---|---|---|
-| GET | /users/me/projects | USER | My projects |
-| GET | /admin/projects | ADMIN | All projects |
-| PATCH | /admin/projects/:id | ADMIN | Update status, attach files |
+| `GET` | `/api/v1/designs` | Public | Filtered catalog (house plans, 3D elevations, interiors) with pagination |
+| `GET` | `/api/v1/designs/:slug` | Public | Full design blueprint details, room dimensions, Vastu chart |
+| `POST` | `/api/v1/admin/designs` | `ADMIN` | Create new catalog design item |
+| `PATCH` | `/api/v1/admin/designs/:id` | `ADMIN` | Update catalog specifications and media assets |
+| `DELETE` | `/api/v1/admin/designs/:id` | `ADMIN` | Archive/remove design item |
 
-## Blog / Content
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | /blog, /blog/:slug | public | List/detail |
-| POST /PATCH /DELETE | /admin/blog(/:id) | ADMIN | CRUD |
-| GET | /faqs | public | FAQ list (optionally scoped by designId/serviceId) |
-| POST /PATCH /DELETE | /admin/faqs(/:id) | ADMIN | CRUD |
-| GET | /testimonials | public | List |
-| POST /PATCH /DELETE | /admin/testimonials(/:id) | ADMIN | CRUD |
+---
 
-## SEO
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | /seo-pages/:path* | public | Resolve a curated SEO landing page config |
-| POST /PATCH /DELETE | /admin/seo-pages(/:id) | ADMIN | CRUD curated landing pages |
-| GET | /sitemap-index.xml, /sitemap-*.xml | public | Generated sitemaps |
-| GET | /robots.txt | public | Robots rules |
+## 📦 Standard API Response Envelope
 
-## Media
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | /admin/media | ADMIN | Upload (validated, triggers variant generation) |
-| GET | /admin/media | ADMIN | Media library list |
-| DELETE | /admin/media/:id | ADMIN | Remove (blocked if referenced) |
-
-## Admin — Users & Settings & Audit
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | /admin/users | ADMIN | List users |
-| PATCH | /admin/users/:id | ADMIN | Update role/status |
-| GET /PATCH | /admin/settings | ADMIN | Site settings |
-| GET | /admin/audit-log | ADMIN | Audit trail |
-
-## Response envelope
+### Success Format:
 ```json
-// success
-{ "success": true, "data": { ... }, "meta": { "page": 1, "pageSize": 20, "total": 134 } }
+{
+  "success": true,
+  "data": { ... },
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 120
+  }
+}
+```
 
-// error
-{ "success": false, "error": { "code": "VALIDATION_ERROR", "message": "...", "details": [...] } }
+### Error Format:
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INSUFFICIENT_CREDITS",
+    "message": "You need an active Design Pass or generation credits to perform this action.",
+    "details": []
+  }
+}
 ```

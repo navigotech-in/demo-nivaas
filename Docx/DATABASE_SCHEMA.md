@@ -1,226 +1,132 @@
-# Database Schema (PostgreSQL + Prisma)
+# Indore House Makers — Database Schema & Architecture
 
-## 1. ER Summary
+**Database**: PostgreSQL (Supabase / Self-hosted)  
+**ORM**: Prisma 6  
+**File**: `server/prisma/schema.prisma`
+
+---
+
+## 🗺️ Entity Relationship Summary
 
 ```
-User 1───* RefreshSession
-User 1───* Favorite *───1 Design
-User 1───* Enquiry
-User 1───* ConsultationRequest
-User 1───* Project
+User (1) ───< (N) RefreshSession
+User (1) ───< (N) AccessPass
+User (1) ───< (N) CreditTransaction
+User (1) ───< (N) CreditReservation
+User (1) ───< (N) GenerationJob
+User (1) ───< (N) Purchase ───< (N) Payment
+User (1) ───< (N) Lead
 
-Design (parent) 1───1 HousePlanDetails | ElevationDetails | InteriorDetails   (by Design.type)
-Design *───1 Category
-Design *───1 Style
-Design 1───* DesignMedia
-Design *───* Amenity   (via DesignAmenity)
-Design *───* Tag       (via DesignTag)
-Design 1───* Favorite
-
-Service 1───* ServicePackage
-Service 1───* Enquiry
-
-ConsultationRequest *───1 User (nullable, guest allowed)
-Project 1───* ProjectFile
-Project *───1 User
-Project *───1 Service (nullable)
-
-BlogPost *───1 BlogCategory
-
-SeoLandingPage *───1 Category (optional link to a curated filter set)
-
-MediaAsset  (generic media library, referenced by DesignMedia, BlogPost, etc.)
+AdminSetupLock (Single Row Unique Lock: "SETUP_LOCK")
+Product (1) ───< (N) Purchase
 ```
 
-## 2. Entities
+---
 
-### User
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| name | string | |
-| email | string, unique | |
-| passwordHash | string | |
-| role | enum(GUEST is implicit/USER, ADMIN) | default USER |
-| phone | string, nullable | |
-| avatarUrl | string, nullable | |
-| createdAt / updatedAt | timestamp | |
+## 📋 Core Entity Models
 
-### RefreshSession
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| userId | FK → User | |
-| tokenHash | string | hashed refresh token |
-| userAgent / ip | string | |
-| expiresAt | timestamp | |
-| revokedAt | timestamp, nullable | |
+### 1. `User`
+| Field | Type | Attributes | Description |
+|---|---|---|---|
+| `id` | `String` | `@id @default(uuid())` | Unique user identifier (`usr_...`) |
+| `email` | `String` | `@unique` | Normalized lowercase email address |
+| `passwordHash` | `String` | | Bcrypt hash (salt rounds: 10) |
+| `name` | `String` | | Full name |
+| `phone` | `String?` | | 10-digit Indian phone number |
+| `role` | `UserRole` | `@default(USER)` | `USER` or `ADMIN` (only 2 roles) |
+| `isEmailVerified`| `Boolean` | `@default(false)` | Email verification flag |
+| `isPhoneVerified`| `Boolean` | `@default(false)` | Phone verification flag |
+| `createdAt` | `DateTime` | `@default(now())` | Registration timestamp |
+| `updatedAt` | `DateTime` | `@updatedAt` | Last modification timestamp |
 
-### Design (parent entity)
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| type | enum(HOUSE_PLAN, ELEVATION, INTERIOR) | |
-| title | string | |
-| slug | string, unique | indexed |
-| shortDescription | string | for cards/listing |
-| description | text | |
-| status | enum(DRAFT, PUBLISHED, ARCHIVED) | indexed |
-| featured | boolean | default false |
-| categoryId | FK → Category, nullable | indexed |
-| styleId | FK → Style, nullable | indexed |
-| seoTitle / seoDescription | string, nullable | |
-| publishedAt | timestamp, nullable | |
-| createdAt / updatedAt | timestamp | |
+---
 
-### HousePlanDetails (1:1 with Design where type=HOUSE_PLAN)
-| Field | Type | Notes |
-|---|---|---|
-| designId | FK → Design, PK | |
-| plotWidth / plotDepth | decimal | plus `unit` (FT/M) |
-| unit | enum(FT, M) | |
-| facing | enum(N,S,E,W,NE,NW,SE,SW) | indexed |
-| bhk | int | indexed |
-| floors | string | e.g. "G", "G+1", "G+2" |
-| bathrooms | int | |
-| parking | boolean | |
-| vastuCompliant | boolean | indexed |
-| plotType | enum(REGULAR, CORNER) | |
-| builtUpAreaSqft | decimal | |
-| budgetMin / budgetMax | decimal, nullable | |
+### 2. `RefreshSession` (Token Family & Breach Detection)
+| Field | Type | Attributes | Description |
+|---|---|---|---|
+| `id` | `String` | `@id @default(uuid())` | Session ID (`ses_...`) |
+| `userId` | `String` | `@relation` | Foreign key to `User` |
+| `familyId` | `String` | | Group ID for rotation lineage tracking |
+| `tokenHash` | `String` | `@unique` | SHA-256 hash of raw 80-char hex token |
+| `userAgent` | `String` | | Browser user agent string |
+| `ipAddress` | `String` | | Client IP address |
+| `isRevoked` | `Boolean` | `@default(false)` | Revocation flag |
+| `rotatedAt` | `DateTime?` | | Rotation timestamp (for 15s grace handling) |
+| `expiresAt` | `DateTime` | | Expiry (30 days) |
 
-### ElevationDetails (1:1, type=ELEVATION)
-| Field | Type | Notes |
-|---|---|---|
-| designId | FK → Design, PK | |
-| floors | string | |
-| plotWidth | decimal | |
-| facing | enum | |
-| styleTag | string | e.g. modern/contemporary/colonial |
+---
 
-### InteriorDetails (1:1, type=INTERIOR)
-| Field | Type | Notes |
-|---|---|---|
-| designId | FK → Design, PK | |
-| roomType | enum(LIVING_ROOM, BEDROOM, KITCHEN, BATHROOM, POOJA_ROOM, OTHER) | indexed |
-| styleTag | string | |
+### 3. `AccessPass` (₹299 30-Day Design Pass)
+| Field | Type | Attributes | Description |
+|---|---|---|---|
+| `id` | `String` | `@id @default(uuid())` | Pass ID (`pass_...`) |
+| `userId` | `String` | `@relation` | User owning the pass |
+| `purchaseId` | `String?` | `@relation` | Associated purchase transaction |
+| `passType` | `PassType` | `@default(DESIGN_PASS_299)` | Pass tier |
+| `status` | `PassStatus`| `@default(ACTIVE)` | `ACTIVE`, `EXPIRED`, `REVOKED` |
+| `startsAt` | `DateTime` | `@default(now())` | Activation timestamp |
+| `expiresAt` | `DateTime` | | 30 days validity |
+| `creditsGranted`| `Int` | `@default(5)` | 5 AI generation credits |
 
-### DesignMedia
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| designId | FK → Design | indexed |
-| mediaAssetId | FK → MediaAsset | |
-| kind | enum(GALLERY, FLOOR_PLAN, COVER) | |
-| sortOrder | int | |
+---
 
-### Category / Style / Amenity / Tag (+ join tables DesignAmenity, DesignTag)
-Standard lookup tables: `id, name, slug, description?`. Join tables: `designId + amenityId` / `designId + tagId` composite PK.
+### 4. `CreditTransaction` (Immutable Ledger — Single Source of Truth)
+| Field | Type | Attributes | Description |
+|---|---|---|---|
+| `id` | `String` | `@id @default(uuid())` | Transaction ID (`tx_...`) |
+| `userId` | `String` | `@relation` | User account |
+| `passId` | `String?` | `@relation` | Linked pass (optional) |
+| `amount` | `Int` | | Delta value (+5 for GRANT, -1 for RESERVE, +1 for RELEASE, 0 for CONSUME) |
+| `type` | `CreditEventType` | | `GRANT`, `RESERVE`, `RELEASE`, `CONSUME`, `EXPIRE`, `ADJUSTMENT` |
+| `description` | `String` | | Human-readable audit text |
+| `referenceType` | `String?` | | `PURCHASE`, `GENERATION_JOB`, `MANUAL` |
+| `referenceId` | `String?` | | Reservation ID or Job ID |
+| `createdAt` | `DateTime` | `@default(now())` | Immutable entry timestamp |
 
-### Favorite
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| userId | FK → User | |
-| designId | FK → Design | |
-| createdAt | timestamp | |
-| — | unique(userId, designId) | |
+---
 
-### Service
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| name / slug | string | |
-| description | text | |
-| status | enum(ACTIVE, INACTIVE) | |
-| seoTitle / seoDescription | string, nullable | |
+### 5. `CreditReservation` (State Machine & Anti-Double-Settlement)
+| Field | Type | Attributes | Description |
+|---|---|---|---|
+| `id` | `String` | `@id @default(uuid())` | Reservation ID (`res_...`) |
+| `userId` | `String` | `@relation` | User holding reservation |
+| `jobId` | `String` | | AI generation job ID |
+| `amount` | `Int` | `@default(1)` | Number of credits reserved |
+| `status` | `ReservationStatus` | `@default(RESERVED)` | `RESERVED`, `CONSUMED`, `RELEASED` |
+| `settledAt` | `DateTime?` | | Settlement timestamp |
 
-### ServicePackage
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| serviceId | FK → Service | |
-| name | string | e.g. "Basic Floor Plan", "Premium 3D Elevation" |
-| priceFrom | decimal, nullable | |
-| features | string[] / json | |
+---
 
-### Enquiry
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| userId | FK → User, nullable | guest allowed |
-| designId | FK → Design, nullable | |
-| serviceId | FK → Service, nullable | |
-| name / email / phone | string | |
-| message | text | |
-| status | enum(NEW, CONTACTED, IN_PROGRESS, CLOSED) | indexed |
-| createdAt | timestamp | |
+### 6. `AdminSetupLock` (Atomic First-Admin Bootstrap)
+| Field | Type | Attributes | Description |
+|---|---|---|---|
+| `id` | `String` | `@id @default("SETUP_LOCK")` | Singleton primary key |
+| `isLocked` | `Boolean` | `@default(false)` | Permanently `true` once first admin exists |
+| `adminId` | `String?` | `@unique` | ID of bootstrapped admin |
+| `lockedAt` | `DateTime?` | | Timestamp when setup was permanently locked |
 
-### ConsultationRequest
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| userId | FK → User, nullable | |
-| plotWidth / plotDepth | decimal, nullable | |
-| budgetRange | string, nullable | |
-| requirementDetails | text | |
-| preferredContactTime | string, nullable | |
-| status | enum(NEW, SCHEDULED, COMPLETED, CANCELLED) | indexed |
-| createdAt | timestamp | |
+---
 
-### Project (post-enquiry lifecycle — may ship v1.1)
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| userId | FK → User | |
-| serviceId | FK → Service, nullable | |
-| title | string | |
-| status | enum(REQUIREMENT, ASSIGNED, IN_PROGRESS, REVIEW, REVISION, APPROVED, DELIVERED) | |
-| createdAt / updatedAt | timestamp | |
+### 7. `Lead` (Consultation & AI Plan Capture)
+| Field | Type | Attributes | Description |
+|---|---|---|---|
+| `id` | `String` | `@id @default(uuid())` | Lead ID (`lead_...`) |
+| `userId` | `String?` | `@relation` | Linked user (if authenticated) |
+| `type` | `String` | `@default("CONSULTATION")` | `CONSULTATION`, `AI_CUSTOM_PLAN`, `COST_ESTIMATE` |
+| `name` | `String` | | Contact person name |
+| `phone` | `String` | | Contact phone number |
+| `city` | `String` | `@default("Indore")` | Construction location |
+| `wizardData` | `Json?` | | Full 20/23-step wizard payload for AI synthesis |
+| `status` | `LeadStatus` | `@default(NEW)` | `NEW`, `CONTACTED`, `QUALIFIED`, `CONVERTED`, `CLOSED` |
 
-### ProjectFile
-`id, projectId (FK), mediaAssetId (FK), label, uploadedAt`
+---
 
-### BlogPost / BlogCategory
-Standard CMS fields: `title, slug, excerpt, content, coverImageId, categoryId, status, seoTitle, seoDescription, publishedAt`.
-
-### SeoLandingPage
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| path | string, unique | e.g. `/house-plans/30x50` |
-| title / h1 | string | |
-| intro / content | text | supporting unique copy to avoid thin content |
-| filterConfig | json | which Design query this page renders |
-| seoTitle / seoDescription | string | |
-| status | enum(DRAFT, PUBLISHED) | |
-
-### FAQ, Testimonial
-Simple content tables scoped optionally to a `designId` or `serviceId`.
-
-### MediaAsset
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| originalUrl | string | |
-| variants | json | `{ thumb, medium, large, webp, avif }` URLs |
-| altText | string, nullable | |
-| width / height | int | |
-| uploadedById | FK → User | |
-
-### SiteSetting
-Key-value table for global config (site name, contact info, social links, default SEO fields, feature flags).
-
-### AuditLog
-| Field | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| actorId | FK → User | |
-| action | string | e.g. `design.publish`, `enquiry.status_change` |
-| entityType / entityId | string | |
-| metadata | json | diff/context |
-| createdAt | timestamp | |
-
-## 3. Indexing Notes
-
-Baseline indexes: unique `slug` on `Design`, `SeoLandingPage.path`, `User.email`; standard FK indexes on all join/child tables; `status` + `publishedAt` composite on `Design` for listing queries; `facing`/`bhk`/`plotWidth`/`plotDepth` on `HousePlanDetails` for filter queries; `pg_trgm` GIN index on `Design.title`/`shortDescription` for free-text search. Final composite indexes to be confirmed after reviewing real query patterns in P2/P3 (see PROJECT_PLAN.md) — not over-indexed speculatively.
+### 8. `AuditLog` (Security Trail)
+| Field | Type | Attributes | Description |
+|---|---|---|---|
+| `id` | `String` | `@id @default(uuid())` | Audit entry ID |
+| `actorId` | `String?` | | User ID performing the action |
+| `actorRole` | `String?` | | `USER`, `ADMIN`, `SYSTEM`, `ANONYMOUS` |
+| `action` | `String` | | e.g. `auth.login_success`, `auth.token_reuse_detected`, `ledger.reserve` |
+| `entityType` | `String` | | e.g. `User`, `RefreshSession`, `CreditTransaction` |
+| `metadata` | `Json?` | | Additional context parameters |

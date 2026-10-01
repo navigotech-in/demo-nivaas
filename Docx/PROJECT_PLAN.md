@@ -1,31 +1,39 @@
-# Project Plan & Phases
+# Indore House Makers — Project Master Plan & Phases
 
-## Phases
+**Official Brand Standard**: Indore House Makers (`https://indorehousemakers.in/`)  
+**Core Stack**: React 19 + TypeScript + Tailwind CSS / Vanilla tokens (Client), Node.js + Express + Prisma ORM + PostgreSQL (Server).
 
-| Phase | Name | Deliverables |
-|---|---|---|
-| P0 | Foundation | Monorepo setup, TS strict mode, PostgreSQL + Prisma init, env config, ESLint/Prettier, base error-handling format, logging, CI skeleton |
-| P1 | Auth + RBAC | Register/login/logout/refresh, profile, Guest/User/Admin RBAC middleware, protected route tests |
-| P2 | Core Catalog | Design parent model + House Plan/Elevation/Interior details, Category/Style/Tag/Amenity, admin CRUD, media upload pipeline |
-| P3 | Discovery | Listing pages, filters, sort, free-text search parsing, favourites, similar/related designs |
-| P4 | Services & Leads | Services/packages, enquiry form, consultation form, admin lead management (status pipeline) |
-| P5 | Content + SEO | Blog, FAQs, curated SEO landing pages, dynamic metadata, JSON-LD, canonical, segmented sitemaps, robots, breadcrumbs, redirects |
-| P6 | Performance | CDN + image optimization pipeline live end-to-end, caching/ISR tuning, DB index audit based on real query patterns, bundle optimization, Lighthouse CI budgets green |
-| P7 | QA & Hardening | Unit (Vitest) + E2E (Playwright) coverage of critical flows, RBAC test suite, SEO crawl validation, responsive + accessibility pass, basic load testing, security/edge-case audit, launch checklist |
+---
 
-Each phase ends with a short internal demo/review before moving to the next; schema/API changes are expected mainly in P0–P2 and should be largely stable by P3 onward to avoid rework.
+## 🗺️ Master Execution Roadmap
 
-## Testing & Edge-Case Strategy
+| Phase | Name | Scope & Deliverables | Status |
+|---|---|---|---|
+| **Phase 0** | **Foundation** | Monorepo structure, TypeScript strict mode, Prisma ORM initialization, environment config, unified API envelope format, error handlers, and base logging. | ✅ **Completed** |
+| **Phase 1** | **Authentication & Security** | JWT Access Token (15m) + HttpOnly Refresh Token (30d) with 15s grace rotation and reuse breach family revocation; Roles (`USER`, `ADMIN`); Audit logging; One-time `/setup/admin` screen with `crypto.timingSafeEqual` and atomic `AdminSetupLock`. | ✅ **Completed** |
+| **Phase 1.1** | **Database & Ledger Hardening** | `PrismaService` production repository; `CreditReservation` state machine (`RESERVED` → `CONSUMED` / `RELEASED`) with double-settlement protection (`RESERVATION_ALREADY_SETTLED`); 12/12 automated integration tests; Full branding purge to Indore House Makers. | ✅ **Completed** |
+| **Phase 2** | **User Panel** *(Current Active)* | Mobile-first User Dashboard; My Projects & Saved Designs; Consultation booking tracker; AI Credit Ledger history with live balance; Profile management; Empty states for 0-records. | 🚀 **In Progress** |
+| **Phase 3** | **Admin Panel** | Desktop-focused Admin Dashboard; Lead/Consultation management status pipeline; User directory & role governance; Credit Ledger audit oversight; CMS for Designs catalog. | ⏳ Queued |
+| **Phase 4** | **AI Architect & Wizard Engine** | 20-Step Regular Plot Flow + 23-Step Asymmetric Engine; Async AI generation jobs (`QUEUED` → `PROCESSING` → `COMPLETED` / `FAILED`); Automatic credit reservation & settlement; PDF/CAD exports. | ⏳ Queued |
+| **Phase 5** | **Payments & Passes** | ₹299 30-Day Design Pass (5 AI Credits); Razorpay Order API + Webhook signature verification; Automatic `GRANT` transaction on capture. | ⏳ Queued |
+| **Phase 6** | **Catalog & Discovery** | 480+ Indian house plans, 3D front elevations, interior designs; Vastu filter, BHK filter, plot dimensions, dynamic XML sitemaps, JSON-LD structured data. | ⏳ Queued |
+| **Phase 7** | **Performance & Image Optimization** | WebP format, responsive image sizes, CDN caching headers, Lighthouse audit (Core Web Vitals green). | ⏳ Queued |
+| **Phase 8** | **Security Audit & Production Launch** | Final penetration/security review, CORS origin lockdown, DB indexes audit, production deployment checklist. | ⏳ Queued |
 
-- **Data edge cases**: designs with missing optional fields (no budget, no Vastu flag), zero-result filter combinations, duplicate slugs, very large galleries, unpublished designs accessed directly by ID/slug (must 404 for non-admins).
-- **Form edge cases**: enquiry/consultation spam (rate limiting + honeypot/validation), invalid phone/email formats, oversized uploads, unsupported file types.
-- **Auth edge cases**: expired/rotated refresh tokens, concurrent logins, role changes mid-session.
-- **SEO edge cases**: thin/combinatorial filter URLs (must be `noindex` or not generated at all), duplicate content across near-identical landing pages (must have unique copy), broken canonical chains.
-- **Performance edge cases**: designs with 30+ high-resolution gallery images (must still hit LCP/CLS targets via lazy loading and fixed aspect-ratio containers).
+---
 
-## Deployment & Environment
+## 🔒 Non-Negotiable Architecture Rules
 
-- Environments: `local → staging → production`, each with isolated PostgreSQL instance and object storage bucket/prefix.
-- CI: lint + typecheck + unit tests + Playwright smoke suite + Lighthouse CI budget check on every PR; full E2E suite on merge to main.
-- Environment variables (non-exhaustive): `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `OBJECT_STORAGE_*`, `CDN_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL`, `RATE_LIMIT_*`, `NODE_ENV`.
-- Migrations via Prisma Migrate, applied as a distinct CI/CD step before app deploy; rollback plan documented per release.
+1. **Brand Standard**: Only **Indore House Makers** across all visible UI, meta tags, and documentation.
+2. **Roles**: Only `USER` and `ADMIN` roles. No public signup for admin. Initial admin setup strictly locked via atomic `/setup-admin` route.
+3. **Credit Ledger**: The `CreditTransaction` ledger is the single source of truth for credit balance (`SUM(amount)`). Every reservation must be tracked via `CreditReservation` and settled only once.
+4. **Zero Fake Data in Production**: Demo accounts and test fixtures are strictly isolated to `import.meta.env.DEV` and test runners.
+5. **Separation of Concerns**: User Panel is built mobile-first; Admin Panel is built desktop-first.
+
+---
+
+## 🧪 Testing & Verification Protocol
+
+- **Integration Tests**: `npm test` in `server/` covers signup, login, refresh rotation, race condition admin setup, and duplicate ledger settlement.
+- **Client Build Validation**: `npm run build` in `client/` ensures strict TypeScript checking without bundle errors.
+- **Documentation Sync**: Any changes to routes, database models, or phase milestones must be updated in the `Docx/` folder immediately.
