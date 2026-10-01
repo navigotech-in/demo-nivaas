@@ -1,99 +1,69 @@
-# Product Requirements Document (PRD)
+# Indore House Makers — Product Requirements Document (PRD)
 
-**Project (working title):** NIVAAS — Residential Architecture & Home Design Platform
-**Benchmark reference:** makemyhouse.com (feature benchmark only — not a visual/content clone)
-**Version:** v1.0
-**Status:** Draft for review
+**Project**: Indore House Makers — Architectural Design & AI Floor Planning Platform  
+**Live Canonical**: `https://indorehousemakers.in/`  
+**Version**: v2.0 (Phase 1.1 Complete, Entering Phase 2: User Panel)  
+**Status**: Active Production Plan
 
 ---
 
-## 1. Purpose
+## 1. Executive Summary & Vision
 
-Build a discovery-and-services platform for Indian residential architecture: house/floor plans, 3D elevations, and interior designs, searchable by plot size, facing, BHK, floors and style, backed by an architectural-services enquiry/consultation funnel and an admin CMS. Functional scope is comparable to makemyhouse.com; information architecture, visual design, navigation and component system are original.
+Indore House Makers is a modern digital platform for Indian residential architecture, CAD house plans, 3D front elevations, interior designs, and instant AI-guided floor planning. It combines a verified catalog of 480+ Indian plot dimensions (30x50, 20x40, 40x60, etc.) with a 20/23-step Vastu-compliant AI Planner, turnkey cost estimator for Madhya Pradesh, and an architect consultation booking funnel.
 
-## 2. Goals
+---
 
-- G1: Let a visitor find a relevant house plan/elevation/interior in under 3 searches/filters.
-- G2: Convert design-detail views into enquiries/consultation requests.
-- G3: Rank for long-tail, high-intent search queries ("30x50 east facing house plan") via programmatic SEO landing pages.
-- G4: Keep Core Web Vitals in the "Good" band on listing and detail pages despite heavy imagery.
-- G5: Give admins a CMS to publish/manage designs, services, content and leads without developer involvement.
+## 2. Core User Roles & Permissions
 
-## 3. Non-goals (v1)
-
-- No payments/checkout (services are enquiry/consultation based, not e-commerce, in v1).
-- No architect/professional marketplace login or bidding system (candidate for v2).
-- No real-time chat (enquiries are form + email/notification based).
-- No mobile native app (responsive web only).
-- No multi-language i18n in v1 (English + Hindi copy conventions allowed in content, not full i18n framework).
-
-## 4. Users & Roles
-
-| Role | Description | Key needs |
+| Role | Access Scope | Capabilities |
 |---|---|---|
-| Guest | Unauthenticated visitor | Browse, search, filter, view details, submit enquiry (with contact info) |
-| User / Customer | Registered visitor | Save/favourite designs, track enquiries & consultation requests, manage profile |
-| Admin | Internal staff/owner | Manage designs, categories, services, leads, content, SEO pages, site settings |
+| **Guest** | Public Pages | Browse catalog, search/filter plans, view specifications, submit leads/consultations, test AI Studio prompts. |
+| **User (Customer)** | Protected User Panel | Manage profile, view saved designs, track booked consultations, access ₹299 Design Pass, view live credit ledger balance & download generated 2D/3D plans. |
+| **Admin** | Protected Admin Panel | Manage consultation leads pipeline, oversee user directory & credit ledger audit logs, publish/update catalog designs, system analytics. |
 
-Architect/Designer as a distinct portal role is deferred to v2 (see Section 3).
+---
 
-## 5. Feature Scope (v1)
+## 3. Key Feature Modules
 
-### 5.1 House Plans
-Browse/search/filter by plot width × depth, unit (ft/m), facing (N/S/E/W/NE/NW/SE/SW), BHK (1–6+), floors (G, G+1, G+2…), bathrooms, parking, Vastu compliance, plot type (corner/regular), style, budget band. Each plan has a detail page (see 5.5).
+### 3.1 AI Architect Studio & Wizard
+- **Shape Branching Engine**:
+  - **Regular Plots (20 Steps)**: Rectangular 4-sided plots with 90° corners, automatic setbacks (GHMC/BBMP/MP bylaws).
+  - **Asymmetric Plots (23 Steps)**: L-shape, corner cuts, trapezoids, odd boundary angles with uploaded survey maps and AI smart setback suggestions.
+- **Vastu Compliance Engine**: Automatic placement verification (Pooja in NE / Ishanya, Kitchen in SE / Agneya, Master Bedroom in SW / Nairutya).
+- **Turnkey Cost Estimation**: Real-time Indore material rate calculations (Standard, Executive ₹2,350/sq.ft, Luxury).
+- **Asynchronous Synthesis**: Async generation job queue with atomic credit reservation and duplicate settlement prevention.
 
-### 5.2 3D Elevations
-Browse/search by floors, plot width, architectural style (modern/contemporary/colonial/etc.), facing. Detail page with gallery and specs.
+### 3.2 Access Pass & Immutable Credit Ledger
+- **₹299 30-Day Design Pass**: Grants 5 high-definition AI generation credits valid for 30 days.
+- **Credit Transaction Ledger**: Single source of truth. Every transaction delta (`GRANT`, `RESERVE`, `RELEASE`, `CONSUME`) is immutable.
+- **Atomic Reservation Lock**: Every generation reserves 1 credit (`status = RESERVED`). On success, confirmed with 0 delta (`status = CONSUMED`); on failure/timeout, refunded with +1 delta (`status = RELEASED`). Cannot be settled twice.
 
-### 5.3 Interior Designs
-Room-wise browse (living room, kitchen, bedroom, bathroom, pooja room, etc.), style filters. Detail page with gallery and description.
+### 3.3 User Panel (Phase 2 Focus)
+- **Mobile-First Dashboard**: Overview cards with active pass status, remaining credits, and quick CTAs.
+- **My Projects**: Listing of user-generated floor plans and elevation concepts with status badges and download links.
+- **Saved Designs (Favorites)**: Bookmark catalog house plans and 3D elevations.
+- **Consultation Tracker**: Live status of booked architect callbacks and design consultations.
+- **Credit History Ledger**: Transparent audit list of all credit grants, reserves, and refunds.
+- **Clean Empty States**: Graceful 0-state UI when user has no projects or bookmarks yet.
 
-### 5.4 Search & Discovery
-Global search (parses free text like "30x50 east facing duplex" into structured filters), category browse, filter sidebar, sort (relevance/newest/popular), "similar/related designs" on detail pages.
+### 3.4 Admin Panel (Phase 3 Focus)
+- **Desktop-Focused Control Center**: Key metrics (total users, active passes, pending leads).
+- **Leads Status Pipeline**: Move leads from `NEW` → `CONTACTED` → `QUALIFIED` → `CONVERTED` → `CLOSED`.
+- **User Directory & Security Audit**: Audit log viewer for auth events and credit transactions.
 
-### 5.5 Design Detail Page (shared shape for plan/elevation/interior)
-Gallery, plot dimensions, built-up area, bedrooms, bathrooms, floors, facing, parking, Vastu, description, features list, similar designs, related elevations/interiors, Save (favourite), Share, "Request customization" and "Talk to an architect" CTAs. SEO: breadcrumbs, canonical, OpenGraph, JSON-LD, alt text.
+---
 
-### 5.6 User System
-Register/login (email+password, JWT access + refresh token), profile, saved/favourite designs, list of enquiries and consultation requests with status.
+## 4. Phased Master Roadmap
 
-### 5.7 Services / Consultation
-Service catalog: Floor Plan Design, 3D Elevation, Structural Drawing, Working Drawings, Electrical Drawing, Plumbing Drawing, Interior Design, Vastu Consultation, Custom House Design. Each service has a detail page and a requirement/enquiry form (plot details, budget, timeline, contact info, file/reference upload optional).
-
-### 5.8 Admin / CMS
-CRUD for designs (house plans, elevations, interiors) with structured attributes + media; categories/styles/tags/amenities; services & packages; enquiries & consultation request management (status pipeline); users; blog/guides; SEO landing pages; FAQs; testimonials; media library; site settings; audit log.
-
-### 5.9 Supporting Content
-Blog/guides (SEO content), FAQs, About, Contact, legal pages (privacy/terms), SEO-optimized static + programmatic landing pages.
-
-## 6. Key User Stories
-
-1. As a visitor, I can filter house plans by plot size and facing so I only see relevant results.
-2. As a visitor, I can search "30x50 east facing" and land on a matching landing page or filtered result set.
-3. As a visitor, I can view a plan's full detail (dimensions, floors, images) and request customization.
-4. As a registered user, I can save designs and revisit them later from my dashboard.
-5. As a registered user, I can submit a consultation request and track its status.
-6. As an admin, I can publish a new house plan with images, structured attributes and SEO fields in one flow.
-7. As an admin, I can see and manage all incoming enquiries/consultation requests with status updates.
-8. As an admin, I can create a new SEO landing page (e.g. "25x40 Duplex House Plans") that pulls matching designs dynamically.
-
-## 7. Success Metrics
-
-- Search-to-detail click-through rate.
-- Detail-page-to-enquiry conversion rate.
-- Organic sessions landing on programmatic SEO pages.
-- LCP / INP / CLS on top 10 landing pages (Core Web Vitals "Good" threshold).
-- Admin time-to-publish for a new design (target: under 10 minutes).
-
-## 8. Assumptions & Constraints
-
-- Content/imagery will be original or licensed — no assets copied from the reference site.
-- v1 targets desktop + mobile web only, India-first (INR pricing/timezone conventions where relevant).
-- Full-text search handled by PostgreSQL (trigram/FTS); dedicated search engine (e.g. Elasticsearch/Algolia) deferred until scale demands it.
-- Hosting/infra choice (Vercel/AWS/etc.) not fixed in this PRD; see ARCHITECTURE.md infra section for requirements the host must satisfy.
-
-## 9. Open Questions
-
-- Final brand name/domain.
-- Whether "Projects" (post-enquiry project lifecycle tracking) ships in v1 or v1.1.
-- Paid vs free consultation policy (affects Service/ServicePackage pricing model).
+```
+Phase 0: Foundation (Monorepo, TS, Prisma, Config)                   ──> [DONE]
+Phase 1: Auth + RBAC + 15m JWT + 30d Cookie + 15s Grace Window       ──> [DONE]
+Phase 1.1: DB Service + Credit State Machine + AdminSetupLock        ──> [DONE]
+Phase 2: User Panel (Mobile-First Dashboard, Projects, Ledger UI)   ──> [IN PROGRESS]
+Phase 3: Admin Panel (Desktop Leads Pipeline, Users, CMS)            ──> [QUEUED]
+Phase 4: AI Planner Job Queue & PDF/CAD Exporter                     ──> [QUEUED]
+Phase 5: Payments (₹299 Pass, Razorpay Webhooks)                     ──> [QUEUED]
+Phase 6: Catalog & Discovery (SEO Landing Pages & Dynamic Sitemaps)  ──> [QUEUED]
+Phase 7: Performance & Image Optimization                            ──> [QUEUED]
+Phase 8: Final Security Audit & Launch Checklist                     ──> [QUEUED]
+```

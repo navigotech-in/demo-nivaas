@@ -1,113 +1,59 @@
-# UI / UX Design Specification
+# Indore House Makers — UI / UX Design Specification
 
-Design direction: **minimal, whitespace-heavy, image-forward, discovery-first, progressive disclosure.** Functionally comparable to the reference (makemyhouse.com), visually and structurally original — different navbar/sidebar treatment, different card system, different color palette, simplified information density per page.
+**Design Philosophy**: Architectural elegance, earthy warmth, high-contrast readability, clean SVG iconography, and responsive mobile-first craftsmanship.
 
-## 1. Navigation
+---
 
-**Desktop navbar:**
-`Logo | House Plans | Elevations | Interiors | Services | Inspiration      🔍 Search   ♡ Saved   Account`
+## 1. Color Palette & Design Tokens
 
-- "Explore" is not a dumping ground — each primary category is its own top-level nav item.
-- Sticky, minimal height, transparent-over-hero on Home, solid on scroll/other pages.
-
-**Mobile:** hamburger → slide-in panel with the same top-level items; search is a persistent icon in the mobile top bar; filters on listing pages open as a bottom sheet rather than an inline sidebar.
-
-**Listing pages (desktop):** left filter sidebar (sticky) + right card grid (responsive 2/3/4 columns by breakpoint).
-
-## 2. Design System Tokens
-
-### Color (light mode)
-| Token | Value (example) | Use |
+### Light Theme (Core Brand)
+| Token | Hex Value | Usage |
 |---|---|---|
-| `--bg-base` | off-white / stone (#FAF8F5) | page background |
-| `--bg-surface` | white (#FFFFFF) | cards |
-| `--text-primary` | charcoal (#22221F) | body/headings |
-| `--text-secondary` | warm gray (#6B675F) | meta text |
-| `--accent` | single restrained accent (e.g. terracotta/clay #B3552B or deep forest #2F4B3C — final pick at brand stage) | CTAs, active filter chips, links |
-| `--border` | #E7E3DC | card/section borders (subtle) |
+| `--bg-base` | `#FAF8F5` / `#FDFCF9` | Primary page background, warm natural limestone tone |
+| `--bg-surface` | `#FFFFFF` | Card surfaces, modal sheets, dropdown menus |
+| `--text-primary` | `#1A1815` / `#292826` | Main headings, titles, high-contrast labels |
+| `--text-secondary`| `#54504A` / `#74706A` | Subtext, descriptions, metadata |
+| `--accent-primary`| `#E76F2E` | Primary action buttons, active badges, highlights |
+| `--accent-terracotta`| `#C94F36` | Secondary accent, brand marks, CTA buttons |
+| `--border-subtle` | `#E7E0D7` / `#EEE9E3` | Subtle card borders, dividers |
 
-### Color (dark mode)
-| Token | Value (example) |
-|---|---|
-| `--bg-base` | #171613 |
-| `--bg-surface` | #201F1B |
-| `--text-primary` | #F3F1EC |
-| `--text-secondary` | #A8A398 |
-| `--accent` | same hue, lightened for contrast |
-| `--border` | #322F29 |
+### Component Iconography Standards
+- **Zero Cartoon Emojis**: All decorative and functional icons use clean, modern Lucide React SVGs (`Icons.Sparkles`, `Icons.Grid`, `Icons.Layers`, `Icons.Sun`, `Icons.Moon`, `Icons.Blueprint`, `Icons.Check`, `Icons.Phone`, etc.).
+- **High-Contrast Text**: Option cards utilize `font-extrabold text-base text-[#1A1815]` for immediate scannability.
 
-### Typography
-- Headings: a humanist serif or grotesk-sans with character (distinct from generic system sans) — e.g. pairing a serif display face for H1/H2 with a clean sans for body/UI.
-- Body/UI: system-leaning sans (e.g. Inter-class) for legibility at small sizes.
-- Scale: `text-xs 12 / sm 14 / base 16 / lg 18 / xl 20 / 2xl 24 / 3xl 30 / 4xl 36 / 5xl 48`.
+---
 
-### Spacing & Layout
-- 4px base spacing scale (4/8/12/16/24/32/48/64/96).
-- Max content width ~1280px; generous section vertical rhythm (64–96px between homepage sections).
-- Card radius: moderate (8–12px), shadows minimal (`0 1px 2px` resting, slightly deeper on hover).
+## 2. Navigation Architecture
 
-### Breakpoints
-`sm 640 / md 768 / lg 1024 / xl 1280 / 2xl 1536` (Tailwind defaults, used as-is).
+### 2.1 Mobile Bottom Navigation (0–767px)
+- Fixed full-width bottom bar (`fixed bottom-0 left-0 right-0 h-16 bg-[#FDFCF9] z-[99980]`).
+- 5 Core tabs: **Home**, **Plans**, **Studio (AI)**, **Designs**, **Menu**.
+- Smooth animated bottom sheet drawer (`#explore-ihm-sheet`) with quick access to User Login, Services, AI Studio, and Consultations.
 
-## 3. Page-by-Page Breakdown
+### 2.2 Tablet Floating Dock (768–1023px)
+- Centered compact dock (`fixed bottom-5 left-1/2 -translate-x-1/2 min-w-[480px] max-w-[580px] rounded-lg shadow-lg`).
 
-| Page | Contains | Key components |
-|---|---|---|
-| Home | Hero + search, popular plot sizes, featured house plans, featured elevations, interior inspiration strip, services overview, featured projects, guides/blog teaser, consultation CTA, footer | Hero, SearchBar, CategoryChips, DesignCardGrid, ServiceCardGrid, BlogTeaser, CTASection |
-| House Plans Listing | Filter sidebar (plot size, facing, BHK, floors, bathrooms, parking, Vastu, plot type, style, budget), sort, result grid, pagination | FilterSidebar, SortDropdown, DesignCard, Pagination, MobileFilterSheet |
-| Elevations Listing | Filters (floors, plot width, style, facing), grid | Same components, scoped filter set |
-| Interiors Listing | Room-type filter chips, style filter, grid | RoomTypeChips, DesignCard |
-| Design Detail (unified) | Gallery, spec table (dimensions/BHK/floors/facing/parking/Vastu), description, features list, similar designs, related elevations/interiors, Save/Share, enquiry CTAs, breadcrumbs, FAQ (if any) | Gallery, SpecTable, SimilarDesigns, EnquiryCTA, Breadcrumbs, FAQAccordion |
-| Services Listing | Service cards (Floor Plan, 3D Elevation, Structural, Working Drawings, Electrical, Plumbing, Interior Design, Vastu, Custom Design) | ServiceCard grid |
-| Service Detail | Description, package options, "Request Consultation" form | PackageCards, ConsultationForm |
-| Search Results | Parsed-query summary, filter sidebar, grid, noindex state for thin combos | SearchSummary, FilterSidebar, DesignCard |
-| Auth (Login/Register) | Minimal centered form | AuthForm |
-| Dashboard — Overview | Quick stats (saved count, open enquiries), recent activity | StatCard |
-| Dashboard — Saved | Grid of favourited designs | DesignCard, EmptyState |
-| Dashboard — Enquiries/Consultations | Status-tagged list | StatusList |
-| Dashboard — Profile | Editable profile form | ProfileForm |
-| Admin — Dashboard | Key counts (designs, leads this week, etc.) | AdminStatCard |
-| Admin — Designs (list/edit) | Table + filters, multi-step create/edit form (common fields → type-specific fields → media → SEO → publish) | AdminTable, MultiStepForm, MediaUploader |
-| Admin — Services | CRUD table + package sub-editor | AdminTable |
-| Admin — Enquiries/Consultations | Table with status pipeline, detail drawer, notes | AdminTable, StatusPipeline, DetailDrawer |
-| Admin — Users | Table, role management | AdminTable |
-| Admin — Categories/Tags/Styles/Amenities | Simple CRUD tables | AdminTable |
-| Admin — Blog/Guides | CRUD + rich text editor | AdminTable, RichTextEditor |
-| Admin — SEO Pages | CRUD, filterConfig builder, preview | AdminTable, FilterConfigBuilder |
-| Admin — FAQs/Testimonials | CRUD tables | AdminTable |
-| Admin — Media Library | Grid, upload, usage indicator | MediaGrid, Uploader |
-| Admin — Site Settings | Key-value settings form | SettingsForm |
-| Admin — Audit Log | Read-only filtered table | AdminTable |
+### 2.3 Desktop Header (1024px+)
+- Sticky top navigation with Logo, House Plans, 3D Elevations, Interiors, Cost Estimator, AI Studio CTA, and User Account button.
 
-## 4. Admin Sidebar
+---
 
-```
-Dashboard
-Designs
- ├ House Plans
- ├ Elevations
- └ Interiors
-Services
-Enquiries
-Consultations
-Users
-Categories / Styles / Tags / Amenities
-Media Library
-Blog / Guides
-SEO Pages
-FAQs
-Testimonials
-Site Settings
-Audit Log
-```
+## 3. Modal & Card Layout Standards
 
-## 5. Component Library (shared primitives)
+### 3.1 AI Architect Studio Modal
+- **Container Sizing**: Fixed stable dimensions across all tabs (`max-w-3xl lg:max-w-4xl h-[88vh] max-h-[780px] min-h-[560px]`).
+- **No Layout Shift**: Tab switching between "AI Plan Generator" and "Ask AI Architect (Chat)" keeps identical outer container boundaries.
+- **Progress Header**: Dynamic step bar (`Step X of 20` or `Step X of 23`) with category breadcrumb and percentage indicator.
 
-Button, Input, Select, Checkbox/Radio, RangeSlider (plot size/budget), Chip/Tag, Card (DesignCard variant + generic Card), Modal, Drawer/BottomSheet, Tabs, Accordion, Breadcrumbs, Pagination, Badge (status), Toast/Notification, DataTable (admin), RichTextEditor wrapper, ImageGallery/Lightbox, StatCard, EmptyState, Skeleton loaders.
+### 3.2 User Panel (Phase 2 Specifications)
+- **Mobile-First Responsive Layout**: Sidebar on desktop, top tab navigation / drawer on mobile.
+- **Dashboard Sections**:
+  1. **Profile & Pass Header**: User name, email, phone, and active ₹299 pass badge with remaining credits.
+  2. **My Projects Grid**: Card view of generated plans with room dimensions, facing, and PDF download button.
+  3. **Saved Favorites**: Grid of bookmarked catalog house plans.
+  4. **Consultations Status**: Timeline tracker for booked architect consultations (`Scheduled`, `In Review`, `Completed`).
+  5. **Credit Ledger History**: Clean table/list displaying every ledger transaction with timestamp and delta badge (`+5 GRANT`, `-1 RESERVE`, `+1 REFUND`).
+  6. **Empty States**: High-quality visual empty states with action CTAs (e.g. "Create your first house plan").
 
-## 6. Responsive & Accessibility Notes
-
-- All interactive controls keyboard-navigable; visible focus states use `--accent`.
-- Filter sidebar collapses to a bottom sheet under `md`; sort/filter controls remain reachable via a sticky mini-bar on mobile listing pages.
-- Images always have descriptive `alt` text (driven by `MediaAsset.altText`, admin-editable).
-- Color contrast meets WCAG AA for text on `--bg-base`/`--bg-surface` in both light and dark themes.
+### 3.3 Admin Panel (Phase 3 Specifications)
+- **Desktop-Focused Control Center**: Collapsible sidebar, metrics summary row, data table with filters, search, and status dropdowns.
