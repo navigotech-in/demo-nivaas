@@ -91,24 +91,28 @@ export default function DashboardPage({
       const [dash, proj, cred, pass, cons, sess] = await Promise.all([
         fetchUserDashboard(headers).catch(() => null),
         fetchUserProjects(headers).catch(() => []),
-        fetchUserCredits(headers).catch(() => null),
-        fetchUserPass(headers).catch(() => null),
+        fetchUserCredits(headers).catch(() => ({ availableBalance: 0, transactions: [] })),
+        fetchUserPass(headers).catch(() => ({ hasActivePass: false, pass: null })),
         fetchUserConsultations(headers).catch(() => []),
         fetchUserSessions(headers).catch(() => []),
       ])
 
       if (dash) {
-        setMetrics(dash.metrics)
+        setMetrics(dash.metrics || null)
         if (dash.user) {
           setProfileName(dash.user.name || '')
           setProfilePhone(dash.user.phone || '')
         }
       }
-      setProjects(proj)
-      setCreditsData(cred)
-      setPassData(pass)
-      setConsultations(cons)
-      setSessions(sess)
+      setProjects(Array.isArray(proj) ? proj : [])
+      setCreditsData(
+        cred && Array.isArray(cred.transactions)
+          ? cred
+          : { availableBalance: cred?.availableBalance ?? 0, transactions: [] }
+      )
+      setPassData(pass || { hasActivePass: false, pass: null })
+      setConsultations(Array.isArray(cons) ? cons : [])
+      setSessions(Array.isArray(sess) ? sess : [])
     } catch (err: any) {
       setError(err?.message || 'Failed to load your dashboard data. Please try again.')
     } finally {
@@ -349,7 +353,7 @@ export default function DashboardPage({
                   <Icons.Blueprint size={18} className={activeTab === 'projects' ? 'text-[#E76F2E]' : ''} />
                   <span>My Projects</span>
                 </div>
-                {projects.length > 0 && (
+                {((projects?.length || 0) > 0) && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-current font-black">
                     {projects.length}
                   </span>
@@ -387,7 +391,7 @@ export default function DashboardPage({
                   <Icons.Phone size={18} className={activeTab === 'consultations' ? 'text-[#E76F2E]' : ''} />
                   <span>Consultations</span>
                 </div>
-                {consultations.length > 0 && (
+                {((consultations?.length || 0) > 0) && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-current font-black">
                     {consultations.length}
                   </span>
@@ -566,7 +570,7 @@ export default function DashboardPage({
                         onClick={() => setActiveTab('projects')}
                         className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition"
                       >
-                        View All My Projects ({projects.length})
+                        View All My Projects ({(projects?.length || 0)})
                       </button>
                     </div>
                   </div>
@@ -587,7 +591,7 @@ export default function DashboardPage({
                     </button>
                   </div>
 
-                  {projects.length === 0 ? (
+                  {!projects || projects.length === 0 ? (
                     <div className="py-12 text-center space-y-4">
                       <div className="w-14 h-14 rounded-2xl bg-[#FAF8F5] text-[#A29D96] flex items-center justify-center mx-auto border border-[#E7E0D7]">
                         <Icons.Blueprint size={28} />
@@ -607,7 +611,7 @@ export default function DashboardPage({
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {projects.slice(0, 4).map((proj) => (
+                      {(projects || []).slice(0, 4).map((proj) => (
                         <div
                           key={proj.id}
                           className="p-4 rounded-2xl border border-[#E7E0D7] bg-[#FAF8F5] hover:border-[#292826] transition flex flex-col justify-between space-y-3"
@@ -664,13 +668,13 @@ export default function DashboardPage({
                     </button>
                   </div>
 
-                  {!creditsData || creditsData.transactions.length === 0 ? (
+                  {!creditsData?.transactions || creditsData.transactions.length === 0 ? (
                     <div className="py-8 text-center text-xs text-[#74706A]">
                       No transactions recorded on your credit ledger yet.
                     </div>
                   ) : (
                     <div className="divide-y divide-[#E7E0D7]">
-                      {creditsData.transactions.slice(0, 5).map((tx) => (
+                      {(creditsData?.transactions || []).slice(0, 5).map((tx) => (
                         <div key={tx.id} className="py-3 flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3 min-w-0">
                             <span
@@ -732,7 +736,7 @@ export default function DashboardPage({
                 </div>
 
                 {/* Projects Grid */}
-                {projects.length === 0 ? (
+                {!projects || projects.length === 0 ? (
                   <div className="bg-white rounded-3xl p-12 border border-[#E7E0D7] text-center space-y-5">
                     <div className="w-16 h-16 rounded-2xl bg-[#FFF6E8] text-[#E76F2E] flex items-center justify-center mx-auto border border-[#E76F2E]/20">
                       <Icons.Blueprint size={32} />
@@ -810,7 +814,7 @@ export default function DashboardPage({
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {projects.map((project) => (
+                    {(projects || []).map((project) => (
                       <div
                         key={project.id}
                         className="bg-white rounded-3xl p-6 border border-[#E7E0D7] shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-4"
@@ -949,7 +953,7 @@ export default function DashboardPage({
                     </p>
                   </div>
 
-                  {!creditsData || creditsData.transactions.length === 0 ? (
+                  {!creditsData?.transactions || creditsData.transactions.length === 0 ? (
                     <div className="py-12 text-center text-xs text-[#74706A]">
                       No transaction history found on your account.
                     </div>
@@ -966,7 +970,7 @@ export default function DashboardPage({
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#E7E0D7]">
-                          {creditsData.transactions.map((tx) => (
+                          {(creditsData?.transactions || []).map((tx) => (
                             <tr key={tx.id} className="hover:bg-[#FAF8F5] transition">
                               <td className="py-3.5 px-3">
                                 <span
@@ -1040,7 +1044,7 @@ export default function DashboardPage({
                   </button>
                 </div>
 
-                {consultations.length === 0 ? (
+                {!consultations || consultations.length === 0 ? (
                   <div className="bg-white rounded-3xl p-12 border border-[#E7E0D7] text-center space-y-4">
                     <div className="w-16 h-16 rounded-2xl bg-[#FAF8F5] text-[#A29D96] flex items-center justify-center mx-auto border border-[#E7E0D7]">
                       <Icons.Phone size={32} />
@@ -1060,7 +1064,7 @@ export default function DashboardPage({
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {consultations.map((c) => (
+                    {(consultations || []).map((c) => (
                       <div
                         key={c.id}
                         className="bg-white rounded-2xl p-5 border border-[#E7E0D7] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
@@ -1237,7 +1241,7 @@ export default function DashboardPage({
                         Devices currently signed into your Indore House Makers account with refresh tokens.
                       </p>
                     </div>
-                    {sessions.filter((s) => !s.isCurrent).length > 0 && (
+                    {(sessions || []).filter((s) => !s.isCurrent).length > 0 && (
                       <button
                         onClick={handleRevokeAllOther}
                         className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition self-start sm:self-auto"
@@ -1248,7 +1252,7 @@ export default function DashboardPage({
                   </div>
 
                   <div className="divide-y divide-[#E7E0D7]">
-                    {sessions.map((sess) => (
+                    {(sessions || []).map((sess) => (
                       <div key={sess.id} className="py-4 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3.5 min-w-0">
                           <div className="w-10 h-10 rounded-xl bg-[#FAF8F5] border border-[#E7E0D7] flex items-center justify-center text-[#292826] shrink-0">
