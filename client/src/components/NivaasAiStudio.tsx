@@ -448,11 +448,7 @@ export default function NivaasAiStudio({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1A1815]/75 backdrop-blur-sm p-2 sm:p-4 animate-fadeIn">
       <div
-        className={`relative w-full bg-white rounded-2xl shadow-2xl border border-[#E7E0D7] flex flex-col overflow-hidden text-[#292826] transition-all duration-300 ${
-          activeTab === 'chat'
-            ? 'max-w-md sm:max-w-xl h-[84vh] sm:h-[580px] max-h-[600px]'
-            : 'max-w-3xl lg:max-w-4xl h-[88vh] max-h-[780px]'
-        }`}
+        className="relative w-full max-w-3xl lg:max-w-4xl h-[88vh] max-h-[780px] min-h-[560px] bg-white rounded-2xl shadow-2xl border border-[#E7E0D7] flex flex-col overflow-hidden text-[#292826]"
       >
         {/* Top Header */}
         <header className="shrink-0 bg-white border-b border-[#EEE9E3] px-4 sm:px-6 py-3 flex items-center justify-between">
