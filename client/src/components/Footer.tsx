@@ -72,49 +72,49 @@ const rawSocialPlatforms: SocialPlatform[] = [
     label: 'Instagram',
     icon: 'Instagram',
     color: '#E1306C',
-    url: 'https://instagram.com/nivaasdesigns',
+    url: 'https://instagram.com/indorehousemakers',
   },
   {
     name: 'Facebook',
     label: 'Facebook',
     icon: 'Facebook',
     color: '#1877F2',
-    url: 'https://facebook.com/nivaasdesigns',
+    url: 'https://facebook.com/indorehousemakers',
   },
   {
     name: 'YouTube',
     label: 'YouTube',
     icon: 'YouTube',
     color: '#FF0000',
-    url: 'https://youtube.com/@nivaasdesigns',
+    url: 'https://youtube.com/@indorehousemakers',
   },
   {
     name: 'Pinterest',
     label: 'Pinterest',
     icon: 'Pinterest',
     color: '#E60023',
-    url: 'https://pinterest.com/nivaasdesigns',
+    url: 'https://pinterest.com/indorehousemakers',
   },
   {
     name: 'LinkedIn',
     label: 'LinkedIn',
     icon: 'LinkedIn',
     color: '#0A66C2',
-    url: 'https://linkedin.com/company/nivaas',
+    url: 'https://linkedin.com/company/indore-house-makers',
   },
   {
     name: 'XTwitter',
     label: 'X (Twitter)',
     icon: 'XTwitter',
     color: '#000000',
-    url: 'https://x.com/nivaasdesigns',
+    url: 'https://x.com/indorehousemkrs',
   },
   {
     name: 'Telegram',
     label: 'Telegram',
     icon: 'Telegram',
     color: '#229ED9',
-    url: 'https://t.me/nivaasdesigns',
+    url: 'https://t.me/indorehousemakers',
   },
 ]
 
@@ -164,7 +164,7 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              alert('Thank you for subscribing to NIVAAS architectural updates!')
+              alert('Thank you for subscribing to Indore House Makers architectural updates!')
             }}
             className="flex w-full lg:w-auto gap-2"
           >

@@ -62,9 +62,9 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
   }, [cityDropdownOpen])
 
   useSeoMeta({
-    title: 'House Plans for Indian Plots - 2D & 3D Vastu Floor Blueprints | NIVAAS',
+    title: 'House Plans for Indian Plots - 2D & 3D Vastu Floor Blueprints | Indore House Makers',
     description: 'Browse verified modern Indian house plans & working blueprints. Filter by 2 BHK, 3 BHK, 4 BHK, plot size, East/North Vastu direction & 60+ Indian cities.',
-    canonicalUrl: 'https://nivaas.in/house-plans',
+    canonicalUrl: 'https://indorehousemakers.in/house-plans',
   })
 
   const filteredCities = useMemo(() => {

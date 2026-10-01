@@ -20,9 +20,9 @@ export default function DesignsPage({ onOpenConsult }: DesignsPageProps) {
   const [selectedStyle, setSelectedStyle] = useState('All Styles')
 
   useSeoMeta({
-    title: '3D Front Elevations & Architectural Facade Designs | NIVAAS',
+    title: '3D Front Elevations & Architectural Facade Designs | Indore House Makers',
     description: 'Discover photorealistic 3D front elevations for Indian homes. Modern contemporary duplexes, Kerala pitched roofs, classical villas and Rajasthani havelis.',
-    canonicalUrl: 'https://nivaas.in/designs',
+    canonicalUrl: 'https://indorehousemakers.in/designs',
   })
 
   const filteredDesigns = useMemo(() => {

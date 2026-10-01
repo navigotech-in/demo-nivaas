@@ -20,7 +20,7 @@ export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false, moda
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
     if (!chatMessage.trim()) return
-    const text = encodeURIComponent(`Hi NIVAAS team, ${chatMessage}`)
+    const text = encodeURIComponent(`Hi Indore House Makers team, ${chatMessage}`)
     const phone = site.whatsapp.replace(/\D/g, '')
     window.open(`https://wa.me/${phone}?text=${text}`, '_blank')
     setChatMessage('')
@@ -51,7 +51,7 @@ export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false, moda
                   <Icons.WhatsApp size={20} />
                 </div>
                 <div>
-                  <div className="font-bold text-sm leading-tight">NIVAAS Design Desk</div>
+                  <div className="font-bold text-sm leading-tight">Indore House Makers Design Desk</div>
                   <div className="text-[10.5px] text-emerald-100 flex items-center gap-1.5 font-medium mt-0.5">
                     <span className="h-2 w-2 rounded-full bg-emerald-200" />
                     Architects Online Now
@@ -71,7 +71,7 @@ export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false, moda
             {/* Body */}
             <div className="p-3.5 space-y-2.5 bg-[#FFF6E8]/60 max-h-[300px] overflow-y-auto text-xs">
               <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm border border-[#EEE9E3] text-[#292826] leading-relaxed font-medium">
-                Namaste! 🙏 Welcome to NIVAAS. Share your plot dimensions or ask any question regarding house plans, Vastu or 3D elevation.
+                Namaste! Welcome to Indore House Makers. Share your plot dimensions or ask any question regarding house plans, Vastu or 3D elevation.
               </div>
 
               <div className="text-[10px] font-bold uppercase text-[#54504A] tracking-wider pt-0.5 flex items-center gap-1">

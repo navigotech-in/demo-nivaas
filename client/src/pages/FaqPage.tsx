@@ -22,9 +22,9 @@ const categories = [
 
 export default function FaqPage({ onOpenConsult }: FaqPageProps) {
   useSeoMeta({
-    title: 'Help Center & FAQs | NIVAAS',
-    description: 'Find clear answers on CAD house blueprints, municipal approvals, Vastu compliance, architecture pricing, and contractor hiring with NIVAAS.',
-    canonicalUrl: 'https://nivaas.in/faq',
+    title: 'Help Center & FAQs | Indore House Makers',
+    description: 'Find clear answers on CAD house blueprints, municipal approvals, Vastu compliance, architecture pricing, and contractor hiring with Indore House Makers.',
+    canonicalUrl: 'https://indorehousemakers.in/faq',
   })
 
   const [selectedCategory, setSelectedCategory] = useState('All Questions')

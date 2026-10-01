@@ -78,6 +78,15 @@ export class CreditLedgerService {
     const reservationId = 'res_' + crypto.randomBytes(8).toString('hex')
     const newBalance = currentBalance - cost
 
+    // Register reservation in state machine
+    db.reservations.set(reservationId, {
+      id: reservationId,
+      userId: params.userId,
+      jobId: params.jobId,
+      amount: cost,
+      status: 'RESERVED',
+    })
+
     const transaction: CreditTransaction = {
       id: 'tx_' + crypto.randomBytes(8).toString('hex'),
       userId: params.userId,
@@ -113,7 +122,36 @@ export class CreditLedgerService {
     reservationId: string
     jobId: string
   }): CreditTransaction {
-    // Audit delta is 0 because the cost was already deducted during reservation
+    const resEntry = db.reservations.get(params.reservationId)
+    if (!resEntry || resEntry.userId !== params.userId) {
+      // Fallback check in creditTransactions
+      const hasReservationTx = db.creditTransactions.some(
+        (tx) => tx.userId === params.userId && tx.referenceId === params.reservationId && tx.amount < 0
+      )
+      if (!hasReservationTx) {
+        throw new Error('RESERVATION_NOT_FOUND')
+      }
+    }
+
+    if (resEntry && resEntry.status !== 'RESERVED') {
+      throw new Error('RESERVATION_ALREADY_SETTLED')
+    }
+
+    // Protection against duplicate consume/release in transaction history
+    const alreadySettledTx = db.creditTransactions.some(
+      (tx) =>
+        tx.userId === params.userId &&
+        tx.referenceId === params.reservationId &&
+        tx.amount >= 0
+    )
+    if (alreadySettledTx) {
+      throw new Error('RESERVATION_ALREADY_SETTLED')
+    }
+
+    if (resEntry) {
+      resEntry.status = 'CONSUMED'
+    }
+
     const currentBalance = this.calculateBalance(params.userId)
 
     const transaction: CreditTransaction = {
@@ -149,7 +187,37 @@ export class CreditLedgerService {
     reason?: string
     amount?: number
   }): CreditTransaction {
-    const refundAmount = params.amount ?? 1
+    const resEntry = db.reservations.get(params.reservationId)
+    if (!resEntry || resEntry.userId !== params.userId) {
+      // Fallback check in creditTransactions
+      const reservationTx = db.creditTransactions.find(
+        (tx) => tx.userId === params.userId && tx.referenceId === params.reservationId && tx.amount < 0
+      )
+      if (!reservationTx) {
+        throw new Error('RESERVATION_NOT_FOUND')
+      }
+    }
+
+    if (resEntry && resEntry.status !== 'RESERVED') {
+      throw new Error('RESERVATION_ALREADY_SETTLED')
+    }
+
+    // Protection against duplicate consume/release in transaction history
+    const alreadySettledTx = db.creditTransactions.some(
+      (tx) =>
+        tx.userId === params.userId &&
+        tx.referenceId === params.reservationId &&
+        tx.amount >= 0
+    )
+    if (alreadySettledTx) {
+      throw new Error('RESERVATION_ALREADY_SETTLED')
+    }
+
+    const refundAmount = params.amount ?? resEntry?.amount ?? 1
+    if (resEntry) {
+      resEntry.status = 'RELEASED'
+    }
+
     const currentBalance = this.calculateBalance(params.userId)
     const newBalance = currentBalance + refundAmount
 

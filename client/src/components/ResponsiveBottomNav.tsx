@@ -135,6 +135,7 @@ export default function ResponsiveBottomNav({
       {/* Bottom Sheet Drawer */}
       <div
         ref={sheetRef}
+        id="explore-ihm-sheet"
         role="dialog"
         aria-modal="true"
         aria-label="Explore Menu"
@@ -294,7 +295,7 @@ export default function ResponsiveBottomNav({
                 aria-label={item.ariaLabel}
                 aria-current={isActive && !isMenu ? 'page' : undefined}
                 aria-expanded={isMenu ? exploreSheetOpen : undefined}
-                aria-controls={isMenu ? 'explore-nivaas-sheet' : undefined}
+                aria-controls={isMenu ? 'explore-ihm-sheet' : undefined}
                 className="flex flex-col items-center justify-center h-full min-h-[44px] py-1 transition-colors relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C94F36]/50"
               >
                 {/* Active Indicator Line */}
@@ -339,7 +340,7 @@ export default function ResponsiveBottomNav({
                 aria-label={item.ariaLabel}
                 aria-current={isActive && !isMenu ? 'page' : undefined}
                 aria-expanded={isMenu ? exploreSheetOpen : undefined}
-                aria-controls={isMenu ? 'explore-nivaas-sheet' : undefined}
+                aria-controls={isMenu ? 'explore-ihm-sheet' : undefined}
                 className={`flex flex-col items-center justify-center flex-1 min-h-[44px] py-1 px-2.5 rounded-md transition-all relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C94F36]/50 ${
                   isActive ? 'bg-[#FFF6E8]/60 text-[#C94F36]' : 'text-[#74706A] hover:text-[#292826] hover:bg-black/5'
                 }`}

@@ -1,6 +1,8 @@
+import crypto from 'node:crypto'
 import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { config } from '../config.js'
+import { db } from '../db/store.js'
 import { authService } from '../services/authService.js'
 import { requireAuth } from '../middleware/auth.js'
 import { authRateLimiter, refreshRateLimiter } from '../middleware/rateLimiter.js'
@@ -248,13 +250,20 @@ router.post(
       const validated = setupAdminSchema.parse(req.body)
       const expectedSecret = process.env.SETUP_SECRET || 'ihm_initial_admin_setup_secret_2026'
 
-      if (validated.setupSecret !== expectedSecret) {
+      // Timing-safe secret comparison
+      const userSecretBuf = Buffer.from(validated.setupSecret)
+      const expectedSecretBuf = Buffer.from(expectedSecret)
+      const isSecretMatch =
+        userSecretBuf.length === expectedSecretBuf.length &&
+        crypto.timingSafeEqual(userSecretBuf, expectedSecretBuf)
+
+      if (!isSecretMatch) {
         db.logAudit({
           actorRole: 'ANONYMOUS',
           action: 'auth.setup_admin_failed',
           entityType: 'User',
           ipAddress: req.ip,
-          metadata: { reason: 'Invalid setup secret' },
+          metadata: { reason: 'Invalid setup secret attempt' },
         })
         res.status(401).json({
           success: false,
@@ -266,7 +275,8 @@ router.post(
         return
       }
 
-      const admin = db.bootstrapAdmin(validated.email, validated.password, validated.name)
+      // Atomic creation with concurrent race protection
+      const admin = db.bootstrapAdminAtomically(validated.email, validated.password, validated.name)
       if (validated.phone) {
         db.updateUser(admin.id, { phone: validated.phone })
       }

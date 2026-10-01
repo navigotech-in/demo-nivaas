@@ -8,7 +8,7 @@ interface GuidesPageProps {
 
 export default function GuidesPage({ onOpenConsult }: GuidesPageProps) {
   useSeoMeta({
-    title: 'Architecture, Vastu & Home Construction Guides | NIVAAS',
+    title: 'Architecture, Vastu & Home Construction Guides | Indore House Makers',
     description: 'Expert architectural insights, Indian municipal by-laws (GHMC, BBMP, DDA), Vastu tips for plot orientation, and home construction budgeting guides.',
     canonicalUrl: 'https://indorehousemakers.in/guides',
   })

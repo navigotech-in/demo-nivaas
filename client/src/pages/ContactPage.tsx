@@ -4,8 +4,8 @@ import { useSeoMeta } from '../components/useSeoMeta'
 
 export default function ContactPage() {
   useSeoMeta({
-    title: 'Contact NIVAAS Architects & Consult Online | Indore & Pan-India',
-    description: 'Get in touch with NIVAAS chief architects. Book a free consultation, request custom house drawings, or visit our design studio.',
+    title: 'Contact Indore House Makers Architects & Consult Online | Indore & Pan-India',
+    description: 'Get in touch with Indore House Makers chief architects. Book a free consultation, request custom house drawings, or visit our design studio.',
     canonicalUrl: 'https://indorehousemakers.in/contact',
   })
 

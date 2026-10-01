@@ -9,7 +9,7 @@ interface ServicesPageProps {
 
 export default function ServicesPage({ onOpenConsult }: ServicesPageProps) {
   useSeoMeta({
-    title: 'Architectural, Structural, MEP & Contractor Services | NIVAAS',
+    title: 'Architectural, Structural, MEP & Contractor Services | Indore House Makers',
     description: 'Comprehensive architectural services: 2D CAD working drawings, structural engineering, MEP layouts, verified contractor network, site supervision & Vastu consultation.',
     canonicalUrl: 'https://indorehousemakers.in/services',
   })

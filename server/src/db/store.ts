@@ -22,11 +22,23 @@ class DatabaseStore {
   public payments: Map<string, Payment> = new Map()
   public accessPasses: Map<string, AccessPass> = new Map()
   public creditTransactions: CreditTransaction[] = []
+  public reservations: Map<string, { id: string; userId: string; jobId: string; amount: number; status: 'RESERVED' | 'CONSUMED' | 'RELEASED' }> = new Map()
   public generationJobs: Map<string, GenerationJob> = new Map()
   public leads: Map<string, Lead> = new Map()
   public auditLogs: AuditLog[] = []
 
   constructor() {
+    this.seedDefaultProduct()
+  }
+
+  public reset() {
+    this.users.clear()
+    this.sessions.clear()
+    this.accessPasses.clear()
+    this.creditTransactions = []
+    this.reservations.clear()
+    this.auditLogs = []
+    this.isSetupLocked = false
     this.seedDefaultProduct()
   }
 
@@ -97,7 +109,40 @@ class DatabaseStore {
     }
   }
 
-  // 3. Explicit Bootstrap Admin Helper (Called by `npm run bootstrap:admin`)
+  private isSetupLocked = false
+
+  // 3. Explicit Bootstrap Admin Helper with Atomic Race Protection
+  public bootstrapAdminAtomically(email: string, password: string, name = 'Indore House Makers Admin'): User {
+    const adminCount = Array.from(this.users.values()).filter((u) => u.role === 'ADMIN').length
+    if (adminCount > 0 || this.isSetupLocked) {
+      throw new Error('SETUP_ALREADY_COMPLETED')
+    }
+
+    this.isSetupLocked = true
+    try {
+      const normalized = email.trim().toLowerCase()
+      const adminId = 'usr_admin_' + crypto.randomBytes(6).toString('hex')
+      const passwordHash = bcrypt.hashSync(password, 10)
+      const adminUser: User = {
+        id: adminId,
+        email: normalized,
+        name,
+        phone: '+919876543210',
+        passwordHash,
+        role: 'ADMIN',
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      this.users.set(adminId, adminUser)
+      return adminUser
+    } catch (err) {
+      this.isSetupLocked = false
+      throw err
+    }
+  }
+
   public bootstrapAdmin(email: string, password: string, name = 'Indore House Makers Admin'): User {
     const normalized = email.trim().toLowerCase()
     const existing = this.findUserByEmail(normalized)
@@ -109,22 +154,7 @@ class DatabaseStore {
       return existing
     }
 
-    const adminId = 'usr_admin_' + crypto.randomBytes(6).toString('hex')
-    const passwordHash = bcrypt.hashSync(password, 10)
-    const adminUser: User = {
-      id: adminId,
-      email: normalized,
-      name,
-      phone: '+919876543210',
-      passwordHash,
-      role: 'ADMIN',
-      isEmailVerified: true,
-      isPhoneVerified: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    this.users.set(adminId, adminUser)
-    return adminUser
+    return this.bootstrapAdminAtomically(email, password, name)
   }
 
   // --- Users ---

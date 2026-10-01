@@ -8,7 +8,7 @@ interface CostEstimatorPageProps {
 
 export default function CostEstimatorPage({ onOpenConsult }: CostEstimatorPageProps) {
   useSeoMeta({
-    title: 'House Construction Cost Calculator (2026 Rates) | NIVAAS',
+    title: 'House Construction Cost Calculator (2026 Rates) | Indore House Makers',
     description: 'Calculate realistic Indian home construction costs based on plot area, floors, material quality & city. Instant breakdown for civil, finishing, MEP & architectural drawings.',
     canonicalUrl: 'https://indorehousemakers.in/cost-estimator',
   })

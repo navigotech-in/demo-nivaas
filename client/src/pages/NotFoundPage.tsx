@@ -4,7 +4,7 @@ import { useSeoMeta } from '../components/useSeoMeta'
 
 export default function NotFoundPage() {
   useSeoMeta({
-    title: '404 - Page Not Found | NIVAAS',
+    title: '404 - Page Not Found | Indore House Makers',
     description: 'The architectural plan or page you are looking for does not exist.',
     canonicalUrl: 'https://indorehousemakers.in/404',
   })

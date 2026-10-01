@@ -210,32 +210,34 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 {loading ? 'Authenticating...' : 'Sign In →'}
               </button>
 
-              {/* Quick Demo Logins for Pair Programming & Testing */}
-              <div className="rounded-xl border border-dashed border-[#E7E0D7] bg-[#FDFCF9] p-2.5 text-center">
-                <span className="block text-[10px] font-bold uppercase tracking-wider text-[#54504A] mb-1.5">
-                  Verified Test Accounts
-                </span>
-                <div className="flex gap-2 justify-center">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemo('USER')}
-                    disabled={loading}
-                    className="flex items-center gap-1.5 rounded-lg border border-[#E7E0D7] bg-white px-3 py-1.5 text-[11px] font-bold text-[#292826] hover:border-[#E76F2E] hover:text-[#E76F2E] transition shadow-2xs"
-                  >
-                    <Icons.User size={13} className="text-[#E76F2E]" />
-                    <span>Demo User (₹299 Pass)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemo('ADMIN')}
-                    disabled={loading}
-                    className="flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50/70 px-3 py-1.5 text-[11px] font-bold text-purple-800 hover:border-purple-400 transition shadow-2xs"
-                  >
-                    <Icons.ShieldCheck size={13} className="text-purple-700" />
-                    <span>Admin Console</span>
-                  </button>
+              {/* Quick Demo Logins: ONLY available in development mode for automated tests / local debugging */}
+              {import.meta.env.DEV && (
+                <div className="rounded-xl border border-dashed border-[#E7E0D7] bg-[#FDFCF9] p-2.5 text-center">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-[#54504A] mb-1.5">
+                    Verified Test Accounts (Dev Only)
+                  </span>
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      type="button"
+                      onClick={() => handleQuickDemo('USER')}
+                      disabled={loading}
+                      className="flex items-center gap-1.5 rounded-lg border border-[#E7E0D7] bg-white px-3 py-1.5 text-[11px] font-bold text-[#292826] hover:border-[#E76F2E] hover:text-[#E76F2E] transition shadow-2xs"
+                    >
+                      <Icons.User size={13} className="text-[#E76F2E]" />
+                      <span>Demo User (₹299 Pass)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickDemo('ADMIN')}
+                      disabled={loading}
+                      className="flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50/70 px-3 py-1.5 text-[11px] font-bold text-purple-800 hover:border-purple-400 transition shadow-2xs"
+                    >
+                      <Icons.ShieldCheck size={13} className="text-purple-700" />
+                      <span>Admin Console</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="pt-1 text-center">
                 <button

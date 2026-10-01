@@ -8,13 +8,7 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
   const app = createApp()
 
   beforeEach(() => {
-    // Reset test store
-    db.users.clear()
-    db.sessions.clear()
-    db.accessPasses.clear()
-    db.creditTransactions = []
-    db.auditLogs = []
-    db.seedDefaultProduct()
+    db.reset()
   })
 
   // 1. Health Endpoint
@@ -215,5 +209,131 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
       reason: 'AI generation timeout',
     })
     expect(creditLedger.calculateBalance(userId)).toBe(4)
+  })
+
+  // 9. Credit Ledger: Duplicate Settlement Protection (Double Release / Double Consume)
+  it('Credit Ledger should reject duplicate release or consume for the same reservation', () => {
+    const userId = 'usr_test_credit_02'
+    creditLedger.grantCredits({ userId, amount: 5, description: 'Pass' })
+
+    // Reserve 1 credit
+    const res = creditLedger.reserveCredit({ userId, jobId: 'job_999' })
+    expect(res.success).toBe(true)
+
+    // 1st Consume succeeds
+    creditLedger.confirmConsumption({
+      userId,
+      reservationId: res.reservationId!,
+      jobId: 'job_999',
+    })
+
+    // 2nd Duplicate Consume MUST throw RESERVATION_ALREADY_SETTLED
+    expect(() => {
+      creditLedger.confirmConsumption({
+        userId,
+        reservationId: res.reservationId!,
+        jobId: 'job_999',
+      })
+    }).toThrow('RESERVATION_ALREADY_SETTLED')
+
+    // Subsequent Release on already consumed reservation MUST also throw RESERVATION_ALREADY_SETTLED
+    expect(() => {
+      creditLedger.releaseReservation({
+        userId,
+        reservationId: res.reservationId!,
+        jobId: 'job_999',
+      })
+    }).toThrow('RESERVATION_ALREADY_SETTLED')
+  })
+
+  // 10. One-Time Setup Admin: Wrong Secret Rejected
+  it('POST /api/v1/auth/setup-admin should reject wrong or missing setup secret with 401', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/setup-admin')
+      .send({
+        name: 'Super Admin',
+        email: 'admin@indorehousemakers.in',
+        password: 'AdminPassword2026!',
+        setupSecret: 'wrong_secret_key_12345',
+      })
+
+    expect(res.status).toBe(401)
+    expect(res.body.success).toBe(false)
+    expect(res.body.error.code).toBe('INVALID_SETUP_SECRET')
+  })
+
+  // 11. One-Time Setup Admin: First Admin Success & Second Attempt Permanent Lock
+  it('POST /api/v1/auth/setup-admin should create first admin and permanently lock subsequent requests', async () => {
+    // 1. Initial status is allowed
+    const statusBefore = await request(app).get('/api/v1/auth/setup-status')
+    expect(statusBefore.status).toBe(200)
+    expect(statusBefore.body.data.isSetupAllowed).toBe(true)
+
+    // 2. First Admin setup with valid secret
+    const setupRes = await request(app)
+      .post('/api/v1/auth/setup-admin')
+      .send({
+        name: 'Founding Admin',
+        email: 'founder@indorehousemakers.in',
+        phone: '9876543210',
+        password: 'SecureAdminPass2026!',
+        setupSecret: process.env.SETUP_SECRET || 'ihm_initial_admin_setup_secret_2026',
+      })
+
+    expect(setupRes.status).toBe(201)
+    expect(setupRes.body.success).toBe(true)
+    expect(setupRes.body.data.user.role).toBe('ADMIN')
+    expect(setupRes.body.data.accessToken).toBeDefined()
+
+    // 3. Status now indicates setup closed
+    const statusAfter = await request(app).get('/api/v1/auth/setup-status')
+    expect(statusAfter.body.data.isSetupAllowed).toBe(false)
+
+    // 4. Second Admin setup attempt MUST be rejected with 403
+    const secondSetupRes = await request(app)
+      .post('/api/v1/auth/setup-admin')
+      .send({
+        name: 'Second Admin Attempter',
+        email: 'hacker@example.com',
+        password: 'AnotherPassword2026!',
+        setupSecret: process.env.SETUP_SECRET || 'ihm_initial_admin_setup_secret_2026',
+      })
+
+    expect(secondSetupRes.status).toBe(403)
+    expect(secondSetupRes.body.error.code).toBe('SETUP_ALREADY_COMPLETED')
+  })
+
+  // 12. Race Condition Protection: Simultaneous Bootstrap Admin creates only ONE admin
+  it('Atomic Admin Setup should ensure only one admin is created in concurrent race', async () => {
+    db.reset()
+
+    const results = await Promise.allSettled([
+      request(app)
+        .post('/api/v1/auth/setup-admin')
+        .send({
+          name: 'Concurrent Admin 1',
+          email: 'admin1@indorehousemakers.in',
+          password: 'Password12345!',
+          setupSecret: process.env.SETUP_SECRET || 'ihm_initial_admin_setup_secret_2026',
+        }),
+      request(app)
+        .post('/api/v1/auth/setup-admin')
+        .send({
+          name: 'Concurrent Admin 2',
+          email: 'admin2@indorehousemakers.in',
+          password: 'Password12345!',
+          setupSecret: process.env.SETUP_SECRET || 'ihm_initial_admin_setup_secret_2026',
+        }),
+    ])
+
+    const successful = results.filter(
+      (r) => r.status === 'fulfilled' && (r.value as any).status === 201
+    )
+    const rejected = results.filter(
+      (r) => r.status === 'fulfilled' && (r.value as any).status === 403
+    )
+
+    expect(successful.length).toBe(1)
+    expect(rejected.length).toBe(1)
   })
 })

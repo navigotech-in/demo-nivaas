@@ -35,7 +35,7 @@ interface HomePageProps {
 
 export default function HomePage({ onCalculateEstimate, onOpenConsult }: HomePageProps) {
   useSeoMeta({
-    title: 'House Plans, 3D Front Elevations & Interior Designs for Indian Homes | NIVAAS',
+    title: 'House Plans, 3D Front Elevations & Interior Designs for Indian Homes | Indore House Makers',
     description: 'Discover 12,000+ 100% Vastu-compliant Indian house plans, photorealistic 3D front elevations, luxury modular interior designs, and construction cost estimates across 60+ Indian cities. GHMC, BBMP & DDA compliant.',
     keywords: 'house plans India, 30x50 house plan, 20x40 floor plan, 3D front elevation design, Indian house designs, duplex house plan, Vastu approved house plans, modular kitchen designs, turnkey construction cost estimator, GHMC BBMP setback rules',
     canonicalUrl: 'https://indorehousemakers.in/',

@@ -21,9 +21,9 @@ export default function InteriorsPage({ onOpenConsult }: InteriorsPageProps) {
   const [selectedRoom, setSelectedRoom] = useState('All Rooms')
 
   useSeoMeta({
-    title: 'Luxury Interior Designs & Modular Kitchens for Indian Homes | NIVAAS',
+    title: 'Luxury Interior Designs & Modular Kitchens for Indian Homes | Indore House Makers',
     description: 'Explore curated Indian interior designs including modular kitchens, living room TV units, master bedroom suites, pooja mandirs, and custom wardrobes.',
-    canonicalUrl: 'https://nivaas.in/interiors',
+    canonicalUrl: 'https://indorehousemakers.in/interiors',
   })
 
   const filteredItems = useMemo(() => {

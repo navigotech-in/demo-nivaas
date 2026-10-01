@@ -77,7 +77,7 @@ export default function Reviews() {
             Real voices, real experiences, Real legacy
           </h2>
           <p className="mt-2 text-sm text-[#54504A]">
-            Over 800+ families across Indore and 60+ Indian cities built their dream homes with NIVAAS architectural plans and on-site engineering supervision.
+            Over 800+ families across Indore and 60+ Indian cities built their dream homes with Indore House Makers architectural plans and on-site engineering supervision.
           </p>
         </div>
 
