@@ -209,4 +209,99 @@ router.post(
   }
 )
 
+// 7. One-Time Admin Setup Routes (Only available when 0 admins exist)
+router.get('/setup-status', (_req: Request, res: Response): void => {
+  const adminCount = Array.from(db.users.values()).filter((u) => u.role === 'ADMIN').length
+  res.json({
+    success: true,
+    data: {
+      isSetupAllowed: adminCount === 0,
+    },
+  })
+})
+
+const setupAdminSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email(),
+  phone: z.string().min(10).max(15).optional(),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(100),
+  setupSecret: z.string().min(1, 'Setup secret key is required'),
+})
+
+router.post(
+  '/setup-admin',
+  authRateLimiter,
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const adminCount = Array.from(db.users.values()).filter((u) => u.role === 'ADMIN').length
+      if (adminCount > 0) {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: 'SETUP_ALREADY_COMPLETED',
+            message: 'Admin setup is permanently closed. An administrator already exists.',
+          },
+        })
+        return
+      }
+
+      const validated = setupAdminSchema.parse(req.body)
+      const expectedSecret = process.env.SETUP_SECRET || 'ihm_initial_admin_setup_secret_2026'
+
+      if (validated.setupSecret !== expectedSecret) {
+        db.logAudit({
+          actorRole: 'ANONYMOUS',
+          action: 'auth.setup_admin_failed',
+          entityType: 'User',
+          ipAddress: req.ip,
+          metadata: { reason: 'Invalid setup secret' },
+        })
+        res.status(401).json({
+          success: false,
+          error: {
+            code: 'INVALID_SETUP_SECRET',
+            message: 'Invalid setup secret key provided.',
+          },
+        })
+        return
+      }
+
+      const admin = db.bootstrapAdmin(validated.email, validated.password, validated.name)
+      if (validated.phone) {
+        db.updateUser(admin.id, { phone: validated.phone })
+      }
+
+      const ipAddress = req.ip || req.socket.remoteAddress || '127.0.0.1'
+      const userAgent = req.headers['user-agent'] || 'Setup Wizard'
+
+      const { rawRefreshToken, session } = await authService.createSession(admin, ipAddress, userAgent)
+      const accessToken = authService.generateAccessToken(admin, session.id)
+      const userSummary = db.getUserSummary(admin)
+
+      setRefreshTokenCookie(res, rawRefreshToken)
+
+      db.logAudit({
+        actorId: admin.id,
+        actorRole: 'ADMIN',
+        action: 'auth.first_admin_setup_completed',
+        entityType: 'User',
+        entityId: admin.id,
+        ipAddress,
+        userAgent,
+        metadata: { message: 'Initial Admin account bootstrapped and setup locked' },
+      })
+
+      res.status(201).json({
+        success: true,
+        data: {
+          user: userSummary,
+          accessToken,
+        },
+      })
+    } catch (err) {
+      next(err)
+    }
+  }
+)
+
 export default router

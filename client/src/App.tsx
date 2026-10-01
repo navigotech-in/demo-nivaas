@@ -17,6 +17,7 @@ const GuidesPage = lazy(() => import('./pages/GuidesPage'))
 const AboutPage = lazy(() => import('./pages/AboutPage'))
 const FaqPage = lazy(() => import('./pages/FaqPage'))
 const ContactPage = lazy(() => import('./pages/ContactPage'))
+const AdminSetupPage = lazy(() => import('./pages/AdminSetupPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 // Global Modals Loaded On-Demand
@@ -132,6 +133,10 @@ function App() {
             <Route
               path="/contact"
               element={<ContactPage />}
+            />
+            <Route
+              path="/setup/admin"
+              element={<AdminSetupPage />}
             />
             <Route
               path="*"

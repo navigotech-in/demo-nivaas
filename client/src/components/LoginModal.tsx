@@ -211,26 +211,28 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               </button>
 
               {/* Quick Demo Logins for Pair Programming & Testing */}
-              <div className="rounded-xl border border-dashed border-[#E7E0D7] bg-[#FFFBF4] p-2.5 text-center">
+              <div className="rounded-xl border border-dashed border-[#E7E0D7] bg-[#FDFCF9] p-2.5 text-center">
                 <span className="block text-[10px] font-bold uppercase tracking-wider text-[#54504A] mb-1.5">
-                  ⚡ Quick Demo Accounts
+                  Verified Test Accounts
                 </span>
                 <div className="flex gap-2 justify-center">
                   <button
                     type="button"
                     onClick={() => handleQuickDemo('USER')}
                     disabled={loading}
-                    className="rounded-lg border border-[#E7E0D7] bg-white px-2.5 py-1 text-[11px] font-bold text-[#292826] hover:border-[#E76F2E]"
+                    className="flex items-center gap-1.5 rounded-lg border border-[#E7E0D7] bg-white px-3 py-1.5 text-[11px] font-bold text-[#292826] hover:border-[#E76F2E] hover:text-[#E76F2E] transition shadow-2xs"
                   >
-                    👤 Demo User (₹299 Pass)
+                    <Icons.User size={13} className="text-[#E76F2E]" />
+                    <span>Demo User (₹299 Pass)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleQuickDemo('ADMIN')}
                     disabled={loading}
-                    className="rounded-lg border border-[#E7E0D7] bg-white px-2.5 py-1 text-[11px] font-bold text-purple-700 hover:border-purple-600"
+                    className="flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50/70 px-3 py-1.5 text-[11px] font-bold text-purple-800 hover:border-purple-400 transition shadow-2xs"
                   >
-                    🛡️ Admin Panel
+                    <Icons.ShieldCheck size={13} className="text-purple-700" />
+                    <span>Admin Console</span>
                   </button>
                 </div>
               </div>

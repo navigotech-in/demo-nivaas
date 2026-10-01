@@ -583,16 +583,16 @@ export default function NivaasAiStudio({
                         onClick={() => setPlotShape('regular')}
                         className={`p-5 rounded-2xl border-2 text-left transition relative overflow-hidden group ${
                           plotShape === 'regular'
-                            ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
+                            ? 'border-[#E76F2E] shadow-md ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
                             : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-lg shadow-2xs">
-                              🟦
+                            <div className="w-9 h-9 rounded-xl bg-[#FAF8F5] border border-[#E7E0D7] flex items-center justify-center text-[#292826] shadow-2xs">
+                              <Icons.Grid size={18} className="text-[#292826]" />
                             </div>
-                            <span className="px-2.5 py-1 rounded-md bg-blue-100/80 text-blue-800 text-[11px] font-bold tracking-wide uppercase border border-blue-200">
+                            <span className="px-2.5 py-0.5 rounded-md bg-[#FAF8F5] text-[#292826] text-[11px] font-bold tracking-wide uppercase border border-[#E7E0D7]">
                               Regular
                             </span>
                           </div>
@@ -602,12 +602,13 @@ export default function NivaasAiStudio({
                             </span>
                           )}
                         </div>
-                        <h4 className="font-bold text-base text-[#292826]">Rectangle / Square Plot</h4>
-                        <p className="text-xs text-[#54504A] mt-1">
-                          Standard 4-side rectangular plot with standard 90° corners (e.g. 30x50, 40x60).
+                        <h4 className="font-extrabold text-base text-[#1A1815] tracking-tight">Rectangle / Square Plot</h4>
+                        <p className="text-xs text-[#54504A] mt-1.5 leading-relaxed font-medium">
+                          Standard 4-side rectangular plot with standard 90° corners (e.g. 30x50, 40x60, 20x40).
                         </p>
-                        <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-semibold text-[#E76F2E]">
-                          <span>⚡ 20-Step Rapid Guided Flow</span>
+                        <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-bold text-[#E76F2E]">
+                          <Icons.Sparkles size={13} className="text-[#E76F2E]" />
+                          <span>20-Step Rapid Guided Flow</span>
                         </div>
                       </button>
 
@@ -617,16 +618,16 @@ export default function NivaasAiStudio({
                         onClick={() => setPlotShape('irregular')}
                         className={`p-5 rounded-2xl border-2 text-left transition relative overflow-hidden group ${
                           plotShape === 'irregular'
-                            ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
+                            ? 'border-[#E76F2E] shadow-md ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
                             : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-lg shadow-2xs">
-                              🔷
+                            <div className="w-9 h-9 rounded-xl bg-[#FAF8F5] border border-[#E7E0D7] flex items-center justify-center text-[#292826] shadow-2xs">
+                              <Icons.Layers size={18} className="text-[#292826]" />
                             </div>
-                            <span className="px-2.5 py-1 rounded-md bg-amber-100/80 text-amber-800 text-[11px] font-bold tracking-wide uppercase border border-amber-200">
+                            <span className="px-2.5 py-0.5 rounded-md bg-[#FAF8F5] text-[#292826] text-[11px] font-bold tracking-wide uppercase border border-[#E7E0D7]">
                               Irregular
                             </span>
                           </div>
@@ -636,12 +637,13 @@ export default function NivaasAiStudio({
                             </span>
                           )}
                         </div>
-                        <h4 className="font-bold text-base text-[#292826]">Asymmetric / Odd Shape</h4>
-                        <p className="text-xs text-[#54504A] mt-1">
+                        <h4 className="font-extrabold text-base text-[#1A1815] tracking-tight">Asymmetric / Odd Shape</h4>
+                        <p className="text-xs text-[#54504A] mt-1.5 leading-relaxed font-medium">
                           L-shape, Triangle, Trapezoid, Corner cut, or curved odd-shaped plot boundary.
                         </p>
-                        <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-semibold text-[#E76F2E]">
-                          <span>📐 Upload Plan + Smart AI Suggestions (23 Steps)</span>
+                        <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-bold text-[#E76F2E]">
+                          <Icons.Blueprint size={13} className="text-[#E76F2E]" />
+                          <span>Upload Plan + AI Suggestions (23 Steps)</span>
                         </div>
                       </button>
                     </div>
@@ -2466,7 +2468,7 @@ export default function NivaasAiStudio({
                                 !isNightLighting ? 'bg-white text-[#292826] shadow-xs' : 'text-[#54504A]'
                               }`}
                             >
-                              ☀️ Day
+                              Daylight
                             </button>
                             <button
                               type="button"
@@ -2475,7 +2477,7 @@ export default function NivaasAiStudio({
                                 isNightLighting ? 'bg-[#292826] text-white shadow-xs' : 'text-[#54504A]'
                               }`}
                             >
-                              🌙 Twilight
+                              Twilight
                             </button>
                           </div>
                         </div>
