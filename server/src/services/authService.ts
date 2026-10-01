@@ -1,0 +1,285 @@
+import crypto from 'node:crypto'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import { config } from '../config.js'
+import { db } from '../db/store.js'
+import { AccessTokenPayload, AuthSuccessData, UserSummary } from '../types/auth.js'
+import { RefreshSession, User } from '../types/models.js'
+
+export class AuthService {
+  // Hash token for secure storage
+  private hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex')
+  }
+
+  // Generate short-lived (15-min) Access Token
+  public generateAccessToken(user: User, sessionId: string): string {
+    const payload: AccessTokenPayload = {
+      sub: user.id,
+      role: user.role,
+      email: user.email,
+      sessionId,
+      name: user.name,
+    }
+    return jwt.sign(payload, config.jwt.accessTokenSecret, {
+      expiresIn: '15m',
+    })
+  }
+
+  // Verify Access Token
+  public verifyAccessToken(token: string): AccessTokenPayload {
+    return jwt.verify(token, config.jwt.accessTokenSecret) as AccessTokenPayload
+  }
+
+  // Generate and record Refresh Token + Session with Family ID
+  public async createSession(
+    user: User,
+    ipAddress: string,
+    userAgent: string,
+    existingFamilyId?: string
+  ): Promise<{ rawRefreshToken: string; session: RefreshSession }> {
+    const rawRefreshToken = crypto.randomBytes(40).toString('hex')
+    const tokenHash = this.hashToken(rawRefreshToken)
+    const sessionId = 'ses_' + crypto.randomBytes(12).toString('hex')
+    const familyId = existingFamilyId || 'fam_' + crypto.randomBytes(12).toString('hex')
+
+    const expiresAt = new Date(
+      Date.now() + config.jwt.refreshTokenExpiresDays * 24 * 60 * 60 * 1000
+    ).toISOString()
+
+    const session: RefreshSession = {
+      id: sessionId,
+      userId: user.id,
+      familyId,
+      tokenHash,
+      userAgent: userAgent || 'Unknown Agent',
+      ipAddress: ipAddress || '127.0.0.1',
+      isRevoked: false,
+      expiresAt,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    db.createSession(session)
+    return { rawRefreshToken, session }
+  }
+
+  // Signup
+  public async signup(params: {
+    email: string
+    password: string
+    name: string
+    phone?: string
+    ipAddress: string
+    userAgent: string
+  }): Promise<AuthSuccessData & { rawRefreshToken: string }> {
+    const normalizedEmail = params.email.trim().toLowerCase()
+    const existing = db.findUserByEmail(normalizedEmail)
+    if (existing) {
+      throw new Error('EMAIL_EXISTS')
+    }
+
+    const saltRounds = 10
+    const passwordHash = await bcrypt.hash(params.password, saltRounds)
+
+    const userId = 'usr_' + crypto.randomBytes(8).toString('hex')
+    const newUser: User = {
+      id: userId,
+      email: normalizedEmail,
+      name: params.name.trim(),
+      phone: params.phone?.trim() || undefined,
+      passwordHash,
+      role: 'USER',
+      isEmailVerified: false,
+      isPhoneVerified: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    db.createUser(newUser)
+
+    // Log audit
+    db.logAudit({
+      actorId: newUser.id,
+      actorRole: newUser.role,
+      action: 'auth.signup',
+      entityType: 'User',
+      entityId: newUser.id,
+      ipAddress: params.ipAddress,
+      userAgent: params.userAgent,
+    })
+
+    const { rawRefreshToken, session } = await this.createSession(
+      newUser,
+      params.ipAddress,
+      params.userAgent
+    )
+    const accessToken = this.generateAccessToken(newUser, session.id)
+    const userSummary = db.getUserSummary(newUser)
+
+    return {
+      user: userSummary,
+      accessToken,
+      rawRefreshToken,
+    }
+  }
+
+  // Login
+  public async login(params: {
+    identifier: string // email or phone
+    password: string
+    ipAddress: string
+    userAgent: string
+  }): Promise<AuthSuccessData & { rawRefreshToken: string }> {
+    const normalized = params.identifier.trim().toLowerCase()
+    let user = db.findUserByEmail(normalized)
+
+    // Check by phone if not found by email
+    if (!user && /^\+?[0-9]{10,14}$/.test(params.identifier.trim())) {
+      user = db.findUserByPhone(params.identifier.trim())
+    }
+
+    if (!user) {
+      throw new Error('INVALID_CREDENTIALS')
+    }
+
+    const isMatch = await bcrypt.compare(params.password, user.passwordHash)
+    if (!isMatch) {
+      db.logAudit({
+        actorRole: 'ANONYMOUS',
+        action: 'auth.login_failed',
+        entityType: 'User',
+        entityId: user.id,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+        metadata: { reason: 'Password mismatch', identifier: params.identifier },
+      })
+      throw new Error('INVALID_CREDENTIALS')
+    }
+
+    const { rawRefreshToken, session } = await this.createSession(
+      user,
+      params.ipAddress,
+      params.userAgent
+    )
+    const accessToken = this.generateAccessToken(user, session.id)
+    const userSummary = db.getUserSummary(user)
+
+    db.logAudit({
+      actorId: user.id,
+      actorRole: user.role,
+      action: 'auth.login_success',
+      entityType: 'User',
+      entityId: user.id,
+      ipAddress: params.ipAddress,
+      userAgent: params.userAgent,
+      metadata: { sessionId: session.id },
+    })
+
+    return {
+      user: userSummary,
+      accessToken,
+      rawRefreshToken,
+    }
+  }
+
+  // Refresh Token with Rotation & Reuse Detection
+  public async refresh(params: {
+    rawRefreshToken: string
+    ipAddress: string
+    userAgent: string
+  }): Promise<{ accessToken: string; newRawRefreshToken: string; user: UserSummary }> {
+    if (!params.rawRefreshToken) {
+      throw new Error('NO_REFRESH_TOKEN')
+    }
+
+    const tokenHash = this.hashToken(params.rawRefreshToken)
+    const session = db.findSessionByTokenHash(tokenHash)
+
+    if (!session) {
+      throw new Error('INVALID_REFRESH_TOKEN')
+    }
+
+    // Token Reuse Detection: If an already revoked token is used, assume breach and revoke family
+    if (session.isRevoked) {
+      db.revokeSessionFamily(session.familyId)
+      db.logAudit({
+        actorId: session.userId,
+        action: 'auth.token_reuse_detected',
+        entityType: 'RefreshSession',
+        entityId: session.id,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+        metadata: { familyId: session.familyId, message: 'All family sessions revoked' },
+      })
+      throw new Error('TOKEN_REUSE_DETECTED')
+    }
+
+    // Check expiry
+    if (new Date(session.expiresAt) < new Date()) {
+      db.revokeSession(session.id)
+      throw new Error('REFRESH_TOKEN_EXPIRED')
+    }
+
+    const user = db.findUserById(session.userId)
+    if (!user) {
+      db.revokeSession(session.id)
+      throw new Error('USER_NOT_FOUND')
+    }
+
+    // Rotate: Revoke the used session and issue a new one in the same family
+    db.revokeSession(session.id)
+    const { rawRefreshToken: newRawRefreshToken, session: newSession } = await this.createSession(
+      user,
+      params.ipAddress,
+      params.userAgent,
+      session.familyId
+    )
+
+    const accessToken = this.generateAccessToken(user, newSession.id)
+    const userSummary = db.getUserSummary(user)
+
+    return {
+      accessToken,
+      newRawRefreshToken,
+      user: userSummary,
+    }
+  }
+
+  // Logout: Revoke current session
+  public async logout(params: {
+    sessionId?: string
+    rawRefreshToken?: string
+    userId?: string
+  }): Promise<void> {
+    if (params.sessionId) {
+      db.revokeSession(params.sessionId)
+    } else if (params.rawRefreshToken) {
+      const tokenHash = this.hashToken(params.rawRefreshToken)
+      const session = db.findSessionByTokenHash(tokenHash)
+      if (session) {
+        db.revokeSession(session.id)
+      }
+    }
+
+    if (params.userId) {
+      db.logAudit({
+        actorId: params.userId,
+        action: 'auth.logout',
+        entityType: 'User',
+        entityId: params.userId,
+      })
+    }
+  }
+
+  // Get Me
+  public async getMe(userId: string): Promise<UserSummary> {
+    const user = db.findUserById(userId)
+    if (!user) {
+      throw new Error('USER_NOT_FOUND')
+    }
+    return db.getUserSummary(user)
+  }
+}
+
+export const authService = new AuthService()

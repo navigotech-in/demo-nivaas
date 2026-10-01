@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { megaMenus, site } from '../lib/data'
 import { Icons } from './Icons'
+import { useAuth } from '../lib/authContext'
 
 const NivaasAiStudio = lazy(() => import('./NivaasAiStudio'))
 
@@ -12,6 +13,7 @@ interface NavProps {
 }
 
 export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavProps) {
+  const { user, isAuthenticated } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
@@ -367,11 +369,25 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
               <button
                 type="button"
                 onClick={onOpenLogin}
-                className="flex items-center justify-center h-9 w-9 rounded-lg border border-[#E7E0D7] bg-white text-[#E76F2E] hover:bg-[#FFF6E8] transition"
+                className={`flex items-center gap-1.5 h-9 rounded-lg border px-2.5 transition ${
+                  isAuthenticated
+                    ? 'border-[#E76F2E] bg-[#FFF6E8] text-[#292826]'
+                    : 'border-[#E7E0D7] bg-white text-[#E76F2E] hover:bg-[#FFF6E8]'
+                }`}
                 aria-label="User Account Login or Signup"
-                title="Login / Signup"
+                title={isAuthenticated ? `${user?.name} (${user?.role})` : 'Login / Signup'}
               >
-                <Icons.User size={17} className="text-[#E76F2E] shrink-0" />
+                <Icons.User size={16} className="text-[#E76F2E] shrink-0" />
+                {isAuthenticated && (
+                  <span className="text-xs font-bold max-w-[90px] truncate">
+                    {user?.name.split(' ')[0]}
+                  </span>
+                )}
+                {isAuthenticated && user?.totalCredits !== undefined && user.totalCredits > 0 && (
+                  <span className="rounded-full bg-[#E76F2E] text-white px-1.5 py-0.2 text-[9px] font-black">
+                    {user.totalCredits}★
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -468,9 +484,13 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 <button
                   type="button"
                   onClick={onOpenLogin}
-                  className="flex items-center justify-center h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-lg border border-[#E7E0D7] bg-white text-[#E76F2E] hover:bg-[#FFF6E8] transition shrink-0"
+                  className={`flex items-center justify-center h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-lg border transition shrink-0 ${
+                    isAuthenticated
+                      ? 'border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E]'
+                      : 'border-[#E7E0D7] bg-white text-[#E76F2E] hover:bg-[#FFF6E8]'
+                  }`}
                   aria-label="User Account Login or Signup"
-                  title="Login / Signup"
+                  title={isAuthenticated ? `${user?.name} (${user?.role})` : 'Login / Signup'}
                 >
                   <Icons.User size={15} className="text-[#E76F2E] shrink-0" />
                 </button>
