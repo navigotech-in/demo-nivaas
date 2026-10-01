@@ -13,11 +13,12 @@ interface NavProps {
 }
 
 export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavProps) {
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [newsOpen, setNewsOpen] = useState(false)
   const [aiStudioOpen, setAiStudioOpen] = useState(false)
@@ -29,6 +30,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
         setActiveDropdown(null)
         setSearchOpen(false)
+        setUserMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -365,24 +367,99 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 <span>Consult Online</span>
               </button>
 
-              {/* Login / Profile Button */}
+              {/* Login / Profile Dropdown Menu */}
               {isAuthenticated ? (
-                <Link
-                  to="/dashboard"
-                  className="flex items-center gap-1.5 h-9 rounded-lg border px-2.5 transition border-[#E76F2E] bg-[#FFF6E8] text-[#292826] hover:bg-[#FFE9CC]"
-                  aria-label="User Account Dashboard"
-                  title={`${user?.name} (${user?.role}) - Click for Dashboard`}
-                >
-                  <Icons.User size={16} className="text-[#E76F2E] shrink-0" />
-                  <span className="text-xs font-bold max-w-[90px] truncate">
-                    {user?.name.split(' ')[0]}
-                  </span>
-                  {user?.totalCredits !== undefined && user.totalCredits > 0 && (
-                    <span className="rounded-full bg-[#E76F2E] text-white px-1.5 py-0.2 text-[9px] font-black">
-                      {user.totalCredits}★
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setUserMenuOpen((prev) => !prev)}
+                    className="flex items-center gap-2 h-9 rounded-xl border px-3 transition border-[#E76F2E]/30 bg-[#FFF6E8] text-[#292826] hover:bg-[#FFE9CC] shadow-xs active:scale-95"
+                    aria-label="User Account Menu"
+                    title={`${user?.name} (${user?.role})`}
+                  >
+                    <div className="h-6 w-6 rounded-lg bg-[#292826] text-white flex items-center justify-center text-xs font-black shrink-0">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <span className="text-xs font-bold max-w-[90px] truncate">
+                      {user?.name.split(' ')[0]}
                     </span>
+                    {user?.role === 'ADMIN' ? (
+                      <span className="rounded-full bg-red-600 text-white px-1.5 py-0.2 text-[9px] font-black uppercase">
+                        ADMIN
+                      </span>
+                    ) : (
+                      user?.totalCredits !== undefined && user.totalCredits > 0 && (
+                        <span className="rounded-full bg-[#E76F2E] text-white px-1.5 py-0.2 text-[9px] font-black">
+                          {user.totalCredits}★
+                        </span>
+                      )
+                    )}
+                    <Icons.ChevronDown
+                      size={12}
+                      className={`text-[#74706A] transition-transform duration-200 ${
+                        userMenuOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {/* Dropdown Card */}
+                  {userMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white p-3 shadow-xl border border-[#E7E0D7] z-50 animate-in fade-in zoom-in-95 duration-150">
+                      {/* User Info Header */}
+                      <div className="p-2 border-b border-[#E7E0D7]/70 pb-3 mb-2">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-black text-[#292826] truncate">{user?.name}</p>
+                          <span
+                            className={`px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase ${
+                              user?.role === 'ADMIN' ? 'bg-red-100 text-red-800' : 'bg-stone-100 text-stone-700'
+                            }`}
+                          >
+                            {user?.role}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#74706A] truncate">{user?.email}</p>
+                        {user?.phone && (
+                          <p className="text-[10px] text-[#74706A] font-mono mt-0.5">📞 {user.phone}</p>
+                        )}
+                      </div>
+
+                      {/* Menu Links */}
+                      <div className="space-y-1">
+                        {user?.role === 'ADMIN' && (
+                          <Link
+                            to="/admin"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 transition"
+                          >
+                            <span>👑</span>
+                            <span>Admin Command Center</span>
+                          </Link>
+                        )}
+
+                        <Link
+                          to="/dashboard"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-[#292826] hover:bg-[#FAF8F5] transition"
+                        >
+                          <Icons.LayoutGrid size={15} className="text-[#E76F2E]" />
+                          <span>My Dashboard</span>
+                        </Link>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserMenuOpen(false)
+                            logout()
+                          }}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition w-full text-left"
+                        >
+                          <Icons.LogOut size={15} />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
                   )}
-                </Link>
+                </div>
               ) : (
                 <button
                   type="button"

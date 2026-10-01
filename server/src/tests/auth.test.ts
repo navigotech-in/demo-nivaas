@@ -2,13 +2,17 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import request from 'supertest'
 import { createApp } from '../app.js'
 import { db } from '../db/store.js'
+import { prisma } from '../db/prisma.js'
 import { creditLedger } from '../services/creditLedger.js'
 
 describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
   const app = createApp()
 
-  beforeEach(() => {
+  beforeEach(async () => {
     db.reset()
+    try {
+      await prisma.user.deleteMany()
+    } catch {}
   })
 
   // 1. Health Endpoint
@@ -48,12 +52,14 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
       name: 'Aarav Sharma',
       email: 'aarav@example.com',
       password: 'Password123!',
+      phone: '9876543210',
     })
 
     const duplicateRes = await request(app).post('/api/v1/auth/signup').send({
       name: 'Another Aarav',
       email: 'aarav@example.com',
       password: 'Password999!',
+      phone: '9876543211',
     })
 
     expect(duplicateRes.status).toBe(409)
@@ -94,6 +100,7 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
       name: 'Regular Customer',
       email: 'cust@example.com',
       password: 'Password123!',
+      phone: '9876543212',
     })
 
     const token = signupRes.body.data.accessToken
@@ -134,6 +141,7 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
       name: 'Vikram Singh',
       email: 'vikram@example.com',
       password: 'Password123!',
+      phone: '9876543213',
     })
 
     const rawCookies = signupRes.headers['set-cookie']
@@ -253,6 +261,7 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
       .send({
         name: 'Super Admin',
         email: 'admin@indorehousemakers.in',
+        phone: '9876543210',
         password: 'AdminPassword2026!',
         setupSecret: 'wrong_secret_key_12345',
       })
@@ -295,6 +304,7 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
       .send({
         name: 'Second Admin Attempter',
         email: 'hacker@example.com',
+        phone: '9876543211',
         password: 'AnotherPassword2026!',
         setupSecret: process.env.SETUP_SECRET || 'ihm_initial_admin_setup_secret_2026',
       })
@@ -306,6 +316,9 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
   // 12. Race Condition Protection: Simultaneous Bootstrap Admin creates only ONE admin
   it('Atomic Admin Setup should ensure only one admin is created in concurrent race', async () => {
     db.reset()
+    try {
+      await prisma.user.deleteMany()
+    } catch {}
 
     const results = await Promise.allSettled([
       request(app)
@@ -313,6 +326,7 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
         .send({
           name: 'Concurrent Admin 1',
           email: 'admin1@indorehousemakers.in',
+          phone: '9876543210',
           password: 'Password12345!',
           setupSecret: process.env.SETUP_SECRET || 'ihm_initial_admin_setup_secret_2026',
         }),
@@ -321,6 +335,7 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
         .send({
           name: 'Concurrent Admin 2',
           email: 'admin2@indorehousemakers.in',
+          phone: '9876543211',
           password: 'Password12345!',
           setupSecret: process.env.SETUP_SECRET || 'ihm_initial_admin_setup_secret_2026',
         }),

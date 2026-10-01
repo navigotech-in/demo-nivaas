@@ -64,10 +64,32 @@ export class AuthService {
     db.createSession(session)
 
     try {
+      let dbUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { id: user.id },
+            { email: user.email },
+          ],
+        },
+      })
+
+      if (!dbUser) {
+        dbUser = await prisma.user.create({
+          data: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            phone: user.phone || null,
+            passwordHash: user.passwordHash || '',
+            role: user.role,
+          },
+        })
+      }
+
       await prisma.refreshSession.create({
         data: {
           id: session.id,
-          userId: session.userId,
+          userId: dbUser.id,
           familyId: session.familyId,
           tokenHash: session.tokenHash,
           userAgent: session.userAgent,
@@ -324,6 +346,43 @@ export class AuthService {
 
     db.rotateSession(session.id, newSession)
 
+    try {
+      let dbUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { id: user.id },
+            { email: user.email },
+          ],
+        },
+      })
+
+      if (!dbUser) {
+        dbUser = await prisma.user.create({
+          data: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            phone: user.phone || null,
+            passwordHash: user.passwordHash || '',
+            role: user.role,
+          },
+        })
+      }
+
+      await prisma.refreshSession.create({
+        data: {
+          id: newSession.id,
+          userId: dbUser.id,
+          familyId: newSession.familyId,
+          tokenHash: newSession.tokenHash,
+          userAgent: newSession.userAgent,
+          ipAddress: newSession.ipAddress,
+          isRevoked: false,
+          expiresAt: new Date(newSession.expiresAt),
+        },
+      })
+    } catch {}
+
     const accessToken = this.generateAccessToken(user, newSession.id)
     const userSummary = db.getUserSummary(user)
 
@@ -342,11 +401,23 @@ export class AuthService {
   }): Promise<void> {
     if (params.sessionId) {
       db.revokeSession(params.sessionId)
+      try {
+        await prisma.refreshSession.update({
+          where: { id: params.sessionId },
+          data: { isRevoked: true },
+        })
+      } catch {}
     } else if (params.rawRefreshToken) {
       const tokenHash = this.hashToken(params.rawRefreshToken)
       const session = db.findSessionByTokenHash(tokenHash)
       if (session) {
         db.revokeSession(session.id)
+        try {
+          await prisma.refreshSession.update({
+            where: { id: session.id },
+            data: { isRevoked: true },
+          })
+        } catch {}
       }
     }
 
@@ -362,7 +433,27 @@ export class AuthService {
 
   // Get Me
   public async getMe(userId: string): Promise<UserSummary> {
-    const user = db.findUserById(userId)
+    let user = db.findUserById(userId)
+    if (!user) {
+      try {
+        const pUser = await prisma.user.findUnique({ where: { id: userId } })
+        if (pUser) {
+          user = {
+            id: pUser.id,
+            email: pUser.email,
+            phone: pUser.phone || undefined,
+            name: pUser.name,
+            passwordHash: pUser.passwordHash,
+            role: pUser.role as any,
+            isEmailVerified: pUser.isEmailVerified,
+            isPhoneVerified: pUser.isPhoneVerified,
+            createdAt: pUser.createdAt.toISOString(),
+            updatedAt: pUser.updatedAt.toISOString(),
+          }
+          db.createUser(user)
+        }
+      } catch {}
+    }
     if (!user) {
       throw new Error('USER_NOT_FOUND')
     }

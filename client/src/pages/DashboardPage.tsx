@@ -324,11 +324,47 @@ export default function DashboardPage({
           </div>
         </div>
 
+        {/* Admin Special Quick-Access Banner */}
+        {user?.role === 'ADMIN' && (
+          <div className="bg-[#292826] text-white p-5 rounded-3xl border border-[#45423E] shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="h-11 w-11 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xl shrink-0">
+                👑
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#E76F2E]">System Root Administrator</span>
+                  <span className="px-2 py-0.2 rounded-full bg-red-900/60 text-red-200 text-[10px] font-bold border border-red-700/50">UNLIMITED PRIVILEGES</span>
+                </div>
+                <p className="text-xs text-[#B9B4AC] mt-0.5">
+                  You are in Client Mode. Open Admin Command Center to manage users, view phone numbers, inspect leads, and audit the credit ledger.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/admin"
+              className="px-4 py-2.5 rounded-xl bg-[#E76F2E] hover:bg-[#C65320] text-white text-xs font-bold transition whitespace-nowrap shadow-sm flex items-center gap-1.5 shrink-0"
+            >
+              <span>Open Admin Command Center</span>
+              <Icons.ChevronRight size={14} />
+            </Link>
+          </div>
+        )}
+
         {/* Navigation Tabs (Mobile Pills + Desktop Sidebar/Bar) */}
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Tabs for Desktop, Horizontal Scroll for Mobile */}
           <div className="lg:w-64 shrink-0">
             <div className="bg-white rounded-2xl p-2 border border-[#E7E0D7] shadow-sm flex lg:flex-col overflow-x-auto scrollbar-none gap-1">
+              {user?.role === 'ADMIN' && (
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200 transition whitespace-nowrap w-full text-left mb-1"
+                >
+                  <span className="text-sm">👑</span>
+                  <span>Admin Panel</span>
+                </Link>
+              )}
               <button
                 onClick={() => setActiveTab('overview')}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition whitespace-nowrap w-full text-left ${
@@ -487,10 +523,21 @@ export default function DashboardPage({
                       </div>
                     </div>
                     <div className="mt-4 flex items-baseline gap-2">
-                      <span className="text-3xl font-black text-[#E76F2E]">
-                        {metrics?.availableCredits ?? 0}
-                      </span>
-                      <span className="text-xs text-[#74706A]">Live Ledger Balance</span>
+                      {user?.role === 'ADMIN' ? (
+                        <>
+                          <span className="text-2xl font-black text-[#E76F2E]">
+                            UNLIMITED
+                          </span>
+                          <span className="text-[10px] text-[#74706A]">Root Admin</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-3xl font-black text-[#E76F2E]">
+                            {metrics?.availableCredits ?? 0}
+                          </span>
+                          <span className="text-xs text-[#74706A]">Live Ledger Balance</span>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -505,7 +552,16 @@ export default function DashboardPage({
                       </div>
                     </div>
                     <div className="mt-4">
-                      {passData?.hasActivePass ? (
+                      {user?.role === 'ADMIN' ? (
+                        <div className="space-y-1">
+                          <span className="text-base font-black text-emerald-700 block">
+                            SYSTEM BYPASS
+                          </span>
+                          <span className="text-[11px] text-[#74706A]">
+                            Full unrestricted access
+                          </span>
+                        </div>
+                      ) : passData?.hasActivePass ? (
                         <div className="space-y-1">
                           <span className="text-lg font-black text-emerald-700 block">
                             ACTIVE
@@ -1148,9 +1204,11 @@ export default function DashboardPage({
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-[#292826] block mb-1">Phone Number</label>
+                      <label className="text-xs font-bold text-[#292826] block mb-1">Phone Number (Required)</label>
                       <input
                         type="tel"
+                        required
+                        minLength={10}
                         value={profilePhone}
                         onChange={(e) => setProfilePhone(e.target.value)}
                         placeholder="e.g. 9876543210"

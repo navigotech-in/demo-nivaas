@@ -5,7 +5,7 @@ import { useAuth } from '../lib/authContext'
 
 export default function AdminSetupPage() {
   const navigate = useNavigate()
-  const { refreshAuth } = useAuth()
+  const { setSessionData } = useAuth()
   const [checking, setChecking] = useState(true)
   const [isAllowed, setIsAllowed] = useState(false)
 
@@ -37,6 +37,11 @@ export default function AdminSetupPage() {
     e.preventDefault()
     setError(null)
 
+    if (!phone || phone.trim().length < 10) {
+      setError('Mobile number is required and must be at least 10 digits.')
+      return
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match.')
       return
@@ -54,11 +59,11 @@ export default function AdminSetupPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          name,
-          email,
-          phone: phone || undefined,
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
           password,
-          setupSecret,
+          setupSecret: setupSecret.trim(),
         }),
       })
 
@@ -67,8 +72,10 @@ export default function AdminSetupPage() {
         throw new Error(json.error?.message || 'Admin initialization failed.')
       }
 
-      await refreshAuth()
-      navigate('/')
+      if (json.data?.user && json.data?.accessToken) {
+        setSessionData(json.data.user, json.data.accessToken)
+      }
+      navigate('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Initialization failed.')
     } finally {
@@ -167,13 +174,15 @@ export default function AdminSetupPage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
-                Mobile Number
+                Mobile Number (Required)
               </label>
               <input
                 type="tel"
+                required
+                minLength={10}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="+91 9876543210"
+                placeholder="10-digit mobile number"
                 className="w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] px-3.5 py-2 text-xs font-semibold text-[#292826] outline-none focus:border-[#E76F2E] focus:bg-white"
               />
             </div>

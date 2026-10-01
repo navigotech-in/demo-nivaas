@@ -3,6 +3,8 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { config } from '../config.js'
 import { db } from '../db/store.js'
+import { prisma } from '../db/prisma.js'
+import { prismaDb } from '../db/prismaService.js'
 import { authService } from '../services/authService.js'
 import { requireAuth } from '../middleware/auth.js'
 import { authRateLimiter, refreshRateLimiter } from '../middleware/rateLimiter.js'
@@ -35,7 +37,7 @@ const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters').max(100),
-  phone: z.string().min(10, 'Phone must be at least 10 digits').max(15).optional(),
+  phone: z.string().min(10, 'Mobile number must be at least 10 digits').max(15, 'Mobile number must not exceed 15 digits'),
 })
 
 router.post(
@@ -212,8 +214,15 @@ router.post(
 )
 
 // 7. One-Time Admin Setup Routes (Only available when 0 admins exist)
-router.get('/setup-status', (_req: Request, res: Response): void => {
-  const adminCount = Array.from(db.users.values()).filter((u) => u.role === 'ADMIN').length
+router.get('/setup-status', async (_req: Request, res: Response): Promise<void> => {
+  let adminCount = Array.from(db.users.values()).filter((u) => u.role === 'ADMIN').length
+  try {
+    const prismaAdmins = await prisma.user.count({ where: { role: 'ADMIN' } })
+    adminCount = Math.max(adminCount, prismaAdmins)
+  } catch {
+    // ignore
+  }
+
   res.json({
     success: true,
     data: {
@@ -225,7 +234,7 @@ router.get('/setup-status', (_req: Request, res: Response): void => {
 const setupAdminSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
-  phone: z.string().min(10).max(15).optional(),
+  phone: z.string().min(10, 'Mobile number must be at least 10 digits').max(15, 'Mobile number must not exceed 15 digits'),
   password: z.string().min(8, 'Password must be at least 8 characters').max(100),
   setupSecret: z.string().min(1, 'Setup secret key is required'),
 })
@@ -235,7 +244,14 @@ router.post(
   authRateLimiter,
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminCount = Array.from(db.users.values()).filter((u) => u.role === 'ADMIN').length
+      let adminCount = Array.from(db.users.values()).filter((u) => u.role === 'ADMIN').length
+      try {
+        const prismaAdmins = await prisma.user.count({ where: { role: 'ADMIN' } })
+        adminCount = Math.max(adminCount, prismaAdmins)
+      } catch {
+        // ignore
+      }
+
       if (adminCount > 0) {
         res.status(403).json({
           success: false,
@@ -275,11 +291,21 @@ router.post(
         return
       }
 
-      // Atomic creation with concurrent race protection
+      // Atomic creation in in-memory store
       const admin = db.bootstrapAdminAtomically(validated.email, validated.password, validated.name)
       if (validated.phone) {
         db.updateUser(admin.id, { phone: validated.phone })
       }
+
+      // Persist in real PostgreSQL
+      try {
+        await prismaDb.bootstrapAdminAtomically(
+          validated.email,
+          validated.password,
+          validated.name,
+          validated.phone
+        )
+      } catch {}
 
       const ipAddress = req.ip || req.socket.remoteAddress || '127.0.0.1'
       const userAgent = req.headers['user-agent'] || 'Setup Wizard'
@@ -308,7 +334,17 @@ router.post(
           accessToken,
         },
       })
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message === 'SETUP_ALREADY_COMPLETED') {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: 'SETUP_ALREADY_COMPLETED',
+            message: 'Admin setup is permanently closed. An administrator already exists.',
+          },
+        })
+        return
+      }
       next(err)
     }
   }

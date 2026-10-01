@@ -68,6 +68,11 @@ export function errorHandler(
       code: ErrorCode.NOT_FOUND,
       message: 'User account not found.',
     },
+    SETUP_ALREADY_COMPLETED: {
+      status: 403,
+      code: ErrorCode.FORBIDDEN,
+      message: 'Admin setup is permanently closed. An administrator already exists.',
+    },
   }
 
   if (err.message && statusMap[err.message]) {

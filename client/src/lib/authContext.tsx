@@ -29,10 +29,11 @@ interface AuthContextType {
   isAuthenticated: boolean
   isAdmin: boolean
   login: (identifier: string, password: string) => Promise<void>
-  signup: (params: { name: string; email: string; password: string; phone?: string }) => Promise<void>
+  signup: (params: { name: string; email: string; password: string; phone: string }) => Promise<void>
   logout: () => Promise<void>
   refreshAuth: () => Promise<boolean>
   getAuthHeaders: () => Record<string, string>
+  setSessionData: (user: UserProfile, accessToken: string) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -239,6 +240,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const setSessionData = useCallback((newUser: UserProfile, newAccessToken: string) => {
+    setUser(newUser)
+    setAccessToken(newAccessToken)
+    authChannel?.postMessage({
+      type: 'AUTH_REFRESHED',
+      accessToken: newAccessToken,
+      user: newUser,
+    })
+  }, [])
+
   return (
     <AuthContext.Provider
       value={{
@@ -252,6 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         refreshAuth,
         getAuthHeaders,
+        setSessionData,
       }}
     >
       {children}

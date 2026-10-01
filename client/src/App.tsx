@@ -18,8 +18,12 @@ const AboutPage = lazy(() => import('./pages/AboutPage'))
 const FaqPage = lazy(() => import('./pages/FaqPage'))
 const ContactPage = lazy(() => import('./pages/ContactPage'))
 const AdminSetupPage = lazy(() => import('./pages/AdminSetupPage'))
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
+
+// Protected Route Guard
+import ProtectedRoute from './components/ProtectedRoute'
 
 // Global Modals Loaded On-Demand
 const ConsultModal = lazy(() => import('./components/ConsultModal'))
@@ -140,13 +144,35 @@ function App() {
               element={<AdminSetupPage />}
             />
             <Route
+              path="/setup-admin"
+              element={<AdminSetupPage />}
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/dashboard"
               element={
-                <DashboardPage
-                  onOpenConsult={handleOpenConsult}
-                  onOpenAiStudio={() => handleOpenAiStudio('generator')}
-                  onOpenLogin={() => setLoginOpen(true)}
-                />
+                <ProtectedRoute>
+                  <DashboardPage
+                    onOpenConsult={handleOpenConsult}
+                    onOpenAiStudio={() => handleOpenAiStudio('generator')}
+                    onOpenLogin={() => setLoginOpen(true)}
+                  />
+                </ProtectedRoute>
               }
             />
             <Route

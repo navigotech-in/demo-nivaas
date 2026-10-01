@@ -94,7 +94,7 @@ export class PrismaDatabaseService {
   }
 
   public async findUserById(id: string) {
-    return await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { id },
       include: {
         passes: {
@@ -105,6 +105,38 @@ export class PrismaDatabaseService {
         },
       },
     })
+
+    if (!user) {
+      const storeUser = db.findUserById(id)
+      if (storeUser) {
+        try {
+          user = await prisma.user.upsert({
+            where: { id: storeUser.id },
+            update: {},
+            create: {
+              id: storeUser.id,
+              email: storeUser.email,
+              name: storeUser.name,
+              phone: storeUser.phone || null,
+              passwordHash: storeUser.passwordHash,
+              role: storeUser.role,
+            },
+            include: {
+              passes: {
+                where: {
+                  status: 'ACTIVE',
+                  expiresAt: { gt: new Date() },
+                },
+              },
+            },
+          })
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    return user
   }
 
   public async createUser(data: {
