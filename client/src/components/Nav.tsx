@@ -366,29 +366,35 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
               </button>
 
               {/* Login / Profile Button */}
-              <button
-                type="button"
-                onClick={onOpenLogin}
-                className={`flex items-center gap-1.5 h-9 rounded-lg border px-2.5 transition ${
-                  isAuthenticated
-                    ? 'border-[#E76F2E] bg-[#FFF6E8] text-[#292826]'
-                    : 'border-[#E7E0D7] bg-white text-[#E76F2E] hover:bg-[#FFF6E8]'
-                }`}
-                aria-label="User Account Login or Signup"
-                title={isAuthenticated ? `${user?.name} (${user?.role})` : 'Login / Signup'}
-              >
-                <Icons.User size={16} className="text-[#E76F2E] shrink-0" />
-                {isAuthenticated && (
+              {isAuthenticated ? (
+                <Link
+                  to="/dashboard"
+                  className="flex items-center gap-1.5 h-9 rounded-lg border px-2.5 transition border-[#E76F2E] bg-[#FFF6E8] text-[#292826] hover:bg-[#FFE9CC]"
+                  aria-label="User Account Dashboard"
+                  title={`${user?.name} (${user?.role}) - Click for Dashboard`}
+                >
+                  <Icons.User size={16} className="text-[#E76F2E] shrink-0" />
                   <span className="text-xs font-bold max-w-[90px] truncate">
                     {user?.name.split(' ')[0]}
                   </span>
-                )}
-                {isAuthenticated && user?.totalCredits !== undefined && user.totalCredits > 0 && (
-                  <span className="rounded-full bg-[#E76F2E] text-white px-1.5 py-0.2 text-[9px] font-black">
-                    {user.totalCredits}★
-                  </span>
-                )}
-              </button>
+                  {user?.totalCredits !== undefined && user.totalCredits > 0 && (
+                    <span className="rounded-full bg-[#E76F2E] text-white px-1.5 py-0.2 text-[9px] font-black">
+                      {user.totalCredits}★
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onOpenLogin}
+                  className="flex items-center gap-1.5 h-9 rounded-lg border px-2.5 transition border-[#E7E0D7] bg-white text-[#E76F2E] hover:bg-[#FFF6E8]"
+                  aria-label="User Account Login or Signup"
+                  title="Login / Signup"
+                >
+                  <Icons.User size={16} className="text-[#E76F2E] shrink-0" />
+                  <span className="text-xs font-bold">Sign In</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -480,20 +486,27 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                   <span>Consult</span>
                 </button>
 
-                {/* User Account Login */}
-                <button
-                  type="button"
-                  onClick={onOpenLogin}
-                  className={`flex items-center justify-center h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-lg border transition shrink-0 ${
-                    isAuthenticated
-                      ? 'border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E]'
-                      : 'border-[#E7E0D7] bg-white text-[#E76F2E] hover:bg-[#FFF6E8]'
-                  }`}
-                  aria-label="User Account Login or Signup"
-                  title={isAuthenticated ? `${user?.name} (${user?.role})` : 'Login / Signup'}
-                >
-                  <Icons.User size={15} className="text-[#E76F2E] shrink-0" />
-                </button>
+                {/* User Account Login / Dashboard */}
+                {isAuthenticated ? (
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center justify-center h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-lg border border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E] shrink-0"
+                    aria-label="User Account Dashboard"
+                    title={`${user?.name} (${user?.role})`}
+                  >
+                    <Icons.User size={15} className="text-[#E76F2E] shrink-0" />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onOpenLogin}
+                    className="flex items-center justify-center h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-lg border border-[#E7E0D7] bg-white text-[#E76F2E] hover:bg-[#FFF6E8] shrink-0"
+                    aria-label="User Account Login or Signup"
+                    title="Login / Signup"
+                  >
+                    <Icons.User size={15} className="text-[#E76F2E] shrink-0" />
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -38,15 +38,21 @@
 
 ---
 
-## 4. User Panel (`/users`) — *Phase 2*
+## 4. User Panel (`/users`) — *Phase 2 (Completed)*
 
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `GET` | `/api/v1/users/me/dashboard` | `USER` | Overview stats, active pass status, remaining credits, latest projects |
-| `GET` | `/api/v1/users/me/projects` | `USER` | List user's created house plans and 3D elevation projects |
-| `GET` | `/api/v1/users/me/credits/history` | `USER` | Full immutable transaction history (grant, reserve, consume, refund) |
-| `GET` | `/api/v1/users/me/consultations` | `USER` | Status of booked architect consultation requests |
-| `PATCH` | `/api/v1/users/me/profile` | `USER` | Update name, phone, or notification preferences |
+| `GET` | `/api/v1/users/me/dashboard` | `USER` / `ADMIN` | Overview metrics (projects, live credits, ₹299 pass, consultations, recent activity) |
+| `GET` | `/api/v1/users/me/projects` | `USER` / `ADMIN` | List user's created house plans and 3D elevation projects |
+| `POST` | `/api/v1/users/me/projects` | `USER` / `ADMIN` | Create new draft floor plan / 3D design job |
+| `GET` | `/api/v1/users/me/credits` | `USER` / `ADMIN` | Live balance calculated from immutable ledger + full transaction history |
+| `GET` | `/api/v1/users/me/pass` | `USER` / `ADMIN` | Active ₹299 Design Pass status and days remaining countdown |
+| `GET` | `/api/v1/users/me/consultations` | `USER` / `ADMIN` | Status of booked architect consultation requests |
+| `GET` | `/api/v1/users/me/sessions` | `USER` / `ADMIN` | List active device refresh sessions with `isCurrent` indicator |
+| `DELETE` | `/api/v1/users/me/sessions/:sessionId` | `USER` / `ADMIN` | Revoke specific device session with strict ownership check |
+| `DELETE` | `/api/v1/users/me/sessions` | `USER` / `ADMIN` | Revoke all other device sessions except current |
+| `PATCH` | `/api/v1/users/me/profile` | `USER` / `ADMIN` | Update display name and phone number |
+| `POST` | `/api/v1/users/me/change-password` | `USER` / `ADMIN` | Verify current password hash and update to new password |
 
 ---
 

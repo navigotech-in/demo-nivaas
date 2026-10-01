@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { config } from '../config.js'
 import { db } from '../db/store.js'
+import { prisma } from '../db/prisma.js'
 import { AccessTokenPayload, AuthSuccessData, UserSummary } from '../types/auth.js'
 import { RefreshSession, User } from '../types/models.js'
 
@@ -61,6 +62,22 @@ export class AuthService {
     }
 
     db.createSession(session)
+
+    try {
+      await prisma.refreshSession.create({
+        data: {
+          id: session.id,
+          userId: session.userId,
+          familyId: session.familyId,
+          tokenHash: session.tokenHash,
+          userAgent: session.userAgent,
+          ipAddress: session.ipAddress,
+          isRevoked: false,
+          expiresAt: new Date(session.expiresAt),
+        },
+      })
+    } catch {}
+
     return { rawRefreshToken, session }
   }
 
@@ -97,6 +114,19 @@ export class AuthService {
     }
 
     db.createUser(newUser)
+
+    try {
+      await prisma.user.create({
+        data: {
+          id: newUser.id,
+          email: newUser.email,
+          name: newUser.name,
+          phone: newUser.phone || null,
+          passwordHash: newUser.passwordHash,
+          role: newUser.role,
+        },
+      })
+    } catch {}
 
     // Log audit
     db.logAudit({
@@ -137,6 +167,41 @@ export class AuthService {
     // Check by phone if not found by email
     if (!user && /^\+?[0-9]{10,14}$/.test(params.identifier.trim())) {
       user = db.findUserByPhone(params.identifier.trim())
+    }
+
+    if (!user) {
+      try {
+        const pUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: normalized },
+              { phone: params.identifier.trim() },
+            ],
+          },
+        })
+        if (pUser) {
+          user = {
+            id: pUser.id,
+            email: pUser.email,
+            phone: pUser.phone || undefined,
+            name: pUser.name,
+            passwordHash: pUser.passwordHash,
+            role: pUser.role as any,
+            isEmailVerified: pUser.isEmailVerified,
+            isPhoneVerified: pUser.isPhoneVerified,
+            createdAt: pUser.createdAt.toISOString(),
+            updatedAt: pUser.updatedAt.toISOString(),
+          }
+          db.createUser(user)
+        }
+      } catch {}
+    } else {
+      try {
+        const pUser = await prisma.user.findUnique({ where: { id: user.id } })
+        if (pUser && pUser.passwordHash !== user.passwordHash) {
+          user.passwordHash = pUser.passwordHash
+        }
+      } catch {}
     }
 
     if (!user) {

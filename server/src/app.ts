@@ -10,6 +10,7 @@ import authRoutes from './routes/authRoutes.js'
 import designsRoutes from './routes/designsRoutes.js'
 import healthRoutes from './routes/healthRoutes.js'
 import leadsRoutes from './routes/leadsRoutes.js'
+import userRoutes from './routes/userRoutes.js'
 import { demoDesigns } from './data.js'
 
 export function createApp() {
@@ -30,6 +31,7 @@ export function createApp() {
   // API v1 Routes
   app.use('/api/v1/health', healthRoutes)
   app.use('/api/v1/auth', authRoutes)
+  app.use('/api/v1/users', userRoutes)
   app.use('/api/v1/leads', leadsRoutes)
   app.use('/api/v1/admin', adminRoutes)
   app.use('/api/v1/designs', designsRoutes)

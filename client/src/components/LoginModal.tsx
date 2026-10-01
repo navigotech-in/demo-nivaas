@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Icons } from './Icons'
 import { useAuth } from '../lib/authContext'
 
@@ -146,23 +147,33 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  type="button"
+              <div className="flex flex-col gap-2">
+                <Link
+                  to="/dashboard"
                   onClick={handleClose}
-                  className="flex-1 rounded-xl bg-[#E76F2E] py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#C65320] transition"
+                  className="w-full text-center rounded-xl bg-[#292826] py-2.5 text-xs font-bold text-white shadow-sm hover:bg-black transition flex items-center justify-center gap-1.5"
                 >
-                  Continue Browsing
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await logout()
-                  }}
-                  className="rounded-xl border border-[#E7E0D7] bg-white px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition"
-                >
-                  Logout
-                </button>
+                  <Icons.LayoutGrid size={14} />
+                  <span>Go to My Dashboard →</span>
+                </Link>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="flex-1 rounded-xl bg-[#E76F2E] py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#C65320] transition"
+                  >
+                    Continue Browsing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await logout()
+                    }}
+                    className="rounded-xl border border-[#E7E0D7] bg-white px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
             </div>
           ) : mode === 'LOGIN' ? (

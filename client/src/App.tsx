@@ -18,6 +18,7 @@ const AboutPage = lazy(() => import('./pages/AboutPage'))
 const FaqPage = lazy(() => import('./pages/FaqPage'))
 const ContactPage = lazy(() => import('./pages/ContactPage'))
 const AdminSetupPage = lazy(() => import('./pages/AdminSetupPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 // Global Modals Loaded On-Demand
@@ -137,6 +138,16 @@ function App() {
             <Route
               path="/setup/admin"
               element={<AdminSetupPage />}
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <DashboardPage
+                  onOpenConsult={handleOpenConsult}
+                  onOpenAiStudio={() => handleOpenAiStudio('generator')}
+                  onOpenLogin={() => setLoginOpen(true)}
+                />
+              }
             />
             <Route
               path="*"

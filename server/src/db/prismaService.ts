@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma.js'
+import { db } from './store.js'
 import { UserSummary } from '../types/auth.js'
 
 export class PrismaDatabaseService {
@@ -534,6 +535,170 @@ export class PrismaDatabaseService {
       orderBy: { createdAt: 'desc' },
     })
   }
+
+  // --- User Panel Methods (Phase 2) ---
+  public async getUserDashboardData(userId: string) {
+    const user = await this.findUserById(userId)
+    if (!user) {
+      throw new Error('USER_NOT_FOUND')
+    }
+
+    const availableCredits = await this.calculateCreditBalance(userId)
+    const totalProjects = await prisma.generationJob.count({ where: { userId } })
+    const totalConsultations = await prisma.lead.count({ where: { userId } })
+    
+    const activePass = user.passes && user.passes.length > 0 ? user.passes[0] : null
+
+    const recentProjects = await prisma.generationJob.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 4,
+    })
+
+    const recentTransactions = await prisma.creditTransaction.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    })
+
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || undefined,
+        role: user.role,
+        createdAt: user.createdAt.toISOString(),
+      },
+      metrics: {
+        totalProjects,
+        availableCredits,
+        activePass: activePass
+          ? {
+              id: activePass.id,
+              passType: activePass.passType,
+              status: activePass.status,
+              startsAt: activePass.startsAt.toISOString(),
+              expiresAt: activePass.expiresAt.toISOString(),
+              creditsGranted: activePass.creditsGranted,
+            }
+          : null,
+        totalConsultations,
+      },
+      recentProjects,
+      recentTransactions,
+    }
+  }
+
+  public async getUserProjects(userId: string) {
+    return await prisma.generationJob.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  public async createUserProject(userId: string, data: {
+    jobType?: string
+    inputPayload: Record<string, unknown>
+  }) {
+    return await prisma.generationJob.create({
+      data: {
+        id: 'job_' + crypto.randomBytes(8).toString('hex'),
+        userId,
+        jobType: data.jobType || '2D_FLOOR_PLAN',
+        status: 'COMPLETED',
+        inputPayload: JSON.parse(JSON.stringify(data.inputPayload)),
+        resultPayload: {
+          title: (data.inputPayload.title as string) || 'Custom Floor Plan',
+          plotSize: (data.inputPayload.plotSize as string) || '30x50 ft',
+          facing: (data.inputPayload.facing as string) || 'East',
+          bhk: (data.inputPayload.bhk as string) || '3 BHK',
+        },
+      },
+    })
+  }
+
+  public async getUserSessions(userId: string) {
+    return await prisma.refreshSession.findMany({
+      where: {
+        userId,
+        isRevoked: false,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  public async revokeUserSession(userId: string, sessionId: string) {
+    const session = await prisma.refreshSession.findUnique({
+      where: { id: sessionId },
+    })
+    if (!session || session.userId !== userId) {
+      throw new Error('SESSION_NOT_FOUND_OR_UNAUTHORIZED')
+    }
+
+    return await prisma.refreshSession.update({
+      where: { id: sessionId },
+      data: { isRevoked: true },
+    })
+  }
+
+  public async revokeAllOtherSessions(userId: string, currentSessionId: string) {
+    return await prisma.refreshSession.updateMany({
+      where: {
+        userId,
+        id: { not: currentSessionId },
+        isRevoked: false,
+      },
+      data: { isRevoked: true },
+    })
+  }
+
+  public async updateUserProfile(userId: string, data: { name?: string; phone?: string }) {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: data.name ? data.name.trim() : undefined,
+        phone: data.phone !== undefined ? (data.phone ? data.phone.trim() : null) : undefined,
+      },
+    })
+  }
+
+  public async changeUserPassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    const storeUser = db.findUserById(userId)
+
+    const hashToCompare = user?.passwordHash || storeUser?.passwordHash
+    if (!hashToCompare) {
+      throw new Error('USER_NOT_FOUND')
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, hashToCompare)
+    if (!isMatch) {
+      throw new Error('INVALID_CURRENT_PASSWORD')
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10)
+    if (storeUser) {
+      storeUser.passwordHash = newHash
+    }
+
+    if (user) {
+      return await prisma.user.update({
+        where: { id: userId },
+        data: { passwordHash: newHash },
+      })
+    }
+    return storeUser
+  }
+
+  public async getUserConsultations(userId: string) {
+    return await prisma.lead.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
 }
 
 export const prismaDb = new PrismaDatabaseService()
+

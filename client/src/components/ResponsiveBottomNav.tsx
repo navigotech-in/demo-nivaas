@@ -97,6 +97,7 @@ export default function ResponsiveBottomNav({
   }
 
   const sheetLinks = [
+    { label: 'My Dashboard & Credits', href: '/dashboard', icon: Icons.User },
     { label: 'Architecture & House Plans', href: '/house-plans', icon: Icons.Blueprint },
     { label: 'Interiors Studio', href: '/interiors', icon: Icons.Sofa },
     { label: '3D Elevation & Designs', href: '/designs', icon: Icons.Sparkles },
