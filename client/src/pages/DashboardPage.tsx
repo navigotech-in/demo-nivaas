@@ -333,11 +333,11 @@ export default function DashboardPage({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-[#E76F2E]">System Root Administrator</span>
-                  <span className="px-2 py-0.2 rounded-full bg-red-900/60 text-red-200 text-[10px] font-bold border border-red-700/50">UNLIMITED PRIVILEGES</span>
+                  <span className="text-xs font-black uppercase tracking-wider text-[#E76F2E]">Administrator Account</span>
+                  <span className="px-2 py-0.2 rounded-full bg-amber-900/60 text-amber-200 text-[10px] font-bold border border-amber-700/50">ADMIN ROLE</span>
                 </div>
                 <p className="text-xs text-[#B9B4AC] mt-0.5">
-                  You are in Client Mode. Open Admin Command Center to manage users, view phone numbers, inspect leads, and audit the credit ledger.
+                  You are viewing the Client Portal. Open Admin Command Center to manage users, view phone numbers, inspect leads, and audit the credit ledger.
                 </p>
               </div>
             </div>

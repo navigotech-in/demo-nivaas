@@ -3,65 +3,50 @@ import { db } from '../db/store.js'
 import { prisma } from '../db/prisma.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 import { z } from 'zod'
+import crypto from 'node:crypto'
 
 const router = Router()
 
-// All admin routes require Authentication + ADMIN role
+// All admin routes strictly require Authentication + ADMIN role
 router.use(requireAuth, requireRole('ADMIN'))
 
-// 1. Overview Metrics (Real PostgreSQL + fallback)
+// 1. Overview Metrics
 router.get('/overview', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const dbUsers = Array.from(db.users.values())
-    let totalUsers = dbUsers.length
-    let totalAdmins = dbUsers.filter((u) => u.role === 'ADMIN').length
-    let totalCustomers = dbUsers.filter((u) => u.role === 'USER').length
-
-    const dbPasses = Array.from(db.accessPasses.values())
-    let activePasses = dbPasses.filter(
-      (p) => p.status === 'ACTIVE' && new Date(p.expiresAt) > new Date()
-    ).length
-
-    const dbSessions = Array.from(db.sessions.values())
-    let activeSessions = dbSessions.filter(
-      (s) => !s.isRevoked && new Date(s.expiresAt) > new Date()
-    ).length
-
+    let totalUsers = 0
+    let totalCustomers = 0
+    let totalAdmins = 0
+    let activePasses = 0
+    let activeSessions = 0
     let totalJobs = 0
     let totalCreditsIssued = 0
-    const dbLeads = Array.from(db.leads.values())
     let leadsByStatus = {
-      NEW: dbLeads.filter((l) => l.status === 'NEW').length,
-      CONTACTED: dbLeads.filter((l) => l.status === 'CONTACTED').length,
-      QUALIFIED: dbLeads.filter((l) => l.status === 'QUALIFIED').length,
-      CONVERTED: dbLeads.filter((l) => l.status === 'CONVERTED').length,
-      CLOSED: dbLeads.filter((l) => l.status === 'CLOSED').length,
-      total: dbLeads.length,
+      NEW: 0,
+      CONTACTED: 0,
+      QUALIFIED: 0,
+      CONVERTED: 0,
+      CLOSED: 0,
+      total: 0,
     }
 
     try {
-      const pUsers = await prisma.user.count()
-      const pAdmins = await prisma.user.count({ where: { role: 'ADMIN' } })
-      const pCustomers = await prisma.user.count({ where: { role: 'USER' } })
-      totalUsers = Math.max(totalUsers, pUsers)
-      totalAdmins = Math.max(totalAdmins, pAdmins)
-      totalCustomers = Math.max(totalCustomers, pCustomers)
+      totalUsers = await prisma.user.count()
+      totalAdmins = await prisma.user.count({ where: { role: 'ADMIN' } })
+      totalCustomers = await prisma.user.count({ where: { role: 'USER' } })
 
-      const pPasses = await prisma.accessPass.count({
+      activePasses = await prisma.accessPass.count({
         where: {
           status: 'ACTIVE',
           expiresAt: { gt: new Date() },
         },
       })
-      activePasses = Math.max(activePasses, pPasses)
 
-      const pSessions = await prisma.refreshSession.count({
+      activeSessions = await prisma.refreshSession.count({
         where: {
           isRevoked: false,
           expiresAt: { gt: new Date() },
         },
       })
-      activeSessions = Math.max(activeSessions, pSessions)
 
       totalJobs = await prisma.generationJob.count()
 
@@ -83,7 +68,31 @@ router.get('/overview', async (_req: Request, res: Response, next: NextFunction)
         }
       }
     } catch {
-      // ignore
+      // In-memory test mirror fallback
+      const dbUsers = Array.from(db.users.values())
+      totalUsers = dbUsers.length
+      totalAdmins = dbUsers.filter((u) => u.role === 'ADMIN').length
+      totalCustomers = dbUsers.filter((u) => u.role === 'USER').length
+
+      const passes = Array.from(db.accessPasses.values())
+      activePasses = passes.filter(
+        (p) => p.status === 'ACTIVE' && new Date(p.expiresAt) > new Date()
+      ).length
+
+      const leads = Array.from(db.leads.values())
+      leadsByStatus = {
+        NEW: leads.filter((l) => l.status === 'NEW').length,
+        CONTACTED: leads.filter((l) => l.status === 'CONTACTED').length,
+        QUALIFIED: leads.filter((l) => l.status === 'QUALIFIED').length,
+        CONVERTED: leads.filter((l) => l.status === 'CONVERTED').length,
+        CLOSED: leads.filter((l) => l.status === 'CLOSED').length,
+        total: leads.length,
+      }
+
+      const sessions = Array.from(db.sessions.values())
+      activeSessions = sessions.filter(
+        (s) => !s.isRevoked && new Date(s.expiresAt) > new Date()
+      ).length
     }
 
     res.json({
@@ -111,69 +120,93 @@ router.get('/overview', async (_req: Request, res: Response, next: NextFunction)
   }
 })
 
-// 2. User Management Directory (Lists all users with live credit balance, active sessions, and pass)
+// 2. User Management Directory with Server-Side Search & Pagination
 router.get('/users', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : ''
-    
-    try {
-      const users = await prisma.user.findMany({
-        orderBy: { createdAt: 'desc' },
-        include: {
-          sessions: {
-            where: { isRevoked: false, expiresAt: { gt: new Date() } },
-          },
-          passes: {
-            where: { status: 'ACTIVE', expiresAt: { gt: new Date() } },
-            orderBy: { expiresAt: 'desc' },
-            take: 1,
-          },
-          creditLedger: true,
-        },
-      })
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 20))
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : ''
+    const skip = (page - 1) * pageSize
 
-      const userSummaries = users
-        .map((u) => {
-          const balance = u.creditLedger.reduce((sum, tx) => sum + tx.amount, 0)
-          const activePass = u.passes[0] || null
-          return {
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            phone: u.phone || null,
-            role: u.role,
-            isEmailVerified: u.isEmailVerified,
-            isPhoneVerified: u.isPhoneVerified,
-            createdAt: u.createdAt,
-            creditBalance: balance,
-            activeSessionsCount: u.sessions.length,
-            activePass: activePass
-              ? {
-                  type: activePass.type,
-                  status: activePass.status,
-                  expiresAt: activePass.expiresAt,
-                }
-              : null,
+    try {
+      const whereClause = search
+        ? {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' as const } },
+              { email: { contains: search, mode: 'insensitive' as const } },
+              { phone: { contains: search } },
+            ],
           }
-        })
-        .filter((u) => {
-          if (!search) return true
-          return (
-            u.name.toLowerCase().includes(search) ||
-            u.email.toLowerCase().includes(search) ||
-            (u.phone && u.phone.includes(search))
-          )
-        })
+        : {}
+
+      const [total, users] = await Promise.all([
+        prisma.user.count({ where: whereClause }),
+        prisma.user.findMany({
+          where: whereClause,
+          skip,
+          take: pageSize,
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            role: true,
+            isEmailVerified: true,
+            isPhoneVerified: true,
+            createdAt: true,
+            sessions: {
+              where: { isRevoked: false, expiresAt: { gt: new Date() } },
+              select: { id: true },
+            },
+            passes: {
+              where: { status: 'ACTIVE', expiresAt: { gt: new Date() } },
+              orderBy: { expiresAt: 'desc' },
+              take: 1,
+              select: {
+                passType: true,
+                status: true,
+                expiresAt: true,
+              },
+            },
+            creditLedger: {
+              select: { amount: true },
+            },
+          },
+        }),
+      ])
+
+      const userSummaries = users.map((u) => {
+        const balance = u.creditLedger.reduce((sum, tx) => sum + tx.amount, 0)
+        return {
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          role: u.role,
+          isEmailVerified: u.isEmailVerified,
+          isPhoneVerified: u.isPhoneVerified,
+          createdAt: u.createdAt,
+          creditBalance: balance,
+          activeSessionsCount: u.sessions.length,
+          activePass: u.passes[0] || null,
+        }
+      })
 
       res.json({
         success: true,
         data: userSummaries,
-        meta: { total: userSummaries.length },
+        meta: {
+          total,
+          page,
+          pageSize,
+          totalPages: Math.ceil(total / pageSize) || 1,
+        },
       })
       return
     } catch {
-      // Fallback
-      let users = Array.from(db.users.values()).map((u) => {
+      // In-memory fallback for unit testing
+      let allUsers = Array.from(db.users.values()).map((u) => {
         const balance = db.calculateUserBalance(u.id)
         const userPasses = Array.from(db.accessPasses.values()).filter(
           (p) => p.userId === u.id && p.status === 'ACTIVE' && new Date(p.expiresAt) > new Date()
@@ -197,18 +230,27 @@ router.get('/users', async (req: Request, res: Response, next: NextFunction): Pr
       })
 
       if (search) {
-        users = users.filter(
+        const q = search.toLowerCase()
+        allUsers = allUsers.filter(
           (u) =>
-            u.name.toLowerCase().includes(search) ||
-            u.email.toLowerCase().includes(search) ||
-            (u.phone && u.phone.includes(search))
+            u.name.toLowerCase().includes(q) ||
+            u.email.toLowerCase().includes(q) ||
+            (u.phone && u.phone.includes(q))
         )
       }
 
+      const total = allUsers.length
+      const paged = allUsers.slice(skip, skip + pageSize)
+
       res.json({
         success: true,
-        data: users,
-        meta: { total: users.length },
+        data: paged,
+        meta: {
+          total,
+          page,
+          pageSize,
+          totalPages: Math.ceil(total / pageSize) || 1,
+        },
       })
     }
   } catch (err) {
@@ -216,65 +258,157 @@ router.get('/users', async (req: Request, res: Response, next: NextFunction): Pr
   }
 })
 
-// 3. Grant/Adjust User Credits
+// 3. Grant/Adjust User Credits (Atomic Transaction + Mandatory Reason + Max Limit)
 const grantCreditsSchema = z.object({
-  amount: z.number().int().min(1, 'Amount must be at least 1 credit').max(10000, 'Max 10,000 credits at once'),
-  reason: z.string().min(3, 'Reason must be at least 3 characters'),
+  amount: z
+    .number()
+    .int('Credit amount must be an integer')
+    .min(1, 'Amount must be at least 1 credit')
+    .max(1000, 'Maximum 1,000 credits allowed per grant action'),
+  reason: z
+    .string()
+    .min(3, 'Mandatory audit reason required (minimum 3 characters)')
+    .max(255, 'Reason must not exceed 255 characters'),
+  idempotencyKey: z.string().max(100).optional(),
 })
 
 router.post('/users/:id/credits', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id: targetUserId } = req.params
     const body = grantCreditsSchema.parse(req.body)
-
-    let updatedBalance = 0
+    const adminId = req.user!.sub
+    const finalIdempotencyKey =
+      body.idempotencyKey || `admin_grant_${adminId}_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`
 
     try {
-      const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } })
+      // 1. Verify user exists
+      const targetUser = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: { id: true, name: true, email: true },
+      })
       if (!targetUser) {
         res.status(404).json({ success: false, error: 'USER_NOT_FOUND', message: 'User does not exist.' })
         return
       }
 
-      await prisma.creditTransaction.create({
-        data: {
-          userId: targetUserId,
-          type: 'GRANT',
-          amount: body.amount,
-          idempotencyKey: `admin_grant_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        },
+      // 2. Check Idempotency
+      const existingTx = await prisma.creditTransaction.findFirst({
+        where: { referenceId: finalIdempotencyKey },
+      })
+      if (existingTx) {
+        const currentBalance = await prisma.creditTransaction
+          .aggregate({ where: { userId: targetUserId }, _sum: { amount: true } })
+          .then((r) => r._sum.amount || 0)
+
+        res.json({
+          success: true,
+          message: 'Credits grant already recorded (idempotent duplicate prevented).',
+          data: {
+            userId: targetUserId,
+            creditsAdded: existingTx.amount,
+            newBalance: currentBalance,
+            reason: body.reason,
+            idempotencyKey: finalIdempotencyKey,
+          },
+        })
+        return
+      }
+
+      // 3. Execute in Atomic Transaction
+      const result = await prisma.$transaction(async (tx) => {
+        const createdTx = await tx.creditTransaction.create({
+          data: {
+            id: 'ctx_' + crypto.randomBytes(8).toString('hex'),
+            userId: targetUserId,
+            type: 'GRANT',
+            amount: body.amount,
+            description: body.reason,
+            referenceType: 'ADMIN_GRANT',
+            referenceId: finalIdempotencyKey,
+          },
+        })
+
+        await tx.auditLog.create({
+          data: {
+            id: 'aud_' + crypto.randomBytes(8).toString('hex'),
+            actorId: adminId,
+            actorRole: 'ADMIN',
+            action: 'admin.credit_grant',
+            entityType: 'User',
+            entityId: targetUserId,
+            metadata: {
+              grantedAmount: body.amount,
+              reason: body.reason,
+              transactionId: createdTx.id,
+              idempotencyKey: finalIdempotencyKey,
+            },
+          },
+        })
+
+        const balanceAgg = await tx.creditTransaction.aggregate({
+          where: { userId: targetUserId },
+          _sum: { amount: true },
+        })
+
+        return {
+          newBalance: balanceAgg._sum.amount || 0,
+          txId: createdTx.id,
+        }
       })
 
-      const agg = await prisma.creditTransaction.aggregate({
-        where: { userId: targetUserId },
-        _sum: { amount: true },
+      res.json({
+        success: true,
+        message: `Successfully granted ${body.amount} credits to user.`,
+        data: {
+          userId: targetUserId,
+          creditsAdded: body.amount,
+          newBalance: result.newBalance,
+          reason: body.reason,
+          idempotencyKey: finalIdempotencyKey,
+        },
       })
-      updatedBalance = agg._sum.amount || 0
-    } catch {
+      return
+    } catch (dbErr) {
+      // In-memory fallback
       const targetUser = db.getUserById(targetUserId)
       if (!targetUser) {
         res.status(404).json({ success: false, error: 'USER_NOT_FOUND', message: 'User does not exist.' })
         return
       }
+
       db.createCreditTransaction({
         userId: targetUserId,
         type: 'GRANT',
         amount: body.amount,
-        idempotencyKey: `admin_grant_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        idempotencyKey: finalIdempotencyKey,
       })
-      updatedBalance = db.calculateUserBalance(targetUserId)
-    }
 
-    res.json({
-      success: true,
-      message: `Successfully granted ${body.amount} credits to user.`,
-      data: {
-        userId: targetUserId,
-        creditsAdded: body.amount,
-        newBalance: updatedBalance,
-        reason: body.reason,
-      },
-    })
+      db.logAudit({
+        actorId: adminId,
+        actorRole: 'ADMIN',
+        action: 'admin.credit_grant',
+        entityType: 'User',
+        entityId: targetUserId,
+        metadata: {
+          grantedAmount: body.amount,
+          reason: body.reason,
+          idempotencyKey: finalIdempotencyKey,
+        },
+      })
+
+      const updatedBalance = db.calculateUserBalance(targetUserId)
+      res.json({
+        success: true,
+        message: `Successfully granted ${body.amount} credits to user.`,
+        data: {
+          userId: targetUserId,
+          creditsAdded: body.amount,
+          newBalance: updatedBalance,
+          reason: body.reason,
+          idempotencyKey: finalIdempotencyKey,
+        },
+      })
+    }
   } catch (err) {
     next(err)
   }
@@ -308,7 +442,7 @@ router.get('/leads', async (_req: Request, res: Response, next: NextFunction): P
 
 const updateLeadStatusSchema = z.object({
   status: z.enum(['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'CLOSED']),
-  notes: z.string().optional(),
+  notes: z.string().max(500).optional(),
 })
 
 router.patch('/leads/:id/status', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -351,12 +485,17 @@ router.patch('/leads/:id/status', async (req: Request, res: Response, next: Next
 // 5. System Audit Logs
 router.get('/audit-logs', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const limit = Number(req.query.limit || 50)
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit || 50)))
     try {
       const txs = await prisma.creditTransaction.findMany({
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: {
+        select: {
+          id: true,
+          userId: true,
+          type: true,
+          amount: true,
+          createdAt: true,
           user: {
             select: { name: true, email: true, phone: true },
           },

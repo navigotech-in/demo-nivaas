@@ -68,6 +68,11 @@ export function errorHandler(
       code: ErrorCode.NOT_FOUND,
       message: 'User account not found.',
     },
+    PHONE_EXISTS: {
+      status: 409,
+      code: ErrorCode.CONFLICT,
+      message: 'This mobile number is already registered with another account.',
+    },
     SETUP_ALREADY_COMPLETED: {
       status: 403,
       code: ErrorCode.FORBIDDEN,

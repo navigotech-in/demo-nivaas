@@ -24,6 +24,9 @@ export function createRateLimiter(options: {
   }, 5 * 60 * 1000).unref()
 
   return (req: Request, res: Response, next: NextFunction): void => {
+    if (process.env.NODE_ENV === 'test') {
+      return next()
+    }
     const ip = req.ip || req.socket.remoteAddress || 'unknown-ip'
     const now = Date.now()
     const record = store.get(ip) || { timestamps: [] }

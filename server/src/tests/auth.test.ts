@@ -3,6 +3,7 @@ import request from 'supertest'
 import { createApp } from '../app.js'
 import { db } from '../db/store.js'
 import { prisma } from '../db/prisma.js'
+import { prismaDb } from '../db/prismaService.js'
 import { creditLedger } from '../services/creditLedger.js'
 
 describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
@@ -11,8 +12,20 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
   beforeEach(async () => {
     db.reset()
     try {
+      await prisma.creditTransaction.deleteMany()
+      await prisma.creditReservation.deleteMany()
+      await prisma.generationJob.deleteMany()
+      await prisma.refreshSession.deleteMany()
+      await prisma.accessPass.deleteMany()
+      await prisma.payment.deleteMany()
+      await prisma.purchase.deleteMany()
+      await prisma.lead.deleteMany()
+      await prisma.auditLog.deleteMany()
+      await prisma.adminSetupLock.deleteMany()
       await prisma.user.deleteMany()
-    } catch {}
+    } catch (e) {
+      console.error('CLEANUP ERROR:', e)
+    }
   })
 
   // 1. Health Endpoint
@@ -116,7 +129,7 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
 
   // 6. Bootstrap Admin can access Admin endpoints
   it('Bootstrap Admin should access /api/v1/admin/overview successfully', async () => {
-    db.bootstrapAdmin('admin@indorehousemakers.in', 'AdminSecret2026!')
+    await prismaDb.bootstrapAdminAtomically('admin@indorehousemakers.in', 'AdminSecret2026!', 'Indore House Makers Admin')
 
     const loginRes = await request(app).post('/api/v1/auth/login').send({
       identifier: 'admin@indorehousemakers.in',

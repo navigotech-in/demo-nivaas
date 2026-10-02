@@ -199,6 +199,16 @@ class DatabaseStore {
     return updated
   }
 
+  public createCreditTransaction(tx: Omit<CreditTransaction, 'id' | 'createdAt'>): CreditTransaction {
+    const entry: CreditTransaction = {
+      id: 'ctx_' + crypto.randomBytes(8).toString('hex'),
+      ...tx,
+      createdAt: new Date().toISOString(),
+    }
+    this.creditTransactions.push(entry)
+    return entry
+  }
+
   // --- Access Pass & Live Ledger Balance ---
   public getActivePass(userId: string): AccessPass | null {
     const now = new Date().toISOString()
@@ -214,12 +224,17 @@ class DatabaseStore {
     return null
   }
 
+  public calculateUserBalance(userId: string): number {
+    const total = this.creditTransactions
+      .filter((tx) => tx.userId === userId)
+      .reduce((sum, tx) => sum + tx.amount, 0)
+    return Math.max(0, total)
+  }
+
   public getUserSummary(user: User): UserSummary {
     const activePass = this.getActivePass(user.id)
     // Pure calculation from immutable ledger transactions
-    const totalCredits = this.creditTransactions
-      .filter((tx) => tx.userId === user.id)
-      .reduce((sum, tx) => sum + tx.amount, 0)
+    const totalCredits = this.calculateUserBalance(user.id)
 
     return {
       id: user.id,
@@ -248,6 +263,15 @@ class DatabaseStore {
   public findSessionByTokenHash(tokenHash: string): RefreshSession | undefined {
     for (const session of this.sessions.values()) {
       if (session.tokenHash === tokenHash) {
+        return session
+      }
+    }
+    return undefined
+  }
+
+  public getActiveSessionByFamily(familyId: string): RefreshSession | undefined {
+    for (const session of this.sessions.values()) {
+      if (session.familyId === familyId && !session.isRevoked) {
         return session
       }
     }

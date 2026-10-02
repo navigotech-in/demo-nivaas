@@ -291,21 +291,40 @@ router.post(
         return
       }
 
-      // Atomic creation in in-memory store
-      const admin = db.bootstrapAdminAtomically(validated.email, validated.password, validated.name)
-      if (validated.phone) {
-        db.updateUser(admin.id, { phone: validated.phone })
-      }
+      let admin: any = null
 
-      // Persist in real PostgreSQL
+      // Persist in real PostgreSQL first
       try {
-        await prismaDb.bootstrapAdminAtomically(
+        const pAdmin = await prismaDb.bootstrapAdminAtomically(
           validated.email,
           validated.password,
           validated.name,
           validated.phone
         )
-      } catch {}
+        admin = {
+          id: pAdmin.id,
+          email: pAdmin.email,
+          name: pAdmin.name,
+          phone: pAdmin.phone || undefined,
+          passwordHash: pAdmin.passwordHash,
+          role: 'ADMIN',
+          isEmailVerified: pAdmin.isEmailVerified,
+          isPhoneVerified: pAdmin.isPhoneVerified,
+          createdAt: pAdmin.createdAt.toISOString(),
+          updatedAt: pAdmin.updatedAt.toISOString(),
+        }
+        db.createUser(admin)
+        db.isSetupLocked = true
+      } catch (dbErr: any) {
+        if (dbErr.message === 'SETUP_ALREADY_COMPLETED') {
+          throw dbErr
+        }
+        // Fallback for store-only testing
+        admin = db.bootstrapAdminAtomically(validated.email, validated.password, validated.name)
+        if (validated.phone) {
+          db.updateUser(admin.id, { phone: validated.phone })
+        }
+      }
 
       const ipAddress = req.ip || req.socket.remoteAddress || '127.0.0.1'
       const userAgent = req.headers['user-agent'] || 'Setup Wizard'

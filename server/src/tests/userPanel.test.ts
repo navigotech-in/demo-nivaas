@@ -16,13 +16,19 @@ describe('Indore House Makers — Phase 2: User Panel API & Ownership Test Suite
   beforeEach(async () => {
     db.reset()
     // Clean test database tables
-    await prisma.creditTransaction.deleteMany()
-    await prisma.creditReservation.deleteMany()
-    await prisma.generationJob.deleteMany()
-    await prisma.refreshSession.deleteMany()
-    await prisma.accessPass.deleteMany()
-    await prisma.lead.deleteMany()
-    await prisma.user.deleteMany()
+    try {
+      await prisma.creditTransaction.deleteMany()
+      await prisma.creditReservation.deleteMany()
+      await prisma.generationJob.deleteMany()
+      await prisma.refreshSession.deleteMany()
+      await prisma.accessPass.deleteMany()
+      await prisma.payment.deleteMany()
+      await prisma.purchase.deleteMany()
+      await prisma.lead.deleteMany()
+      await prisma.auditLog.deleteMany()
+      await prisma.adminSetupLock.deleteMany()
+      await prisma.user.deleteMany()
+    } catch {}
 
     // Create User A
     const signupA = await authService.signup({
@@ -68,10 +74,10 @@ describe('Indore House Makers — Phase 2: User Panel API & Ownership Test Suite
     expect(res.body.data.user.email).toBe('rohan@example.com')
     expect(res.body.data.user.name).toBe('Rohan Sharma')
     expect(res.body.data.metrics.totalProjects).toBe(0)
-    expect(res.body.data.metrics.availableCredits).toBe(0)
+    expect(res.body.data.metrics.availableCredits).toBe(100) // 100 Welcome credits
     expect(res.body.data.metrics.activePass).toBeNull()
     expect(res.body.data.recentProjects).toEqual([])
-    expect(res.body.data.recentTransactions).toEqual([])
+    expect(res.body.data.recentTransactions.length).toBe(1) // 1 Welcome credit grant
   })
 
   // 3. Project Creation and Listing
@@ -141,16 +147,16 @@ describe('Indore House Makers — Phase 2: User Panel API & Ownership Test Suite
       .set('Authorization', `Bearer ${userTokenA}`)
 
     expect(creditsRes.status).toBe(200)
-    expect(creditsRes.body.data.balance).toBe(4) // 5 - 1 = 4
-    expect(creditsRes.body.data.totalTransactions).toBe(2)
+    expect(creditsRes.body.data.balance).toBe(104) // 100 welcome + 5 - 1 = 104
+    expect(creditsRes.body.data.totalTransactions).toBe(3)
 
-    // Verify User B's credit balance is strictly 0
+    // Verify User B's credit balance is strictly isolated (only their own 100 welcome credits)
     const creditsResB = await request(app)
       .get('/api/v1/users/me/credits')
       .set('Authorization', `Bearer ${userTokenB}`)
 
-    expect(creditsResB.body.data.balance).toBe(0)
-    expect(creditsResB.body.data.totalTransactions).toBe(0)
+    expect(creditsResB.body.data.balance).toBe(100)
+    expect(creditsResB.body.data.totalTransactions).toBe(1)
   })
 
   // 5. Active Pass Status

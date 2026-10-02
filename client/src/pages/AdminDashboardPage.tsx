@@ -72,6 +72,9 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null)
   const [users, setUsers] = useState<AdminUserItem[]>([])
+  const [userPage, setUserPage] = useState(1)
+  const [userTotalPages, setUserTotalPages] = useState(1)
+  const [userTotal, setUserTotal] = useState(0)
   const [leads, setLeads] = useState<AdminLeadItem[]>([])
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([])
   const [userSearch, setUserSearch] = useState('')
@@ -80,15 +83,13 @@ export default function AdminDashboardPage() {
   // Credit Grant Modal State
   const [selectedUserForCredits, setSelectedUserForCredits] = useState<AdminUserItem | null>(null)
   const [creditAmount, setCreditAmount] = useState('100')
-  const [creditReason, setCreditReason] = useState('Admin Promotional Grant')
+  const [creditReason, setCreditReason] = useState('Promotional Grant')
   const [isGranting, setIsGranting] = useState(false)
 
-  const fetchAdminData = async () => {
-    setLoading(true)
+  const fetchOverviewAndLeads = async () => {
     try {
-      const [overviewRes, usersRes, leadsRes, auditRes] = await Promise.all([
+      const [overviewRes, leadsRes, auditRes] = await Promise.all([
         fetch('/api/v1/admin/overview', { credentials: 'include' }),
-        fetch('/api/v1/admin/users', { credentials: 'include' }),
         fetch('/api/v1/admin/leads', { credentials: 'include' }),
         fetch('/api/v1/admin/audit-logs', { credentials: 'include' }),
       ])
@@ -96,10 +97,6 @@ export default function AdminDashboardPage() {
       if (overviewRes.ok) {
         const json = await overviewRes.json()
         setMetrics(json.data?.metrics || null)
-      }
-      if (usersRes.ok) {
-        const json = await usersRes.json()
-        setUsers(json.data || [])
       }
       if (leadsRes.ok) {
         const json = await leadsRes.json()
@@ -110,15 +107,50 @@ export default function AdminDashboardPage() {
         setAuditLogs(json.data || [])
       }
     } catch {
-      setActionMessage({ type: 'error', text: 'Failed to fetch admin statistics from server.' })
-    } finally {
-      setLoading(false)
+      setActionMessage({ type: 'error', text: 'Failed to fetch admin overview.' })
+    }
+  }
+
+  const fetchUsers = async (page = userPage, search = userSearch) => {
+    try {
+      const res = await fetch(
+        `/api/v1/admin/users?page=${page}&pageSize=15&search=${encodeURIComponent(search)}`,
+        { credentials: 'include' }
+      )
+      if (res.ok) {
+        const json = await res.json()
+        setUsers(json.data || [])
+        setUserTotalPages(json.meta?.totalPages || 1)
+        setUserTotal(json.meta?.total || 0)
+      }
+    } catch {
+      setActionMessage({ type: 'error', text: 'Failed to fetch users list.' })
     }
   }
 
   useEffect(() => {
-    fetchAdminData()
+    const init = async () => {
+      setLoading(true)
+      await Promise.all([fetchOverviewAndLeads(), fetchUsers(1, '')])
+      setLoading(false)
+    }
+    init()
   }, [])
+
+  // Handle Search Debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setUserPage(1)
+      fetchUsers(1, userSearch)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [userSearch])
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > userTotalPages) return
+    setUserPage(newPage)
+    fetchUsers(newPage, userSearch)
+  }
 
   const handleGrantCredits = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -143,7 +175,8 @@ export default function AdminDashboardPage() {
           text: `Successfully granted ${creditAmount} credits to ${selectedUserForCredits.name}. New balance: ${json.data?.newBalance} credits.`,
         })
         setSelectedUserForCredits(null)
-        fetchAdminData()
+        fetchUsers(userPage, userSearch)
+        fetchOverviewAndLeads()
       } else {
         setActionMessage({ type: 'error', text: json.message || 'Failed to grant credits.' })
       }
@@ -175,16 +208,6 @@ export default function AdminDashboardPage() {
     }
   }
 
-  const filteredUsers = users.filter((u) => {
-    if (!userSearch) return true
-    const q = userSearch.toLowerCase()
-    return (
-      u.name.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      (u.phone && u.phone.includes(q))
-    )
-  })
-
   return (
     <div className="min-h-screen bg-[#FDFCF9] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -197,8 +220,8 @@ export default function AdminDashboardPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-black text-[#292826] tracking-tight">Admin Command Center</h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 text-[10px] font-black tracking-wider uppercase border border-red-200">
-                  SYSTEM ROOT
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black tracking-wider uppercase border border-amber-300">
+                  ADMINISTRATOR
                 </span>
               </div>
               <p className="text-xs text-[#74706A] mt-0.5">
@@ -265,7 +288,7 @@ export default function AdminDashboardPage() {
             }`}
           >
             <Icons.User size={15} />
-            User Management Directory ({users.length})
+            User Management Directory ({userTotal})
           </button>
 
           <button
@@ -325,11 +348,11 @@ export default function AdminDashboardPage() {
 
               <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-xs">
                 <div className="flex items-center justify-between text-xs text-[#74706A] font-medium mb-2">
-                  <span>AI DESIGNS & JOBS</span>
+                  <span>AI GENERATION JOBS</span>
                   <Icons.Sparkles size={16} className="text-[#E76F2E]" />
                 </div>
                 <div className="text-3xl font-black text-[#292826]">{metrics?.totalJobs ?? 0}</div>
-                <p className="text-[11px] text-[#74706A] mt-1.5">Floor plans & 3D generations</p>
+                <p className="text-[11px] text-[#74706A] mt-1.5">Conceptual 2D & 3D plans</p>
               </div>
 
               <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-xs">
@@ -347,11 +370,11 @@ export default function AdminDashboardPage() {
 
               <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-xs">
                 <div className="flex items-center justify-between text-xs text-[#74706A] font-medium mb-2">
-                  <span>SYSTEM PRIVILEGE STATUS</span>
+                  <span>SYSTEM ROLE PRIVILEGES</span>
                   <Icons.CheckCircle size={16} className="text-emerald-600" />
                 </div>
-                <div className="text-lg font-black text-emerald-800">UNLIMITED BYPASS</div>
-                <p className="text-[11px] text-[#74706A] mt-1.5">Admin root bypasses user paywalls</p>
+                <div className="text-lg font-black text-[#292826]">ADMINISTRATOR</div>
+                <p className="text-[11px] text-[#74706A] mt-1.5">Full governance & oversight access</p>
               </div>
             </div>
 
@@ -374,7 +397,7 @@ export default function AdminDashboardPage() {
                             <p className="text-xs font-bold text-[#292826]">{u.name}</p>
                             <span
                               className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
-                                u.role === 'ADMIN' ? 'bg-red-100 text-red-800' : 'bg-stone-100 text-stone-700'
+                                u.role === 'ADMIN' ? 'bg-amber-100 text-amber-900' : 'bg-stone-100 text-stone-700'
                               }`}
                             >
                               {u.role}
@@ -398,7 +421,7 @@ export default function AdminDashboardPage() {
               <div className="bg-white p-6 rounded-2xl border border-[#E7E0D7] shadow-xs">
                 <h2 className="text-base font-black text-[#292826] mb-4 flex items-center gap-2">
                   <Icons.Shield size={18} className="text-[#E76F2E]" />
-                  Security & Architecture
+                  Architecture & Security
                 </h2>
                 <div className="space-y-3 text-xs text-[#54504A]">
                   <div className="flex justify-between py-1.5 border-b border-[#E7E0D7]/60">
@@ -407,7 +430,7 @@ export default function AdminDashboardPage() {
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-[#E7E0D7]/60">
                     <span className="font-medium text-[#74706A]">Auth Security:</span>
-                    <span className="font-bold text-[#292826]">JWT + HttpOnly Token Family</span>
+                    <span className="font-bold text-[#292826]">JWT + HttpOnly Family</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-[#E7E0D7]/60">
                     <span className="font-medium text-[#74706A]">Ledger Consistency:</span>
@@ -424,12 +447,14 @@ export default function AdminDashboardPage() {
         )}
 
         {/* Tab 2: User Directory */}
-        {activeTab === 'users' && (
+        {!loading && activeTab === 'users' && (
           <div className="bg-white rounded-2xl border border-[#E7E0D7] shadow-xs p-6 space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-black text-[#292826] tracking-tight">Registered Users Directory</h2>
-                <p className="text-xs text-[#74706A]">Real accounts stored in PostgreSQL database with phone & credit stats</p>
+                <p className="text-xs text-[#74706A]">
+                  Showing page {userPage} of {userTotalPages} ({userTotal} total registered accounts)
+                </p>
               </div>
 
               {/* Search Bar */}
@@ -460,7 +485,7 @@ export default function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E7E0D7]">
-                  {filteredUsers.map((u) => (
+                  {users.map((u) => (
                     <tr key={u.id} className="hover:bg-[#FFF6E8]/30 transition">
                       <td className="p-3.5 font-bold text-[#292826]">
                         <div>{u.name}</div>
@@ -473,7 +498,7 @@ export default function AdminDashboardPage() {
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                             u.role === 'ADMIN'
-                              ? 'bg-red-100 text-red-800 border border-red-200'
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
                               : 'bg-blue-50 text-blue-800 border border-blue-200'
                           }`}
                         >
@@ -506,7 +531,7 @@ export default function AdminDashboardPage() {
                       </td>
                     </tr>
                   ))}
-                  {filteredUsers.length === 0 && (
+                  {users.length === 0 && (
                     <tr>
                       <td colSpan={7} className="p-6 text-center text-xs text-[#74706A]">
                         No users found matching your search.
@@ -516,11 +541,34 @@ export default function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Server-side Pagination Bar */}
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs text-[#74706A]">
+                Page <strong>{userPage}</strong> of <strong>{userTotalPages}</strong>
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(userPage - 1)}
+                  disabled={userPage <= 1}
+                  className="px-3 py-1.5 rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] hover:bg-[#FFF6E8] text-xs font-bold disabled:opacity-40 transition"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => handlePageChange(userPage + 1)}
+                  disabled={userPage >= userTotalPages}
+                  className="px-3 py-1.5 rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] hover:bg-[#FFF6E8] text-xs font-bold disabled:opacity-40 transition"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Tab 3: Consultations & Leads */}
-        {activeTab === 'leads' && (
+        {!loading && activeTab === 'leads' && (
           <div className="bg-white rounded-2xl border border-[#E7E0D7] shadow-xs p-6 space-y-4">
             <div>
               <h2 className="text-lg font-black text-[#292826] tracking-tight">Customer Consultations & Leads</h2>
@@ -593,7 +641,7 @@ export default function AdminDashboardPage() {
         )}
 
         {/* Tab 4: Ledger & Audit Logs */}
-        {activeTab === 'audit' && (
+        {!loading && activeTab === 'audit' && (
           <div className="bg-white rounded-2xl border border-[#E7E0D7] shadow-xs p-6 space-y-4">
             <div>
               <h2 className="text-lg font-black text-[#292826] tracking-tight">Credit Ledger Audit Log</h2>
@@ -674,11 +722,14 @@ export default function AdminDashboardPage() {
 
             <form onSubmit={handleGrantCredits} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#292826] mb-1">Credit Amount</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-xs font-bold text-[#292826]">Credit Amount</label>
+                  <span className="text-[10px] text-[#74706A]">Min 1, Max 1,000</span>
+                </div>
                 <input
                   type="number"
                   min="1"
-                  max="10000"
+                  max="1000"
                   required
                   value={creditAmount}
                   onChange={(e) => setCreditAmount(e.target.value)}
@@ -687,10 +738,13 @@ export default function AdminDashboardPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#292826] mb-1">Audit Reason</label>
+                <label className="block text-xs font-bold text-[#292826] mb-1">Mandatory Audit Reason</label>
                 <input
                   type="text"
                   required
+                  minLength={3}
+                  maxLength={255}
+                  placeholder="e.g. Approved promotional gift or trial allowance"
                   value={creditReason}
                   onChange={(e) => setCreditReason(e.target.value)}
                   className="w-full h-11 px-3.5 rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] text-xs focus:ring-2 focus:ring-[#E76F2E] outline-none"

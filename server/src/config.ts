@@ -14,6 +14,7 @@ export const config = {
     accessTokenExpiresIn: '15m', // Short-lived 15 minutes
     refreshTokenSecret: process.env.JWT_REFRESH_SECRET || 'nivaas_dev_refresh_secret_change_in_production_2026',
     refreshTokenExpiresDays: 30, // 30 days
+    refreshGraceSeconds: 15, // 15s grace window for concurrent rotation
   },
 
   // Cookie Settings for Refresh Token
