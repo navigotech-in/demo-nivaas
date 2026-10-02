@@ -604,7 +604,7 @@ export default function NivaasAiStudio({
                         </p>
                         <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-bold text-[#E76F2E]">
                           <Icons.Grid size={13} className="text-[#E76F2E]" />
-                          <span>20-Step Architectural Guided Flow</span>
+                          <span>23 questions grouped into 6 stages</span>
                         </div>
                       </button>
 
@@ -639,7 +639,7 @@ export default function NivaasAiStudio({
                         </p>
                         <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-bold text-[#E76F2E]">
                           <Icons.Layers size={13} className="text-[#E76F2E]" />
-                          <span>Custom Dimension Blueprint Flow (23 Steps)</span>
+                          <span>23 questions grouped into 6 stages</span>
                         </div>
                       </button>
                     </div>

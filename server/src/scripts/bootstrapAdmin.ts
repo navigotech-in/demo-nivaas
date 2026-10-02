@@ -1,32 +1,13 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import bcrypt from 'bcryptjs'
 import crypto from 'node:crypto'
 import { prisma } from '../db/prisma.js'
 import { db } from '../db/store.js'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const credentialsPath = path.resolve(__dirname, '../../admin.credentials.json')
-
 async function bootstrap() {
-  let email = process.env.ADMIN_EMAIL || 'admin@ihm.com'
-  let password = process.env.ADMIN_PASSWORD || 'Admin@123'
-  let name = process.env.ADMIN_NAME || 'IHM Administrator'
-  let phone = process.env.ADMIN_PHONE || '+919876543210'
-
-  if (fs.existsSync(credentialsPath)) {
-    try {
-      const fileData = JSON.parse(fs.readFileSync(credentialsPath, 'utf-8'))
-      if (fileData.email) email = fileData.email.trim().toLowerCase()
-      if (fileData.password) password = fileData.password.trim()
-      if (fileData.name) name = fileData.name.trim()
-      if (fileData.phone) phone = fileData.phone.trim()
-      console.log(`[Admin Config] Loaded credentials from: ${credentialsPath}`)
-    } catch (e) {
-      console.warn('[Admin Config] Failed to parse admin.credentials.json, using defaults/env.')
-    }
-  }
+  const email = (process.env.ADMIN_EMAIL || 'admin@ihm.com').trim().toLowerCase()
+  const password = process.env.ADMIN_PASSWORD || 'Admin@123'
+  const name = (process.env.ADMIN_NAME || 'IHM Administrator').trim()
+  const phone = (process.env.ADMIN_PHONE || '+919876543210').trim()
 
   const normalizedEmail = email.toLowerCase()
   const passwordHash = await bcrypt.hash(password, 10)

@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/authContext'
 import { Icons } from '../components/Icons'
+import {
+  DashboardLayout,
+  PageHeader,
+  MetricCard,
+  DataTable,
+  StatusText,
+  EmptyState,
+} from '../components/dashboard'
 
 interface AdminMetrics {
   totalUsers: number
@@ -66,7 +74,7 @@ interface AuditLogItem {
 }
 
 export default function AdminDashboardPage() {
-  const { user, logout, getAuthHeaders, isAuthenticated, isLoading } = useAuth()
+  const { user, getAuthHeaders, isAuthenticated, isLoading } = useAuth()
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'leads' | 'audit'>('overview')
 
   const [loading, setLoading] = useState(true)
@@ -182,7 +190,7 @@ export default function AdminDashboardPage() {
       if (res.ok) {
         setActionMessage({
           type: 'success',
-          text: `Successfully granted ${creditAmount} credits to ${selectedUserForCredits.name}. New balance: ${json.data?.newBalance} credits.`,
+          text: `Granted ${creditAmount} credits to ${selectedUserForCredits.name}. New balance: ${json.data?.newBalance} credits.`,
         })
         setSelectedUserForCredits(null)
         fetchUsers(userPage, userSearch)
@@ -221,12 +229,12 @@ export default function AdminDashboardPage() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-[#FDFCF9] flex items-center justify-center p-6">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-[#E76F2E] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-semibold text-[#74706A]">Loading Admin Command Center...</p>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-6 h-6 border-2 border-[#C94F36] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-[#74706A]">Loading administration portal...</span>
         </div>
       </div>
     )
@@ -235,24 +243,24 @@ export default function AdminDashboardPage() {
   if (!isAuthenticated || user?.role !== 'ADMIN') {
     return (
       <div className="min-h-screen bg-[#FDFCF9] flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-2xl border border-[#E7E0D7] p-8 text-center shadow-sm space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
-            <Icons.ShieldCheck size={28} />
+        <div className="max-w-md w-full bg-white rounded-lg border border-[#E7E0D7] p-6 text-center space-y-4">
+          <div className="w-12 h-12 rounded-md bg-[#FFF6E8] text-[#C94F36] flex items-center justify-center mx-auto border border-[#E7E0D7]">
+            <Icons.Shield size={24} />
           </div>
-          <h2 className="text-xl font-black text-[#292826]">Administrator Access Required</h2>
+          <h2 className="text-lg font-bold text-[#292826]">Administrator Access Required</h2>
           <p className="text-xs text-[#74706A] leading-relaxed">
-            This command center is exclusively reserved for the platform administrator. Please sign in with administrator credentials.
+            This area is restricted to the platform administrator. Please sign in with administrator credentials.
           </p>
           <div className="pt-2 flex flex-col gap-2">
             <Link
               to="/login"
-              className="w-full py-2.5 px-4 rounded-xl bg-[#292826] hover:bg-black text-white text-xs font-bold transition flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-md bg-[#292826] hover:bg-black text-white text-xs font-semibold transition"
             >
               Sign In as Administrator
             </Link>
             <Link
               to="/"
-              className="w-full py-2.5 px-4 rounded-xl border border-[#E7E0D7] text-[#74706A] hover:text-[#292826] text-xs font-semibold transition"
+              className="w-full py-2.5 px-4 rounded-md border border-[#E7E0D7] text-[#74706A] hover:text-[#292826] text-xs font-medium transition"
             >
               Return to Homepage
             </Link>
@@ -262,561 +270,441 @@ export default function AdminDashboardPage() {
     )
   }
 
+  const sidebarItems = [
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: <Icons.LayoutGrid size={16} />,
+      onClick: () => setActiveTab('overview'),
+      active: activeTab === 'overview',
+    },
+    {
+      id: 'users',
+      label: 'Users Directory',
+      icon: <Icons.Users size={16} />,
+      badge: userTotal || metrics?.totalUsers || 0,
+      onClick: () => setActiveTab('users'),
+      active: activeTab === 'users',
+    },
+    {
+      id: 'leads',
+      label: 'Leads & Inquiries',
+      icon: <Icons.Phone size={16} />,
+      badge: leads.length || metrics?.leads?.total || 0,
+      onClick: () => setActiveTab('leads'),
+      active: activeTab === 'leads',
+    },
+    {
+      id: 'audit',
+      label: 'Audit & Ledger',
+      icon: <Icons.FileText size={16} />,
+      onClick: () => setActiveTab('audit'),
+      active: activeTab === 'audit',
+    },
+  ]
+
+  const sidebarFooter = (
+    <div className="space-y-2 text-xs">
+      <Link
+        to="/dashboard"
+        className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-white text-[#292826] hover:bg-[#FAF8F5] font-medium transition border border-[#E7E0D7]"
+      >
+        <span className="flex items-center gap-2">
+          <Icons.User size={14} className="text-[#C94F36]" />
+          <span>Client View</span>
+        </span>
+        <Icons.ChevronRight size={12} className="text-[#74706A]" />
+      </Link>
+    </div>
+  )
+
   return (
-    <div className="min-h-screen bg-[#FDFCF9] py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Top Header Card */}
-        <div className="bg-white rounded-2xl border border-[#E7E0D7] p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-2xl bg-[#292826] text-amber-400 flex items-center justify-center shadow-md border border-[#292826]/20">
-              <Icons.ShieldCheck size={28} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black text-[#292826] tracking-tight">Admin Command Center</h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black tracking-wider uppercase border border-amber-300">
-                  ADMINISTRATOR
-                </span>
-              </div>
-              <p className="text-xs text-[#74706A] mt-0.5">
-                Logged in as <strong>{user?.name}</strong> ({user?.email}) • Phone:{' '}
-                <strong>{user?.phone || 'N/A'}</strong>
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <Link
-              to="/dashboard"
-              className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 h-10 rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] hover:bg-[#FFF6E8] text-xs font-bold text-[#292826] transition shadow-xs"
-            >
-              <Icons.User size={15} className="text-[#E76F2E]" />
-              Switch to Client View
-            </Link>
-            <button
-              onClick={() => logout()}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition border border-red-200"
-            >
-              <Icons.LogOut size={14} />
-              Sign Out
-            </button>
-          </div>
-        </div>
-
-        {/* Global Notifications / Alert Banner */}
-        {actionMessage && (
-          <div
-            className={`p-4 rounded-xl border text-xs font-medium flex items-center justify-between transition-all ${
-              actionMessage.type === 'success'
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                : 'bg-red-50 border-red-200 text-red-800'
-            }`}
-          >
-            <span>{actionMessage.text}</span>
-            <button onClick={() => setActionMessage(null)} className="font-bold underline text-[11px] ml-4">
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-[#E7E0D7] pb-3 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition shrink-0 ${
-              activeTab === 'overview'
-                ? 'bg-[#292826] text-white shadow-sm'
-                : 'bg-white text-[#54504A] hover:bg-[#FFF6E8] border border-[#E7E0D7]'
-            }`}
-          >
-            <Icons.Layers size={15} />
-            System Overview
-          </button>
-
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition shrink-0 ${
-              activeTab === 'users'
-                ? 'bg-[#292826] text-white shadow-sm'
-                : 'bg-white text-[#54504A] hover:bg-[#FFF6E8] border border-[#E7E0D7]'
-            }`}
-          >
-            <Icons.User size={15} />
-            User Management Directory ({userTotal})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('leads')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition shrink-0 ${
-              activeTab === 'leads'
-                ? 'bg-[#292826] text-white shadow-sm'
-                : 'bg-white text-[#54504A] hover:bg-[#FFF6E8] border border-[#E7E0D7]'
-            }`}
-          >
-            <Icons.Phone size={15} />
-            Consultations & Leads ({leads.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('audit')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition shrink-0 ${
-              activeTab === 'audit'
-                ? 'bg-[#292826] text-white shadow-sm'
-                : 'bg-white text-[#54504A] hover:bg-[#FFF6E8] border border-[#E7E0D7]'
-            }`}
-          >
-            <Icons.Shield size={15} />
-            Ledger & Security Audit
+    <DashboardLayout
+      title="IHM Admin Portal"
+      badgeText="ADMIN"
+      sidebarItems={sidebarItems}
+      sidebarFooter={sidebarFooter}
+    >
+      {actionMessage && (
+        <div
+          className={`p-3 rounded-md text-xs font-medium flex items-center justify-between ${
+            actionMessage.type === 'success'
+              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border border-rose-200 text-rose-800'
+          }`}
+        >
+          <span>{actionMessage.text}</span>
+          <button onClick={() => setActionMessage(null)} className="ml-2 font-bold">
+            ×
           </button>
         </div>
+      )}
 
-        {/* Loading Skeleton */}
-        {loading && (
-          <div className="space-y-6 animate-pulse">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-28 bg-white rounded-2xl border border-[#E7E0D7] p-5 space-y-3" />
-              ))}
-            </div>
-            <div className="h-64 bg-white rounded-2xl border border-[#E7E0D7]" />
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 1: ADMIN OVERVIEW */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="System Overview"
+            subtitle={`Logged in as ${user?.name} (${user?.email})`}
+            actions={
+              <button
+                onClick={() => fetchOverviewAndLeads()}
+                className="px-3 py-1.5 rounded-md border border-[#E7E0D7] hover:bg-[#FAF8F5] text-xs font-medium text-[#292826] flex items-center gap-1.5 transition"
+              >
+                <Icons.RefreshCw size={13} />
+                <span>Refresh Data</span>
+              </button>
+            }
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard
+              label="Total Registered Users"
+              value={metrics?.totalUsers ?? users.length}
+              subtext="Platform accounts"
+              icon={<Icons.Users size={18} />}
+            />
+            <MetricCard
+              label="Active Passes"
+              value={metrics?.activePasses ?? 0}
+              subtext="₹299 Design Passes"
+              icon={<Icons.Award size={18} />}
+            />
+            <MetricCard
+              label="Active Sessions"
+              value={metrics?.activeSessions ?? 0}
+              subtext="Logged-in devices"
+              icon={<Icons.Shield size={18} />}
+            />
+            <MetricCard
+              label="Consultation Leads"
+              value={metrics?.leads?.total ?? leads.length}
+              subtext={`${metrics?.leads?.NEW ?? 0} new requests`}
+              icon={<Icons.Phone size={18} />}
+            />
           </div>
-        )}
 
-        {/* Tab 1: System Overview */}
-        {!loading && activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* KPI Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-xs">
-                <div className="flex items-center justify-between text-xs text-[#74706A] font-medium mb-2">
-                  <span>TOTAL REGISTERED USERS</span>
-                  <Icons.User size={16} className="text-[#E76F2E]" />
-                </div>
-                <div className="text-3xl font-black text-[#292826]">{metrics?.totalUsers ?? 0}</div>
-                <div className="text-[11px] text-[#74706A] mt-1.5 flex items-center gap-2">
-                  <span className="text-emerald-700 font-bold">{metrics?.totalCustomers ?? 0} Customers</span>
-                  <span>•</span>
-                  <span className="text-[#E76F2E] font-bold">{metrics?.totalAdmins ?? 0} Admins</span>
-                </div>
+          {/* Lead Status Breakdown */}
+          <div className="bg-white rounded-lg border border-[#E7E0D7] p-5">
+            <h3 className="text-xs font-bold text-[#292826] uppercase tracking-wider mb-4">
+              Lead Pipeline Summary
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div className="p-3 rounded-md bg-[#FAF8F5] border border-[#E7E0D7]">
+                <span className="text-[11px] font-medium text-[#74706A]">New</span>
+                <div className="text-lg font-bold text-[#292826] mt-1">{metrics?.leads?.NEW ?? 0}</div>
               </div>
-
-              <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-xs">
-                <div className="flex items-center justify-between text-xs text-[#74706A] font-medium mb-2">
-                  <span>AI GENERATION JOBS</span>
-                  <Icons.Sparkles size={16} className="text-[#E76F2E]" />
-                </div>
-                <div className="text-3xl font-black text-[#292826]">{metrics?.totalJobs ?? 0}</div>
-                <p className="text-[11px] text-[#74706A] mt-1.5">Conceptual 2D & 3D plans</p>
+              <div className="p-3 rounded-md bg-[#FAF8F5] border border-[#E7E0D7]">
+                <span className="text-[11px] font-medium text-[#74706A]">Contacted</span>
+                <div className="text-lg font-bold text-[#292826] mt-1">{metrics?.leads?.CONTACTED ?? 0}</div>
               </div>
-
-              <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-xs">
-                <div className="flex items-center justify-between text-xs text-[#74706A] font-medium mb-2">
-                  <span>ACTIVE LEADS & CALLS</span>
-                  <Icons.Phone size={16} className="text-[#E76F2E]" />
-                </div>
-                <div className="text-3xl font-black text-[#292826]">{metrics?.leads.total ?? 0}</div>
-                <div className="text-[11px] text-[#74706A] mt-1.5 flex items-center gap-1.5">
-                  <span className="text-amber-700 font-bold">{metrics?.leads.NEW ?? 0} New</span>
-                  <span>•</span>
-                  <span className="text-blue-700 font-bold">{metrics?.leads.CONTACTED ?? 0} Contacted</span>
-                </div>
+              <div className="p-3 rounded-md bg-[#FAF8F5] border border-[#E7E0D7]">
+                <span className="text-[11px] font-medium text-[#74706A]">Qualified</span>
+                <div className="text-lg font-bold text-[#292826] mt-1">{metrics?.leads?.QUALIFIED ?? 0}</div>
               </div>
-
-              <div className="bg-white p-5 rounded-2xl border border-[#E7E0D7] shadow-xs">
-                <div className="flex items-center justify-between text-xs text-[#74706A] font-medium mb-2">
-                  <span>SYSTEM ROLE PRIVILEGES</span>
-                  <Icons.CheckCircle size={16} className="text-emerald-600" />
-                </div>
-                <div className="text-lg font-black text-[#292826]">ADMINISTRATOR</div>
-                <p className="text-[11px] text-[#74706A] mt-1.5">Full governance & oversight access</p>
+              <div className="p-3 rounded-md bg-[#FAF8F5] border border-[#E7E0D7]">
+                <span className="text-[11px] font-medium text-[#74706A]">Converted</span>
+                <div className="text-lg font-bold text-[#292826] mt-1">{metrics?.leads?.CONVERTED ?? 0}</div>
               </div>
-            </div>
-
-            {/* Quick Actions & System Info */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-[#E7E0D7] shadow-xs">
-                <h2 className="text-base font-black text-[#292826] mb-4 flex items-center gap-2">
-                  <Icons.Layers size={18} className="text-[#E76F2E]" />
-                  Recent User Registrations
-                </h2>
-                <div className="divide-y divide-[#E7E0D7]/60">
-                  {users.slice(0, 5).map((u) => (
-                    <div key={u.id} className="py-3 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-xl bg-[#FFF6E8] text-[#E76F2E] font-black text-xs flex items-center justify-center border border-[#E76F2E]/20">
-                          {u.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-xs font-bold text-[#292826]">{u.name}</p>
-                            <span
-                              className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
-                                u.role === 'ADMIN' ? 'bg-amber-100 text-amber-900' : 'bg-stone-100 text-stone-700'
-                              }`}
-                            >
-                              {u.role}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-[#74706A]">
-                            {u.email} • Phone: <strong>{u.phone || 'N/A'}</strong>
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-black text-[#E76F2E]">{u.creditBalance} Credits</span>
-                        <p className="text-[10px] text-[#74706A]">{new Date(u.createdAt).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  ))}
-                  {users.length === 0 && <p className="text-xs text-[#74706A] py-4">No users registered yet.</p>}
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-[#E7E0D7] shadow-xs">
-                <h2 className="text-base font-black text-[#292826] mb-4 flex items-center gap-2">
-                  <Icons.Shield size={18} className="text-[#E76F2E]" />
-                  Architecture & Security
-                </h2>
-                <div className="space-y-3 text-xs text-[#54504A]">
-                  <div className="flex justify-between py-1.5 border-b border-[#E7E0D7]/60">
-                    <span className="font-medium text-[#74706A]">PostgreSQL Database:</span>
-                    <span className="font-bold text-emerald-700">Connected</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-[#E7E0D7]/60">
-                    <span className="font-medium text-[#74706A]">Auth Security:</span>
-                    <span className="font-bold text-[#292826]">JWT + HttpOnly Family</span>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-[#E7E0D7]/60">
-                    <span className="font-medium text-[#74706A]">Ledger Consistency:</span>
-                    <span className="font-bold text-[#292826]">ACID Transactions Only</span>
-                  </div>
-                  <div className="flex justify-between py-1.5">
-                    <span className="font-medium text-[#74706A]">Active Sessions:</span>
-                    <span className="font-bold text-[#292826]">{metrics?.activeSessions ?? 1} devices</span>
-                  </div>
-                </div>
+              <div className="p-3 rounded-md bg-[#FAF8F5] border border-[#E7E0D7]">
+                <span className="text-[11px] font-medium text-[#74706A]">Closed</span>
+                <div className="text-lg font-bold text-[#292826] mt-1">{metrics?.leads?.CLOSED ?? 0}</div>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Tab 2: User Directory */}
-        {!loading && activeTab === 'users' && (
-          <div className="bg-white rounded-2xl border border-[#E7E0D7] shadow-xs p-6 space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-black text-[#292826] tracking-tight">Registered Users Directory</h2>
-                <p className="text-xs text-[#74706A]">
-                  Showing page {userPage} of {userTotalPages} ({userTotal} total registered accounts)
-                </p>
-              </div>
-
-              {/* Search Bar */}
-              <div className="relative w-full sm:w-72">
-                <Icons.Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#74706A]" />
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 2: USERS DIRECTORY */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'users' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="User Directory"
+            subtitle={`Total ${userTotal} registered users in PostgreSQL database.`}
+            actions={
+              <div className="w-64">
                 <input
                   type="text"
                   placeholder="Search by name, email, phone..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
-                  className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] text-xs focus:ring-2 focus:ring-[#E76F2E] outline-none"
+                  className="w-full px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] focus:outline-none focus:border-[#C94F36]"
                 />
               </div>
-            </div>
+            }
+          />
 
-            {/* Users Table */}
-            <div className="overflow-x-auto border border-[#E7E0D7] rounded-xl">
-              <table className="w-full text-left text-xs text-[#54504A]">
-                <thead className="bg-[#FAF8F5] text-[#292826] font-bold border-b border-[#E7E0D7]">
-                  <tr>
-                    <th className="p-3.5">User Details</th>
-                    <th className="p-3.5">Mobile Number</th>
-                    <th className="p-3.5">Role</th>
-                    <th className="p-3.5">Credit Balance</th>
-                    <th className="p-3.5">Design Pass</th>
-                    <th className="p-3.5">Joined On</th>
-                    <th className="p-3.5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E7E0D7]">
-                  {users.map((u) => (
-                    <tr key={u.id} className="hover:bg-[#FFF6E8]/30 transition">
-                      <td className="p-3.5 font-bold text-[#292826]">
-                        <div>{u.name}</div>
-                        <div className="text-[11px] font-normal text-[#74706A]">{u.email}</div>
-                      </td>
-                      <td className="p-3.5">
-                        <span className="font-mono font-medium text-[#292826]">{u.phone || '—'}</span>
-                      </td>
-                      <td className="p-3.5">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                            u.role === 'ADMIN'
-                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                              : 'bg-blue-50 text-blue-800 border border-blue-200'
-                          }`}
-                        >
-                          {u.role}
-                        </span>
-                      </td>
-                      <td className="p-3.5 font-black text-[#E76F2E]">
-                        {u.creditBalance} Credits
-                      </td>
-                      <td className="p-3.5">
-                        {u.activePass ? (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                            ₹299 PASS ACTIVE
-                          </span>
-                        ) : (
-                          <span className="text-[11px] text-[#74706A]">None</span>
-                        )}
-                      </td>
-                      <td className="p-3.5 text-[#74706A] text-[11px]">
-                        {new Date(u.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="p-3.5 text-right">
-                        <button
-                          onClick={() => setSelectedUserForCredits(u)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#292826] text-white text-[11px] font-bold hover:bg-[#E76F2E] transition shadow-xs"
-                        >
-                          <Icons.Sparkles size={12} />
-                          Grant Credits
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {users.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="p-6 text-center text-xs text-[#74706A]">
-                        No users found matching your search.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+          <DataTable<AdminUserItem>
+            data={users}
+            keyExtractor={(u) => u.id}
+            columns={[
+              {
+                header: 'Name & Email',
+                accessor: (u) => (
+                  <div>
+                    <div className="font-semibold text-[#292826]">{u.name}</div>
+                    <div className="text-[11px] text-[#74706A]">{u.email}</div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Phone',
+                accessor: (u) => u.phone || '—',
+              },
+              {
+                header: 'Role',
+                accessor: (u) => (
+                  <span
+                    className={`text-[11px] font-semibold ${
+                      u.role === 'ADMIN' ? 'text-[#C94F36]' : 'text-[#74706A]'
+                    }`}
+                  >
+                    {u.role}
+                  </span>
+                ),
+              },
+              {
+                header: 'Pass Status',
+                accessor: (u) => (
+                  <StatusText
+                    status={u.activePass?.status === 'ACTIVE' ? 'Pass Active' : 'No Pass'}
+                    variant={u.activePass?.status === 'ACTIVE' ? 'success' : 'neutral'}
+                  />
+                ),
+              },
+              {
+                header: 'Credits',
+                accessor: (u) => (
+                  <span className="font-semibold text-[#292826]">{u.creditBalance ?? 0}</span>
+                ),
+              },
+              {
+                header: 'Actions',
+                align: 'right',
+                accessor: (u) => (
+                  <button
+                    onClick={() => setSelectedUserForCredits(u)}
+                    className="px-2.5 py-1 rounded-md text-xs font-semibold text-[#C94F36] bg-[#FFF6E8] hover:bg-[#ffeecf] border border-[#E7E0D7] transition"
+                  >
+                    Grant Credits
+                  </button>
+                ),
+              },
+            ]}
+            emptyState={
+              <EmptyState
+                title="No users found"
+                description="No users match the search criteria in PostgreSQL."
+                icon={<Icons.Users size={24} />}
+              />
+            }
+          />
 
-            {/* Server-side Pagination Bar */}
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-xs text-[#74706A]">
-                Page <strong>{userPage}</strong> of <strong>{userTotalPages}</strong>
+          {/* Pagination */}
+          {userTotalPages > 1 && (
+            <div className="flex items-center justify-between text-xs text-[#74706A]">
+              <span>
+                Page {userPage} of {userTotalPages}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => handlePageChange(userPage - 1)}
                   disabled={userPage <= 1}
-                  className="px-3 py-1.5 rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] hover:bg-[#FFF6E8] text-xs font-bold disabled:opacity-40 transition"
+                  className="px-3 py-1 rounded-md border border-[#E7E0D7] disabled:opacity-40 hover:bg-[#FAF8F5]"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => handlePageChange(userPage + 1)}
                   disabled={userPage >= userTotalPages}
-                  className="px-3 py-1.5 rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] hover:bg-[#FFF6E8] text-xs font-bold disabled:opacity-40 transition"
+                  className="px-3 py-1 rounded-md border border-[#E7E0D7] disabled:opacity-40 hover:bg-[#FAF8F5]"
                 >
                   Next
                 </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-        {/* Tab 3: Consultations & Leads */}
-        {!loading && activeTab === 'leads' && (
-          <div className="bg-white rounded-2xl border border-[#E7E0D7] shadow-xs p-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-black text-[#292826] tracking-tight">Customer Consultations & Leads</h2>
-              <p className="text-xs text-[#74706A]">All online consultation and architectural design enquiries</p>
-            </div>
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 3: LEADS & INQUIRIES */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'leads' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="Consultation Leads"
+            subtitle="Customer consultation requests and architectural inquiries."
+          />
 
-            <div className="overflow-x-auto border border-[#E7E0D7] rounded-xl">
-              <table className="w-full text-left text-xs text-[#54504A]">
-                <thead className="bg-[#FAF8F5] text-[#292826] font-bold border-b border-[#E7E0D7]">
-                  <tr>
-                    <th className="p-3.5">Client Name</th>
-                    <th className="p-3.5">Phone Number</th>
-                    <th className="p-3.5">Service Requested</th>
-                    <th className="p-3.5">Plot Size & Budget</th>
-                    <th className="p-3.5">City</th>
-                    <th className="p-3.5">Date</th>
-                    <th className="p-3.5">Status Pipeline</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E7E0D7]">
-                  {leads.map((lead) => (
-                    <tr key={lead.id} className="hover:bg-[#FFF6E8]/30 transition">
-                      <td className="p-3.5 font-bold text-[#292826]">
-                        {lead.name}
-                        {lead.email && <div className="text-[11px] font-normal text-[#74706A]">{lead.email}</div>}
-                      </td>
-                      <td className="p-3.5 font-mono font-medium text-[#292826]">{lead.phone}</td>
-                      <td className="p-3.5 font-medium text-[#292826]">{lead.serviceType}</td>
-                      <td className="p-3.5 text-[11px] text-[#74706A]">
-                        {lead.plotSize || '—'} • {lead.budget || '—'}
-                      </td>
-                      <td className="p-3.5">{lead.city || 'Indore'}</td>
-                      <td className="p-3.5 text-[#74706A] text-[11px]">
-                        {new Date(lead.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="p-3.5">
-                        <select
-                          value={lead.status}
-                          onChange={(e) => handleUpdateLeadStatus(lead.id, e.target.value)}
-                          className={`text-[11px] font-bold rounded-lg px-2.5 py-1 border outline-none cursor-pointer ${
-                            lead.status === 'NEW'
-                              ? 'bg-amber-50 text-amber-900 border-amber-300'
-                              : lead.status === 'CONTACTED'
-                              ? 'bg-blue-50 text-blue-900 border-blue-300'
-                              : lead.status === 'CONVERTED'
-                              ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
-                              : 'bg-stone-100 text-stone-800 border-stone-300'
-                          }`}
-                        >
-                          <option value="NEW">NEW</option>
-                          <option value="CONTACTED">CONTACTED</option>
-                          <option value="QUALIFIED">QUALIFIED</option>
-                          <option value="CONVERTED">CONVERTED</option>
-                          <option value="CLOSED">CLOSED</option>
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                  {leads.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="p-6 text-center text-xs text-[#74706A]">
-                        No consultations or customer leads recorded yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+          <DataTable<AdminLeadItem>
+            data={leads}
+            keyExtractor={(l) => l.id}
+            columns={[
+              {
+                header: 'Customer Details',
+                accessor: (l) => (
+                  <div>
+                    <div className="font-semibold text-[#292826]">{l.name}</div>
+                    <div className="text-[11px] text-[#74706A]">
+                      {l.phone} {l.email ? `• ${l.email}` : ''}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Service / Plot',
+                accessor: (l) => (
+                  <div>
+                    <div className="text-[#292826] font-medium">{l.serviceType}</div>
+                    <div className="text-[11px] text-[#74706A]">{l.plotSize || 'N/A'} • {l.city || 'Indore'}</div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Date',
+                accessor: (l) => new Date(l.createdAt).toLocaleDateString(),
+              },
+              {
+                header: 'Status',
+                align: 'right',
+                accessor: (l) => (
+                  <select
+                    value={l.status}
+                    onChange={(e) => handleUpdateLeadStatus(l.id, e.target.value)}
+                    className="px-2 py-1 text-xs rounded-md border border-[#E7E0D7] bg-white text-[#292826] font-medium focus:outline-none focus:border-[#C94F36]"
+                  >
+                    <option value="NEW">NEW</option>
+                    <option value="CONTACTED">CONTACTED</option>
+                    <option value="QUALIFIED">QUALIFIED</option>
+                    <option value="CONVERTED">CONVERTED</option>
+                    <option value="CLOSED">CLOSED</option>
+                  </select>
+                ),
+              },
+            ]}
+            emptyState={
+              <EmptyState
+                title="No inquiries found"
+                description="Consultation submissions from the website will appear here."
+                icon={<Icons.Phone size={24} />}
+              />
+            }
+          />
+        </div>
+      )}
 
-        {/* Tab 4: Ledger & Audit Logs */}
-        {!loading && activeTab === 'audit' && (
-          <div className="bg-white rounded-2xl border border-[#E7E0D7] shadow-xs p-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-black text-[#292826] tracking-tight">Credit Ledger Audit Log</h2>
-              <p className="text-xs text-[#74706A]">Immutable transaction history across all users in PostgreSQL</p>
-            </div>
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 4: AUDIT LOGS */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'audit' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="Audit & Transaction Ledger"
+            subtitle="Immutable system transaction logs and credit events."
+          />
 
-            <div className="overflow-x-auto border border-[#E7E0D7] rounded-xl">
-              <table className="w-full text-left text-xs text-[#54504A]">
-                <thead className="bg-[#FAF8F5] text-[#292826] font-bold border-b border-[#E7E0D7]">
-                  <tr>
-                    <th className="p-3.5">Transaction ID</th>
-                    <th className="p-3.5">User</th>
-                    <th className="p-3.5">Event Type</th>
-                    <th className="p-3.5">Amount</th>
-                    <th className="p-3.5">Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E7E0D7]">
-                  {auditLogs.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-[#FFF6E8]/30 transition">
-                      <td className="p-3.5 font-mono text-[11px] text-[#74706A]">{tx.id.slice(0, 12)}...</td>
-                      <td className="p-3.5 font-medium text-[#292826]">
-                        {tx.user?.name || tx.userId}
-                        {tx.user?.email && <div className="text-[10px] text-[#74706A]">{tx.user.email}</div>}
-                      </td>
-                      <td className="p-3.5">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-stone-100 text-stone-800">
-                          {tx.type}
-                        </span>
-                      </td>
-                      <td
-                        className={`p-3.5 font-black ${
-                          tx.amount > 0 ? 'text-emerald-700' : 'text-red-700'
-                        }`}
-                      >
-                        {tx.amount > 0 ? `+${tx.amount}` : tx.amount} Credits
-                      </td>
-                      <td className="p-3.5 text-[11px] text-[#74706A]">
-                        {new Date(tx.createdAt).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                  {auditLogs.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="p-6 text-center text-xs text-[#74706A]">
-                        No ledger transactions recorded yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
+          <DataTable<AuditLogItem>
+            data={auditLogs}
+            keyExtractor={(log) => log.id}
+            columns={[
+              {
+                header: 'Timestamp',
+                accessor: (log) => new Date(log.createdAt).toLocaleString(),
+              },
+              {
+                header: 'User',
+                accessor: (log) => log.user?.name || log.userId || 'System',
+              },
+              {
+                header: 'Event Type',
+                accessor: (log) => <span className="font-medium text-[#292826]">{log.type}</span>,
+              },
+              {
+                header: 'Amount / Value',
+                align: 'right',
+                accessor: (log) => (
+                  <span
+                    className={`font-semibold ${
+                      log.amount > 0 ? 'text-emerald-700' : 'text-rose-700'
+                    }`}
+                  >
+                    {log.amount > 0 ? `+${log.amount}` : log.amount}
+                  </span>
+                ),
+              },
+            ]}
+            emptyState={
+              <EmptyState
+                title="No audit entries"
+                description="Credit transactions and security events will be logged here."
+                icon={<Icons.FileText size={24} />}
+              />
+            }
+          />
+        </div>
+      )}
 
-      {/* Grant Credits Modal */}
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL: GRANT CREDITS */}
+      {/* ------------------------------------------------------------- */}
       {selectedUserForCredits && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-[#E7E0D7] p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded-xl bg-[#FFF6E8] text-[#E76F2E] flex items-center justify-center font-bold">
-                  <Icons.Sparkles size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-[#292826]">Grant Free AI Credits</h3>
-                  <p className="text-xs text-[#74706A]">To: {selectedUserForCredits.name}</p>
-                </div>
-              </div>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg border border-[#E7E0D7] max-w-sm w-full p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[#292826]">Grant Credits</h3>
               <button
                 onClick={() => setSelectedUserForCredits(null)}
                 className="text-[#74706A] hover:text-[#292826] text-lg font-bold"
               >
-                ✕
+                ×
               </button>
             </div>
 
-            <form onSubmit={handleGrantCredits} className="space-y-4">
+            <p className="text-xs text-[#74706A]">
+              Grant promotional or support credits to <strong>{selectedUserForCredits.name}</strong> ({selectedUserForCredits.email}).
+            </p>
+
+            <form onSubmit={handleGrantCredits} className="space-y-3">
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs font-bold text-[#292826]">Credit Amount</label>
-                  <span className="text-[10px] text-[#74706A]">Min 1, Max 1,000</span>
-                </div>
+                <label className="block text-[11px] font-medium text-[#74706A] mb-1">Credit Amount</label>
                 <input
                   type="number"
-                  min="1"
-                  max="1000"
-                  required
+                  min={1}
+                  max={1000}
                   value={creditAmount}
                   onChange={(e) => setCreditAmount(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] text-xs font-bold focus:ring-2 focus:ring-[#E76F2E] outline-none"
+                  className="w-full px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] focus:outline-none focus:border-[#C94F36]"
+                  required
                 />
               </div>
-
               <div>
-                <label className="block text-xs font-bold text-[#292826] mb-1">Mandatory Audit Reason</label>
+                <label className="block text-[11px] font-medium text-[#74706A] mb-1">Reason / Note</label>
                 <input
                   type="text"
-                  required
-                  minLength={3}
-                  maxLength={255}
-                  placeholder="e.g. Approved promotional gift or trial allowance"
                   value={creditReason}
                   onChange={(e) => setCreditReason(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] text-xs focus:ring-2 focus:ring-[#E76F2E] outline-none"
+                  className="w-full px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] focus:outline-none focus:border-[#C94F36]"
+                  required
                 />
               </div>
 
-              <div className="flex items-center gap-3 pt-2">
+              <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedUserForCredits(null)}
-                  className="flex-1 h-11 rounded-xl border border-[#E7E0D7] text-xs font-bold hover:bg-[#FAF8F5] transition"
+                  className="px-3 py-1.5 rounded-md border border-[#E7E0D7] text-xs font-medium text-[#74706A] hover:bg-[#FAF8F5]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isGranting}
-                  className="flex-1 h-11 rounded-xl bg-[#292826] text-white text-xs font-bold hover:bg-[#E76F2E] transition shadow-md disabled:opacity-50"
+                  className="px-4 py-1.5 rounded-md bg-[#C94F36] hover:bg-[#b0422c] text-white text-xs font-semibold transition disabled:opacity-50"
                 >
                   {isGranting ? 'Granting...' : 'Confirm Grant'}
                 </button>
@@ -825,6 +713,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   )
 }
