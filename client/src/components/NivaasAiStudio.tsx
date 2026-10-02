@@ -598,13 +598,13 @@ export default function NivaasAiStudio({
                             </span>
                           )}
                         </div>
-                        <h4 className="font-extrabold text-base text-[#1A1815] tracking-tight">Rectangle / Square Plot</h4>
-                        <p className="text-xs text-[#54504A] mt-1.5 leading-relaxed font-medium">
+                        <h4 className="font-extrabold text-base text-black tracking-tight">Rectangle / Square Plot</h4>
+                        <p className="text-xs text-stone-700 mt-1.5 leading-relaxed font-medium">
                           Standard 4-side rectangular plot with standard 90° corners (e.g. 30x50, 40x60, 20x40).
                         </p>
                         <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-bold text-[#E76F2E]">
-                          <Icons.Sparkles size={13} className="text-[#E76F2E]" />
-                          <span>20-Step Rapid Guided Flow</span>
+                          <Icons.Grid size={13} className="text-[#E76F2E]" />
+                          <span>20-Step Architectural Guided Flow</span>
                         </div>
                       </button>
 
@@ -633,13 +633,13 @@ export default function NivaasAiStudio({
                             </span>
                           )}
                         </div>
-                        <h4 className="font-extrabold text-base text-[#1A1815] tracking-tight">Asymmetric / Odd Shape</h4>
-                        <p className="text-xs text-[#54504A] mt-1.5 leading-relaxed font-medium">
+                        <h4 className="font-extrabold text-base text-black tracking-tight">Asymmetric / Odd Shape</h4>
+                        <p className="text-xs text-stone-700 mt-1.5 leading-relaxed font-medium">
                           L-shape, Triangle, Trapezoid, Corner cut, or curved odd-shaped plot boundary.
                         </p>
                         <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-bold text-[#E76F2E]">
-                          <Icons.Blueprint size={13} className="text-[#E76F2E]" />
-                          <span>Upload Plan + AI Suggestions (23 Steps)</span>
+                          <Icons.Layers size={13} className="text-[#E76F2E]" />
+                          <span>Custom Dimension Blueprint Flow (23 Steps)</span>
                         </div>
                       </button>
                     </div>
@@ -2079,7 +2079,7 @@ export default function NivaasAiStudio({
                         {
                           id: 'Ultra-Luxury Villa Grade (~₹3,200+/sq.ft)',
                           title: 'Ultra-Luxury Villa Grade',
-                          emoji: '👑',
+                          emoji: '🏛️',
                           rate: '₹3,200+ / sq.ft',
                           tag: 'Luxury Bespoke',
                           desc: 'Italian marble, Grohe/Toto automation, double-glazed soundproof glass, VRV AC ready',

@@ -328,8 +328,8 @@ export default function DashboardPage({
         {user?.role === 'ADMIN' && (
           <div className="bg-[#292826] text-white p-5 rounded-3xl border border-[#45423E] shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="h-11 w-11 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xl shrink-0">
-                👑
+              <div className="h-11 w-11 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+                <Icons.ShieldCheck size={20} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -361,7 +361,7 @@ export default function DashboardPage({
                   to="/admin"
                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200 transition whitespace-nowrap w-full text-left mb-1"
                 >
-                  <span className="text-sm">👑</span>
+                  <Icons.Shield size={16} className="text-amber-700" />
                   <span>Admin Panel</span>
                 </Link>
               )}

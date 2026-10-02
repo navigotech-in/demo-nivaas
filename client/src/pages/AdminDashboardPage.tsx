@@ -66,7 +66,7 @@ interface AuditLogItem {
 }
 
 export default function AdminDashboardPage() {
-  const { user, logout } = useAuth()
+  const { user, logout, getAuthHeaders, isAuthenticated, isLoading } = useAuth()
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'leads' | 'audit'>('overview')
 
   const [loading, setLoading] = useState(true)
@@ -89,9 +89,9 @@ export default function AdminDashboardPage() {
   const fetchOverviewAndLeads = async () => {
     try {
       const [overviewRes, leadsRes, auditRes] = await Promise.all([
-        fetch('/api/v1/admin/overview', { credentials: 'include' }),
-        fetch('/api/v1/admin/leads', { credentials: 'include' }),
-        fetch('/api/v1/admin/audit-logs', { credentials: 'include' }),
+        fetch('/api/v1/admin/overview', { headers: getAuthHeaders(), credentials: 'include' }),
+        fetch('/api/v1/admin/leads', { headers: getAuthHeaders(), credentials: 'include' }),
+        fetch('/api/v1/admin/audit-logs', { headers: getAuthHeaders(), credentials: 'include' }),
       ])
 
       if (overviewRes.ok) {
@@ -115,7 +115,7 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch(
         `/api/v1/admin/users?page=${page}&pageSize=15&search=${encodeURIComponent(search)}`,
-        { credentials: 'include' }
+        { headers: getAuthHeaders(), credentials: 'include' }
       )
       if (res.ok) {
         const json = await res.json()
@@ -129,22 +129,29 @@ export default function AdminDashboardPage() {
   }
 
   useEffect(() => {
+    if (isLoading) return
+    if (!isAuthenticated || user?.role !== 'ADMIN') {
+      setLoading(false)
+      return
+    }
+
     const init = async () => {
       setLoading(true)
       await Promise.all([fetchOverviewAndLeads(), fetchUsers(1, '')])
       setLoading(false)
     }
     init()
-  }, [])
+  }, [isLoading, isAuthenticated, user?.role])
 
   // Handle Search Debounce
   useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'ADMIN') return
     const timer = setTimeout(() => {
       setUserPage(1)
       fetchUsers(1, userSearch)
     }, 300)
     return () => clearTimeout(timer)
-  }, [userSearch])
+  }, [userSearch, isAuthenticated, user?.role])
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > userTotalPages) return
@@ -161,7 +168,10 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch(`/api/v1/admin/users/${selectedUserForCredits.id}/credits`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
         credentials: 'include',
         body: JSON.stringify({
           amount: Number(creditAmount),
@@ -191,7 +201,10 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch(`/api/v1/admin/leads/${leadId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
         credentials: 'include',
         body: JSON.stringify({ status: newStatus }),
       })
@@ -208,14 +221,55 @@ export default function AdminDashboardPage() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#FDFCF9] flex items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-[#E76F2E] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-semibold text-[#74706A]">Loading Admin Command Center...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated || user?.role !== 'ADMIN') {
+    return (
+      <div className="min-h-screen bg-[#FDFCF9] flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-[#E7E0D7] p-8 text-center shadow-sm space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+            <Icons.ShieldCheck size={28} />
+          </div>
+          <h2 className="text-xl font-black text-[#292826]">Administrator Access Required</h2>
+          <p className="text-xs text-[#74706A] leading-relaxed">
+            This command center is exclusively reserved for the platform administrator. Please sign in with administrator credentials.
+          </p>
+          <div className="pt-2 flex flex-col gap-2">
+            <Link
+              to="/login"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#292826] hover:bg-black text-white text-xs font-bold transition flex items-center justify-center gap-2"
+            >
+              Sign In as Administrator
+            </Link>
+            <Link
+              to="/"
+              className="w-full py-2.5 px-4 rounded-xl border border-[#E7E0D7] text-[#74706A] hover:text-[#292826] text-xs font-semibold transition"
+            >
+              Return to Homepage
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#FDFCF9] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Top Header Card */}
         <div className="bg-white rounded-2xl border border-[#E7E0D7] p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-2xl bg-[#292826] text-white flex items-center justify-center font-black text-xl shadow-md border border-[#292826]/20">
-              👑
+            <div className="h-14 w-14 rounded-2xl bg-[#292826] text-amber-400 flex items-center justify-center shadow-md border border-[#292826]/20">
+              <Icons.ShieldCheck size={28} />
             </div>
             <div>
               <div className="flex items-center gap-2">

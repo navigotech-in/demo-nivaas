@@ -431,7 +431,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                             onClick={() => setUserMenuOpen(false)}
                             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 transition"
                           >
-                            <span>👑</span>
+                            <Icons.ShieldCheck size={15} className="text-amber-600" />
                             <span>Admin Command Center</span>
                           </Link>
                         )}
