@@ -425,25 +425,25 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
 
                       {/* Menu Links */}
                       <div className="space-y-1">
-                        {user?.role === 'ADMIN' && (
+                        {user?.role === 'ADMIN' ? (
                           <Link
                             to="/admin"
                             onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 transition"
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-[#C94F36] bg-[#FFF6E8] border border-[#E7E0D7] transition"
                           >
-                            <Icons.ShieldCheck size={15} className="text-amber-600" />
+                            <Icons.Shield size={15} className="text-[#C94F36]" />
                             <span>Admin Command Center</span>
                           </Link>
+                        ) : (
+                          <Link
+                            to="/dashboard"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#292826] hover:bg-[#FAF8F5] transition"
+                          >
+                            <Icons.LayoutGrid size={15} className="text-[#C94F36]" />
+                            <span>My Workspace</span>
+                          </Link>
                         )}
-
-                        <Link
-                          to="/dashboard"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-[#292826] hover:bg-[#FAF8F5] transition"
-                        >
-                          <Icons.LayoutGrid size={15} className="text-[#E76F2E]" />
-                          <span>My Dashboard</span>
-                        </Link>
 
                         <button
                           type="button"
@@ -566,7 +566,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 {/* User Account Login / Dashboard */}
                 {isAuthenticated ? (
                   <Link
-                    to="/dashboard"
+                    to={user?.role === 'ADMIN' ? '/admin' : '/dashboard'}
                     className="flex items-center justify-center h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-lg border border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E] shrink-0"
                     aria-label="User Account Dashboard"
                     title={`${user?.name} (${user?.role})`}

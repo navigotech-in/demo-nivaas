@@ -75,7 +75,7 @@ interface AuditLogItem {
 
 export default function AdminDashboardPage() {
   const { user, getAuthHeaders, isAuthenticated, isLoading } = useAuth()
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'leads' | 'audit'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'subscriptions' | 'users' | 'leads' | 'audit'>('overview')
 
   const [loading, setLoading] = useState(true)
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null)
@@ -270,6 +270,9 @@ export default function AdminDashboardPage() {
     )
   }
 
+  const subscribedUsers = users.filter((u) => u.activePass !== null)
+  const activeSubscribedCount = users.filter((u) => u.activePass?.status === 'ACTIVE').length
+
   const sidebarItems = [
     {
       id: 'overview',
@@ -277,6 +280,14 @@ export default function AdminDashboardPage() {
       icon: <Icons.LayoutGrid size={16} />,
       onClick: () => setActiveTab('overview'),
       active: activeTab === 'overview',
+    },
+    {
+      id: 'subscriptions',
+      label: 'Subscriptions / Passes',
+      icon: <Icons.Award size={16} />,
+      badge: metrics?.activePasses ?? activeSubscribedCount,
+      onClick: () => setActiveTab('subscriptions'),
+      active: activeTab === 'subscriptions',
     },
     {
       id: 'users',
@@ -303,27 +314,11 @@ export default function AdminDashboardPage() {
     },
   ]
 
-  const sidebarFooter = (
-    <div className="space-y-2 text-xs">
-      <Link
-        to="/dashboard"
-        className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-white text-[#292826] hover:bg-[#FAF8F5] font-medium transition border border-[#E7E0D7]"
-      >
-        <span className="flex items-center gap-2">
-          <Icons.User size={14} className="text-[#C94F36]" />
-          <span>Client View</span>
-        </span>
-        <Icons.ChevronRight size={12} className="text-[#74706A]" />
-      </Link>
-    </div>
-  )
-
   return (
     <DashboardLayout
-      title="IHM Admin Portal"
+      title="Admin Command Center"
       badgeText="ADMIN"
       sidebarItems={sidebarItems}
-      sidebarFooter={sidebarFooter}
     >
       {actionMessage && (
         <div
@@ -418,7 +413,115 @@ export default function AdminDashboardPage() {
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB 2: USERS DIRECTORY */}
+      {/* TAB 2: SUBSCRIPTIONS & PASSES */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'subscriptions' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="Subscriptions & Access Passes"
+            subtitle="Overview of all active ₹299 Design Passes, subscribed users, and credit allocations."
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard
+              label="Active Subscriptions"
+              value={metrics?.activePasses ?? activeSubscribedCount}
+              subtext="Current active design passes"
+              icon={<Icons.Award size={18} />}
+            />
+            <MetricCard
+              label="Total Subscribed Members"
+              value={subscribedUsers.length}
+              subtext="Users with active or previous passes"
+              icon={<Icons.Users size={18} />}
+            />
+            <MetricCard
+              label="Primary Plan"
+              value="₹299 / Month"
+              subtext="5 High-Res AI Generations / Pass"
+              icon={<Icons.Coins size={18} />}
+            />
+            <MetricCard
+              label="Credits Issued"
+              value={`${metrics?.totalCreditsIssued ?? 0} Credits`}
+              subtext="Granted across all passes"
+              icon={<Icons.CreditCard size={18} />}
+            />
+          </div>
+
+          <DataTable<AdminUserItem>
+            data={subscribedUsers}
+            keyExtractor={(u) => u.id}
+            columns={[
+              {
+                header: 'User & Email',
+                accessor: (u) => (
+                  <div>
+                    <div className="font-semibold text-[#292826]">{u.name}</div>
+                    <div className="text-[11px] text-[#74706A]">{u.email}</div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Mobile Phone',
+                accessor: (u) => u.phone || '—',
+              },
+              {
+                header: 'Pass Plan',
+                accessor: (u) => (
+                  <span className="font-medium text-[#292826]">
+                    {u.activePass?.type === 'DESIGN_PASS_299' ? '₹299 Design Pass' : u.activePass?.type || 'Standard Pass'}
+                  </span>
+                ),
+              },
+              {
+                header: 'Status',
+                accessor: (u) => (
+                  <StatusText
+                    status={u.activePass?.status === 'ACTIVE' ? 'Active' : 'Expired'}
+                    variant={u.activePass?.status === 'ACTIVE' ? 'success' : 'neutral'}
+                  />
+                ),
+              },
+              {
+                header: 'Expires On',
+                accessor: (u) =>
+                  u.activePass?.expiresAt
+                    ? new Date(u.activePass.expiresAt).toLocaleDateString()
+                    : '—',
+              },
+              {
+                header: 'Credit Balance',
+                accessor: (u) => (
+                  <span className="font-semibold text-[#292826]">{u.creditBalance ?? 0}</span>
+                ),
+              },
+              {
+                header: 'Actions',
+                align: 'right',
+                accessor: (u) => (
+                  <button
+                    onClick={() => setSelectedUserForCredits(u)}
+                    className="px-2.5 py-1 rounded-md text-xs font-semibold text-[#C94F36] bg-[#FFF6E8] hover:bg-[#ffeecf] border border-[#E7E0D7] transition"
+                  >
+                    Grant Credits
+                  </button>
+                ),
+              },
+            ]}
+            emptyState={
+              <EmptyState
+                title="No active subscriptions yet"
+                description="When clients purchase the ₹299 Design Pass or receive promotional access, they will be listed here."
+                icon={<Icons.Award size={24} />}
+              />
+            }
+          />
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 3: USERS DIRECTORY */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'users' && (
         <div className="space-y-6">

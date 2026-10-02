@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/authContext'
 import { Icons } from '../components/Icons'
 import { useSeoMeta } from '../components/useSeoMeta'
@@ -89,7 +89,10 @@ export default function DashboardPage({
   const [newFacing, setNewFacing] = useState('East Facing')
 
   const loadDashboardData = useCallback(async () => {
-    if (!isAuthenticated) return
+    if (!isAuthenticated || user?.role === 'ADMIN') {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     setError(null)
     const headers = getAuthHeaders()
@@ -125,13 +128,13 @@ export default function DashboardPage({
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated, getAuthHeaders])
+  }, [isAuthenticated, user?.role, getAuthHeaders])
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.role === 'USER') {
       loadDashboardData()
     }
-  }, [isAuthenticated, loadDashboardData])
+  }, [isAuthenticated, user?.role, loadDashboardData])
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -234,6 +237,10 @@ export default function DashboardPage({
         </div>
       </div>
     )
+  }
+
+  if (isAuthenticated && user?.role === 'ADMIN') {
+    return <Navigate to="/admin" replace />
   }
 
   if (!isAuthenticated) {
