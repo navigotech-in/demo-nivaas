@@ -8,8 +8,6 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
-  console.error('[Unhandled Error]', err)
-
   // Zod Validation Error
   if (err instanceof ZodError) {
     res.status(422).json({
@@ -93,6 +91,7 @@ export function errorHandler(
   }
 
   // Fallback 500
+  console.error('[Internal Server Error]', err)
   res.status(500).json({
     success: false,
     error: {
