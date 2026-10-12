@@ -59,8 +59,8 @@ export default function Services({ onOpenConsult }: ServicesProps) {
                   <div className="flex h-[34px] w-[34px] items-center justify-center rounded-lg bg-[#FFF6E8] border border-[#E7E0D7]">
                     {getServiceIcon(srv.id)}
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#E76F2E] bg-[#F1ECE5] px-[10px] py-[2px] rounded-lg flex items-center gap-1">
-                    <Icons.Check size={12} className="text-[#E76F2E]" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#9B3814] bg-[#FFF0E6] border border-[#E76F2E]/25 px-[10px] py-[2px] rounded-lg flex items-center gap-1">
+                    <Icons.Check size={12} className="text-[#9B3814]" />
                     <span>{srv.badge}</span>
                   </span>
                 </div>

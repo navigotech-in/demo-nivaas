@@ -319,6 +319,11 @@ router.post(
         if (dbErr.message === 'SETUP_ALREADY_COMPLETED') {
           throw dbErr
         }
+        if (config.dataStore === 'postgres') {
+          // Admin must be persisted in the real DB — never silently create a
+          // memory-only admin that disappears on restart.
+          throw dbErr
+        }
         // Fallback for store-only testing
         admin = db.bootstrapAdminAtomically(validated.email, validated.password, validated.name)
         if (validated.phone) {

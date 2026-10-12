@@ -10,14 +10,16 @@ export default function AboutNivaas() {
         <div className="relative">
           <div className="overflow-hidden rounded-3xl border border-slate-300 shadow-card">
             <Img
-              src="https://images.pexels.com/photos/37129015/pexels-photo-37129015.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop"
+              src="https://images.pexels.com/photos/37129015/pexels-photo-37129015.jpeg?auto=compress&cs=tinysrgb&w=480&h=360&fit=crop"
               alt="Indore House Makers designed modern Indian duplex"
+              width={480}
+              height={360}
               className="aspect-[4/3] w-full object-cover"
             />
           </div>
           <div className="absolute -bottom-5 -right-3 sm:right-4 rounded-2xl bg-[#E76F2E] px-5 py-4 text-white shadow-lg border border-[#C65320]">
             <div className="font-display text-2xl font-extrabold text-white">14+</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-white/85">Years of Design</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-white">Years of Design</div>
           </div>
         </div>
 

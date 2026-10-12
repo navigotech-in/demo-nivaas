@@ -46,7 +46,13 @@ export default function CommercialDesigns({ onOpenConsult }: CommercialDesignsPr
 
         {/* Single Unified Commercial Card */}
         <div key={active.id} className="relative overflow-hidden rounded-lg border border-[#E7E0D7] shadow-card animate-fadeIn">
-          <img src={active.image} alt={active.label} className="absolute inset-0 h-full w-full object-cover" />
+          <img
+            src={active.image}
+            alt={active.label}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-[#292826]/90 via-[#292826]/45 to-[#292826]/10" />
 
           <div className="relative min-h-[360px] sm:min-h-[408px] flex flex-col justify-end p-6 sm:p-10">

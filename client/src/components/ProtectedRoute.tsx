@@ -1,7 +1,8 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/authContext'
 import { Icons } from './Icons'
+import { openLoginModal } from '../lib/uiEvents'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -10,6 +11,14 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children, adminOnly = false }: ProtectedRouteProps) {
   const { user, isAuthenticated, isLoading } = useAuth()
+
+  // When unauthenticated (including an expired session or a direct hit on a
+  // protected route), automatically surface the global login popup.
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || !user)) {
+      openLoginModal()
+    }
+  }, [isLoading, isAuthenticated, user])
 
   if (isLoading) {
     return (
@@ -31,9 +40,16 @@ export default function ProtectedRoute({ children, adminOnly = false }: Protecte
           <p className="text-xs text-[#54504A] leading-relaxed mb-6">
             You must be logged in to access this page. Please sign in to your Indore House Makers account.
           </p>
+          <button
+            type="button"
+            onClick={() => openLoginModal()}
+            className="inline-flex items-center justify-center w-full h-11 rounded-xl bg-[#E76F2E] text-white font-bold text-xs hover:bg-[#C65320] transition shadow-md cursor-pointer"
+          >
+            Sign In to Continue
+          </button>
           <Link
             to="/"
-            className="inline-flex items-center justify-center w-full h-11 rounded-xl bg-[#292826] text-white font-bold text-xs hover:bg-[#E76F2E] transition shadow-md"
+            className="inline-flex items-center justify-center w-full h-11 mt-2.5 rounded-xl bg-[#292826] text-white font-bold text-xs hover:bg-[#E76F2E] transition shadow-md"
           >
             Return to Homepage
           </Link>
@@ -43,25 +59,7 @@ export default function ProtectedRoute({ children, adminOnly = false }: Protecte
   }
 
   if (adminOnly && user.role !== 'ADMIN') {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center bg-[#FDFCF9]">
-        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-red-200 shadow-lg">
-          <div className="h-14 w-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-5 border border-red-200">
-            <Icons.Shield size={28} />
-          </div>
-          <h2 className="text-2xl font-black text-[#292826] tracking-tight mb-2">Access Denied (403)</h2>
-          <p className="text-xs text-[#54504A] leading-relaxed mb-6">
-            This area requires elevated <strong>ADMIN</strong> role privileges. Your current account (<code className="text-[#292826] font-bold">{user.email}</code>) is registered as a standard customer.
-          </p>
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center justify-center w-full h-11 rounded-xl bg-[#292826] text-white font-bold text-xs hover:bg-[#E76F2E] transition shadow-md"
-          >
-            Go to User Dashboard
-          </Link>
-        </div>
-      </div>
-    )
+    return <Navigate to="/dashboard" replace />
   }
 
   return <>{children}</>

@@ -1,11 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { site } from '../lib/data'
 import { Icons } from './Icons'
+import { useAuth } from '../lib/authContext'
+import {
+  createUserProject,
+  generateFree2DPreview,
+  fetchUserEntitlements,
+  type UserEntitlements,
+  startPaid3DGeneration,
+  saveWizardDraft,
+} from '../lib/api'
+import DesignPassModal from './DesignPassModal'
+import { notifyDataChanged, subscribeDataChanged } from '../lib/syncEvents'
 
 export interface NivaasAiStudioProps {
   open: boolean
   onClose: () => void
   onOpenConsult?: (details?: string) => void
+  onOpenLogin?: () => void
   initialMode?: 'generator' | 'chat'
   initialWidth?: number
   initialDepth?: number
@@ -40,17 +52,24 @@ export default function NivaasAiStudio({
   open,
   onClose,
   onOpenConsult,
+  onOpenLogin,
   initialMode = 'generator',
   initialWidth = 30,
   initialDepth = 50,
 }: NivaasAiStudioProps) {
+  const { user, accessToken, refreshAuth, isAuthenticated } = useAuth()
   const [activeTab, setActiveTab] = useState<'generator' | 'chat'>(initialMode)
 
   // -----------------------------------------------------------
   // Wizard State
   // -----------------------------------------------------------
   const [step, setStep] = useState(1)
-  
+  const [showPassModal, setShowPassModal] = useState(false)
+  const [is3DUnlocked, setIs3DUnlocked] = useState(false)
+  const [is3DGenerated, setIs3DGenerated] = useState(false)
+  const [creditsRemaining, setCreditsRemaining] = useState(0)
+  const [generating3D, setGenerating3D] = useState(false)
+
   // Step 1: Shape Branching State
   const [plotShape, setPlotShape] = useState<'regular' | 'irregular' | 'not_sure'>('regular')
 
@@ -107,12 +126,15 @@ export default function NivaasAiStudio({
   // Synthesis & Result State
   const [processingProgress, setProcessingProgress] = useState(0)
   const [processingStatus, setProcessingStatus] = useState('Analyzing plot setbacks and municipal bylaws...')
-  const [leadName, setLeadName] = useState('')
-  const [leadPhone, setLeadPhone] = useState('')
-  const [leadCity, setLeadCity] = useState('')
   const [activeFloorView, setActiveFloorView] = useState<'ground' | 'first'>('ground')
   const [isNightLighting, setIsNightLighting] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+
+  // Entitlement & Free 2D Generation State
+  const [entitlements, setEntitlements] = useState<UserEntitlements | null>(null)
+  const [generatingFree2D, setGeneratingFree2D] = useState(false)
+  const [generatingPaid3D, setGeneratingPaid3D] = useState(false)
+  const [freeGenError, setFreeGenError] = useState('')
 
   // -----------------------------------------------------------
   // Dynamic Total Steps & Explicit Step Naming
@@ -122,6 +144,84 @@ export default function NivaasAiStudio({
   const synthesisStep = totalWizardSteps + 1 // 21 for regular, 24 for irregular
   const leadStep = totalWizardSteps + 2      // 22 for regular, 25 for irregular
   const resultsStep = totalWizardSteps + 3   // 23 for regular, 26 for irregular
+
+  // Restore draft on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const rawDraft = localStorage.getItem('ihm_wizard_draft')
+      if (rawDraft) {
+        const draft = JSON.parse(rawDraft)
+        if (draft.plotWidth) setPlotWidth(draft.plotWidth)
+        if (draft.plotDepth) setPlotDepth(draft.plotDepth)
+        if (draft.floors) setFloors(draft.floors)
+        if (draft.parking) setParking(draft.parking)
+        if (draft.plotDirection) setPlotDirection(draft.plotDirection)
+        if (draft.materialGrade) setMaterialGrade(draft.materialGrade)
+        if (draft.elevationStyle) setElevationStyle(draft.elevationStyle)
+      }
+    } catch {}
+  }, [])
+
+  // Auto-save draft on change
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const draft = {
+      plotShape,
+      plotWidth,
+      plotDepth,
+      floors,
+      parking,
+      plotDirection,
+      materialGrade,
+      elevationStyle,
+      masterBedrooms,
+      kitchenFloor,
+      mandirPreference,
+      balconies,
+      officeSpace,
+      garden,
+      lift,
+      bathroomChoice,
+    }
+    localStorage.setItem('ihm_wizard_draft', JSON.stringify(draft))
+  }, [
+    plotShape,
+    plotWidth,
+    plotDepth,
+    floors,
+    parking,
+    plotDirection,
+    materialGrade,
+    elevationStyle,
+    masterBedrooms,
+    kitchenFloor,
+    mandirPreference,
+    balconies,
+    officeSpace,
+    garden,
+    lift,
+    bathroomChoice,
+  ])
+
+  // Single Source of Truth: Refresh live entitlements from backend
+  const refreshEntitlements = async () => {
+    if (!accessToken || !isAuthenticated) {
+      setEntitlements(null)
+      return
+    }
+    try {
+      const data = await fetchUserEntitlements({ Authorization: `Bearer ${accessToken}` })
+      setEntitlements(data)
+    } catch {
+      // Fallback
+    }
+  }
+
+  // Check entitlements when user changes
+  useEffect(() => {
+    refreshEntitlements()
+  }, [accessToken, isAuthenticated])
 
   // Map step number to step name
   const getStepKey = (s: number): string => {
@@ -201,6 +301,7 @@ export default function NivaasAiStudio({
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
+      refreshEntitlements().catch(() => null)
     } else {
       document.body.style.overflow = ''
     }
@@ -208,6 +309,30 @@ export default function NivaasAiStudio({
       document.body.style.overflow = ''
     }
   }, [open])
+
+  // Real-time synchronization: Re-fetches entitlements if passes/credits update in background or other tabs
+  useEffect(() => {
+    if (!open) return
+    const unsubscribe = subscribeDataChanged((type) => {
+      if (type === 'all' || type === 'passes' || type === 'credits') {
+        refreshEntitlements().catch(() => null)
+      }
+    })
+    return unsubscribe
+  }, [open, refreshEntitlements])
+
+  // Synchronize 3D unlocked state & credits with authoritative entitlements
+  useEffect(() => {
+    if (entitlements?.designPass?.active && (entitlements.designPass.creditsRemaining ?? 0) > 0) {
+      setIs3DUnlocked(true)
+      setCreditsRemaining(entitlements.designPass.creditsRemaining)
+    } else if (entitlements?.designPass?.creditsRemaining !== undefined) {
+      setCreditsRemaining(entitlements.designPass.creditsRemaining)
+      if (entitlements.designPass.creditsRemaining <= 0) {
+        setIs3DUnlocked(false)
+      }
+    }
+  }, [entitlements])
 
   // Chat auto-scroll
   useEffect(() => {
@@ -233,7 +358,9 @@ export default function NivaasAiStudio({
         setProcessingProgress((prev) => {
           if (prev >= 100) {
             clearInterval(interval)
-            setTimeout(() => setStep(leadStep), 600) // Go to lead capture
+            setTimeout(() => {
+              setStep(leadStep)
+            }, 600)
             return 100
           }
           const next = prev + 5
@@ -248,6 +375,138 @@ export default function NivaasAiStudio({
       return () => clearInterval(interval)
     }
   }, [step, synthesisStep, leadStep, isRegular])
+
+  const handleGenerateFree2DPlan = async () => {
+    if (!accessToken) {
+      onOpenLogin?.()
+      return
+    }
+
+    setGeneratingFree2D(true)
+    setFreeGenError('')
+    try {
+      const wizardPayload = {
+        plotWidth: isRegular ? plotWidth : Math.round(Math.sqrt(rawPlotAreaSqFt)),
+        plotLength: isRegular ? plotDepth : Math.round(Math.sqrt(rawPlotAreaSqFt)),
+        plotAreaSqFt: rawPlotAreaSqFt,
+        plotAreaSqYards,
+        facing: plotDirection,
+        bhk: `${suggestedBHK} BHK`,
+        floors,
+        elevationStyle,
+        materialGrade,
+        builtUpArea,
+        carpetArea,
+        estimatedCostLakhs,
+        vastuScore: 98,
+        leadName: user?.name || 'Indore Client',
+        leadCity: (user as any)?.city || 'Indore, MP',
+        title: `${isRegular ? `${plotWidth}x${plotDepth} ft` : `${rawPlotAreaSqFt} sq.ft`} ${plotDirection} Facing ${floors.split(' ')[0]} Residence`,
+      }
+
+      await generateFree2DPreview(
+        { wizardData: wizardPayload },
+        { Authorization: `Bearer ${accessToken}` }
+      )
+
+      await createUserProject(
+        {
+          jobType: '2D_FLOOR_PLAN',
+          inputPayload: wizardPayload,
+        },
+        { Authorization: `Bearer ${accessToken}` }
+      ).catch(() => null)
+
+      await refreshEntitlements().catch(() => null)
+      await refreshAuth().catch(() => null)
+      notifyDataChanged('generations')
+      setStep(resultsStep)
+    } catch (err: any) {
+      if (err.message?.includes('FREE_PREVIEW_ALREADY_CONSUMED')) {
+        await refreshEntitlements().catch(() => null)
+        setFreeGenError('All 5 free 2D previews have been used on your account. Upgrade to the ₹299 Design Pass for unlimited new 3D & 2D generations.')
+      } else {
+        setFreeGenError(err.message || 'Failed to generate free 2D plan.')
+      }
+    } finally {
+      setGeneratingFree2D(false)
+    }
+  }
+
+  const handleGeneratePaid3DPlan = async () => {
+    if (!accessToken) {
+      onOpenLogin?.()
+      return
+    }
+
+    setGeneratingPaid3D(true)
+    setFreeGenError('')
+    try {
+      const wizardPayload = {
+        plotWidth: isRegular ? plotWidth : Math.round(Math.sqrt(rawPlotAreaSqFt)),
+        plotLength: isRegular ? plotDepth : Math.round(Math.sqrt(rawPlotAreaSqFt)),
+        plotAreaSqFt: rawPlotAreaSqFt,
+        plotAreaSqYards,
+        facing: plotDirection,
+        bhk: `${suggestedBHK} BHK`,
+        floors,
+        elevationStyle,
+        materialGrade,
+        builtUpArea,
+        carpetArea,
+        estimatedCostLakhs,
+        vastuScore: 98,
+        leadName: user?.name || 'Indore Client',
+        leadCity: (user as any)?.city || 'Indore, MP',
+        title: `${isRegular ? `${plotWidth}x${plotDepth} ft` : `${rawPlotAreaSqFt} sq.ft`} ${plotDirection} Facing ${floors.split(' ')[0]} Luxury 3D Design`,
+      }
+
+      const session = await saveWizardDraft(
+        { stage: 20, wizardData: wizardPayload },
+        { Authorization: `Bearer ${accessToken}` }
+      ).catch(() => null)
+
+      const sessionId = session?.id || 'session_' + Date.now()
+
+      const genRes = await startPaid3DGeneration(sessionId, { Authorization: `Bearer ${accessToken}` })
+      if (genRes?.creditsRemaining !== undefined) {
+        setCreditsRemaining(genRes.creditsRemaining)
+      }
+
+      await createUserProject(
+        {
+          jobType: 'THREE_D_GENERATION',
+          inputPayload: {
+            ...wizardPayload,
+            has3D: true,
+            is3DUnlocked: true,
+            image: getElevationImage(),
+          },
+        },
+        { Authorization: `Bearer ${accessToken}` }
+      ).catch(() => null)
+
+      // The design package is already generated (1 credit reserved). Mark it generated
+      // so the results screen shows the completed 3D render instead of prompting for a
+      // second, duplicate 1-credit generation.
+      setIs3DGenerated(true)
+      notifyDataChanged('generations')
+      notifyDataChanged('credits')
+
+      await refreshEntitlements().catch(() => null)
+      await refreshAuth().catch(() => null)
+      setStep(resultsStep)
+    } catch (err: any) {
+      if (err.message?.includes('DESIGN_PASS_REQUIRED') || err.message?.includes('INSUFFICIENT_CREDITS')) {
+        await refreshEntitlements().catch(() => null)
+        setShowPassModal(true)
+      } else {
+        setFreeGenError(err.message || 'Failed to generate 3D plan.')
+      }
+    } finally {
+      setGeneratingPaid3D(false)
+    }
+  }
 
   if (!open) return null
 
@@ -285,17 +544,21 @@ export default function NivaasAiStudio({
     floors.includes('Ground') || floors.includes('Single')
       ? 1
       : floors.includes('Two') || floors.includes('G+1')
-      ? 1.85
-      : floors.includes('Three') || floors.includes('G+2')
-      ? 2.7
-      : 3.5
+        ? 1.85
+        : floors.includes('Three') || floors.includes('G+2')
+          ? 2.7
+          : 3.5
   const builtUpArea = Math.round(buildableAreaSqFt * floorMultiplier)
   const carpetArea = Math.round(builtUpArea * 0.76)
 
-  // Rate estimation (+6% complexity premium for irregular plots)
-  const baseRate = materialGrade.includes('1,800') ? 1800 : materialGrade.includes('3,200') ? 3250 : 2350
-  const finalRatePerSqFt = isRegular ? baseRate : Math.round(baseRate * 1.06)
-  const estimatedCostLakhs = ((builtUpArea * finalRatePerSqFt) / 100000).toFixed(1)
+  // Rate estimation from selected package (Standard: 1450, Premium: 1750, Luxury: 2200)
+  const getMaterialNumericRate = (grade: string): number => {
+    if (grade.toLowerCase().includes('standard')) return 1450
+    if (grade.toLowerCase().includes('luxury')) return 2200
+    return 1750 // Premium default
+  }
+  const finalRatePerSqFt = getMaterialNumericRate(materialGrade)
+  const estimatedCostLakhs = ((builtUpArea * finalRatePerSqFt) / 100000).toFixed(2)
 
   // AI Smart Suggestion Values
   const getSmartSuggestedBHK = (): number => {
@@ -359,11 +622,6 @@ export default function NivaasAiStudio({
     } else if (step === resultsStep) {
       setStep(totalWizardSteps)
     }
-  }
-
-  const handleSubmitLead = (e: React.FormEvent) => {
-    e.preventDefault()
-    setStep(resultsStep) // Results page
   }
 
   // Chat message submission
@@ -450,6 +708,24 @@ export default function NivaasAiStudio({
       <div
         className="relative w-full max-w-3xl lg:max-w-4xl h-[88vh] max-h-[780px] min-h-[560px] bg-white rounded-2xl shadow-2xl border border-[#E7E0D7] flex flex-col overflow-hidden text-[#292826]"
       >
+        {/* Admin Test Simulation Mode Banner */}
+        {user?.role === 'ADMIN' && (
+          <div className="bg-[#292826] text-white px-4 py-1.5 text-xs flex items-center justify-between border-b border-black/20 shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-bold text-amber-400 text-[11px] uppercase tracking-wider">
+                Admin Live Test Mode
+              </span>
+              <span className="hidden sm:inline text-[11px] text-[#C5BFB8]">
+                · Unlimited simulation preview (Zero customer credits consumed)
+              </span>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#C94F36] text-white uppercase tracking-wider">
+              Admin Privilege
+            </span>
+          </div>
+        )}
+
         {/* Top Header */}
         <header className="shrink-0 bg-white border-b border-[#EEE9E3] px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -457,9 +733,10 @@ export default function NivaasAiStudio({
               <Icons.Sparkles size={18} className="text-white animate-pulse" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-display font-extrabold text-base tracking-tight text-[#292826]">
-                  Indore House Makers <span className="text-[#C94F36]">{activeTab === 'chat' ? 'AI Design Desk' : 'AI Architect Studio'}</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-display font-extrabold text-base tracking-tight text-[#292826] flex items-center gap-1.5">
+                  <span>Indore House Makers</span>
+                  <span className="text-[#C94F36] whitespace-nowrap">{activeTab === 'chat' ? 'AI Design Desk' : 'AI Architect Studio'}</span>
                 </span>
                 {activeTab === 'generator' ? (
                   <span className="hidden sm:inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#FFF6E8] text-[#C65320] border border-[#E76F2E]/20 rounded-full">
@@ -481,16 +758,44 @@ export default function NivaasAiStudio({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Live User Credit / Entitlement Indicator */}
+            {entitlements?.designPass.active ? (
+              <div className="hidden md:flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold shadow-2xs">
+                  <span>🪙</span>
+                  <span>3D Pass: {entitlements.designPass.creditsRemaining} Credits</span>
+                  <span className="text-[10px] text-amber-700 font-semibold">({entitlements.designPass.daysRemaining}d left)</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-sky-50 border border-sky-300 text-sky-900 text-xs font-bold shadow-2xs">
+                  <span>📐</span>
+                  <span>2D: {entitlements.daily2D ? `${entitlements.daily2D.remaining}/5 Today` : '5/day'}</span>
+                </div>
+              </div>
+            ) : entitlements?.daily2D && entitlements.daily2D.remaining > 0 ? (
+              <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold shadow-2xs">
+                <span>🎁</span>
+                <span>Free 2D: {entitlements.daily2D.remaining}/5 Today</span>
+              </div>
+            ) : isAuthenticated && !entitlements?.designPass?.active ? (
+              <button
+                type="button"
+                onClick={() => setShowPassModal(true)}
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] text-white text-xs font-bold shadow-2xs hover:opacity-95 transition cursor-pointer"
+              >
+                <span>✨</span>
+                <span>Upgrade (₹299 Pass)</span>
+              </button>
+            ) : null}
+
             {/* Mode Switcher Tabs */}
             <div className="flex items-center bg-[#F4EFEA] p-1 rounded-xl border border-[#E7E0D7]">
               <button
                 type="button"
                 onClick={() => setActiveTab('generator')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                  activeTab === 'generator'
-                    ? 'bg-white text-[#E76F2E] shadow-sm'
-                    : 'text-[#54504A] hover:text-[#292826]'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'generator'
+                  ? 'bg-white text-[#E76F2E] shadow-sm'
+                  : 'text-[#54504A] hover:text-[#292826]'
+                  }`}
               >
                 <Icons.Blueprint size={13} />
                 <span>AI Plan Generator</span>
@@ -498,11 +803,10 @@ export default function NivaasAiStudio({
               <button
                 type="button"
                 onClick={() => setActiveTab('chat')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                  activeTab === 'chat'
-                    ? 'bg-white text-[#E76F2E] shadow-sm'
-                    : 'text-[#54504A] hover:text-[#292826]'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'chat'
+                  ? 'bg-white text-[#E76F2E] shadow-sm'
+                  : 'text-[#54504A] hover:text-[#292826]'
+                  }`}
               >
                 <span>💬</span>
                 <span>Ask AI</span>
@@ -577,11 +881,10 @@ export default function NivaasAiStudio({
                       <button
                         type="button"
                         onClick={() => setPlotShape('regular')}
-                        className={`p-5 rounded-2xl border-2 text-left transition relative overflow-hidden group ${
-                          plotShape === 'regular'
-                            ? 'border-[#E76F2E] shadow-md ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
-                            : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
-                        }`}
+                        className={`p-5 rounded-2xl border-2 text-left transition relative overflow-hidden group ${plotShape === 'regular'
+                          ? 'border-[#E76F2E] shadow-md ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
+                          : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
+                          }`}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
@@ -612,11 +915,10 @@ export default function NivaasAiStudio({
                       <button
                         type="button"
                         onClick={() => setPlotShape('irregular')}
-                        className={`p-5 rounded-2xl border-2 text-left transition relative overflow-hidden group ${
-                          plotShape === 'irregular'
-                            ? 'border-[#E76F2E] shadow-md ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
-                            : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
-                        }`}
+                        className={`p-5 rounded-2xl border-2 text-left transition relative overflow-hidden group ${plotShape === 'irregular'
+                          ? 'border-[#E76F2E] shadow-md ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
+                          : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
+                          }`}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
@@ -646,11 +948,10 @@ export default function NivaasAiStudio({
 
                     {/* Not Sure Banner with Direct File Upload & Auto-Detect */}
                     <div className="pt-1">
-                      <label className={`w-full p-4 sm:p-5 rounded-2xl border-2 border-dashed transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer group shadow-sm ${
-                        plotShape === 'not_sure'
-                          ? 'border-[#E76F2E] bg-[#FFF6E8] ring-2 ring-[#E76F2E]'
-                          : 'border-[#E76F2E]/40 bg-[#FFF6E8]/40 hover:bg-[#FFF6E8] hover:border-[#E76F2E]'
-                      }`}>
+                      <label className={`w-full p-4 sm:p-5 rounded-2xl border-2 border-dashed transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer group shadow-sm ${plotShape === 'not_sure'
+                        ? 'border-[#E76F2E] bg-[#FFF6E8] ring-2 ring-[#E76F2E]'
+                        : 'border-[#E76F2E]/40 bg-[#FFF6E8]/40 hover:bg-[#FFF6E8] hover:border-[#E76F2E]'
+                        }`}>
                         <input
                           type="file"
                           accept=".jpg,.jpeg,.png,.pdf"
@@ -740,11 +1041,10 @@ export default function NivaasAiStudio({
                               key={w}
                               type="button"
                               onClick={() => setPlotWidth(w)}
-                              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition ${
-                                plotWidth === w
-                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
-                                  : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E] hover:bg-[#FFF6E8]'
-                              }`}
+                              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition ${plotWidth === w
+                                ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
+                                : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E] hover:bg-[#FFF6E8]'
+                                }`}
                             >
                               {w} ft
                             </button>
@@ -795,11 +1095,10 @@ export default function NivaasAiStudio({
                               key={d}
                               type="button"
                               onClick={() => setPlotDepth(d)}
-                              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition ${
-                                plotDepth === d
-                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
-                                  : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E] hover:bg-[#FFF6E8]'
-                              }`}
+                              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition ${plotDepth === d
+                                ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
+                                : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E] hover:bg-[#FFF6E8]'
+                                }`}
                             >
                               {d} ft
                             </button>
@@ -880,11 +1179,10 @@ export default function NivaasAiStudio({
                         <button
                           type="button"
                           onClick={() => setHasMapPin(!hasMapPin)}
-                          className={`px-3 py-1 rounded-lg text-xs font-bold border transition ${
-                            hasMapPin
-                              ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
-                              : 'bg-[#FDFCF9] text-[#54504A] border-[#E7E0D7]'
-                          }`}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold border transition ${hasMapPin
+                            ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                            : 'bg-[#FDFCF9] text-[#54504A] border-[#E7E0D7]'
+                            }`}
                         >
                           {hasMapPin ? '📍 Pin Dropped' : '+ Drop Pin'}
                         </button>
@@ -925,11 +1223,10 @@ export default function NivaasAiStudio({
                               key={count}
                               type="button"
                               onClick={() => setSidesCount(count)}
-                              className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
-                                sidesCount === count
-                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
-                                  : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                              }`}
+                              className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${sidesCount === count
+                                ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
+                                : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
+                                }`}
                             >
                               {count === 3 ? '3 (Triangle)' : count === 4 ? '4 (Quad)' : count === 5 ? '5 (Pentagon)' : '6+ (Polygon)'}
                             </button>
@@ -990,11 +1287,10 @@ export default function NivaasAiStudio({
                                 key={sideLetter}
                                 type="button"
                                 onClick={() => setRoadFacingSide(sideLetter)}
-                                className={`flex-1 py-2 rounded-lg text-xs font-bold border transition ${
-                                  roadFacingSide === sideLetter
-                                    ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
-                                    : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7]'
-                                }`}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold border transition ${roadFacingSide === sideLetter
+                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                  : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7]'
+                                  }`}
                               >
                                 Side {sideLetter}
                               </button>
@@ -1036,11 +1332,10 @@ export default function NivaasAiStudio({
                                   setExistingStructures([...existingStructures, item])
                                 }
                               }}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition ${
-                                existingStructures.includes(item)
-                                  ? 'bg-[#292826] text-white border-[#292826]'
-                                  : 'bg-[#FDFCF9] text-[#54504A] border-[#E7E0D7] hover:border-[#292826]'
-                              }`}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition ${existingStructures.includes(item)
+                                ? 'bg-[#292826] text-white border-[#292826]'
+                                : 'bg-[#FDFCF9] text-[#54504A] border-[#E7E0D7] hover:border-[#292826]'
+                                }`}
                             >
                               {item}
                             </button>
@@ -1089,11 +1384,10 @@ export default function NivaasAiStudio({
                                 key={f.id}
                                 type="button"
                                 onClick={() => setFamilySize(f.id as any)}
-                                className={`flex-1 py-1 px-1.5 rounded-lg text-[11px] font-bold border transition ${
-                                  familySize === f.id
-                                    ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
-                                    : 'bg-white text-[#292826] border-[#E7E0D7]'
-                                }`}
+                                className={`flex-1 py-1 px-1.5 rounded-lg text-[11px] font-bold border transition ${familySize === f.id
+                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                  : 'bg-white text-[#292826] border-[#E7E0D7]'
+                                  }`}
                               >
                                 {f.label}
                               </button>
@@ -1115,11 +1409,10 @@ export default function NivaasAiStudio({
                                 key={b.id}
                                 type="button"
                                 onClick={() => setBudgetTier(b.id as any)}
-                                className={`flex-1 py-1 px-1.5 rounded-lg text-[11px] font-bold border transition ${
-                                  budgetTier === b.id
-                                    ? 'bg-[#292826] text-white border-[#292826]'
-                                    : 'bg-white text-[#292826] border-[#E7E0D7]'
-                                }`}
+                                className={`flex-1 py-1 px-1.5 rounded-lg text-[11px] font-bold border transition ${budgetTier === b.id
+                                  ? 'bg-[#292826] text-white border-[#292826]'
+                                  : 'bg-white text-[#292826] border-[#E7E0D7]'
+                                  }`}
                               >
                                 {b.label}
                               </button>
@@ -1185,11 +1478,10 @@ export default function NivaasAiStudio({
                                 key={m}
                                 type="button"
                                 onClick={() => setVastuMode(m)}
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition ${
-                                  vastuMode === m
-                                    ? 'bg-emerald-700 text-white'
-                                    : 'bg-white text-emerald-800 border border-emerald-300'
-                                }`}
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition ${vastuMode === m
+                                  ? 'bg-emerald-700 text-white'
+                                  : 'bg-white text-emerald-800 border border-emerald-300'
+                                  }`}
                               >
                                 {m}
                               </button>
@@ -1250,11 +1542,10 @@ export default function NivaasAiStudio({
                                   setLifestyleTags([...lifestyleTags, tag])
                                 }
                               }}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
-                                lifestyleTags.includes(tag)
-                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-xs'
-                                  : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                              }`}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${lifestyleTags.includes(tag)
+                                ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-xs'
+                                : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
+                                }`}
                             >
                               {tag}
                             </button>
@@ -1319,50 +1610,39 @@ export default function NivaasAiStudio({
                             key={item.id}
                             type="button"
                             onClick={() => setFloors(item.id)}
-                            className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 relative flex flex-col justify-between cursor-pointer ${
-                              isSelected
-                                ? 'border-[#E76F2E] bg-gradient-to-br from-[#FFF8F0] via-[#FFEDD5] to-[#FED7AA] shadow-xl ring-2 ring-[#E76F2E] scale-[1.02]'
-                                : 'border-gray-300 bg-white hover:border-[#E76F2E] hover:bg-orange-50/30 shadow-sm'
-                            }`}
+                            className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 relative flex flex-col justify-between cursor-pointer ${isSelected
+                              ? 'border-[#E76F2E] bg-[#FFF8F0] shadow-md ring-2 ring-[#E76F2E]/30 scale-[1.01]'
+                              : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E] hover:bg-orange-50/20 shadow-xs'
+                              }`}
                           >
                             <div>
-                              <div className="flex items-center justify-between w-full mb-2">
+                              <div className="flex items-center justify-between w-full mb-2.5">
                                 <div className="flex items-center gap-2.5">
-                                  <span className="text-2xl p-1.5 rounded-xl bg-white/90 border border-gray-200 shadow-2xs">
+                                  <span className="text-2xl p-1.5 rounded-xl bg-white border border-[#E7E0D7] shadow-2xs">
                                     {item.emoji}
                                   </span>
                                   <span
-                                    className={`text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md border ${
-                                      isSelected
-                                        ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
-                                        : 'bg-gray-100 text-gray-700 border-gray-200'
-                                    }`}
+                                    className={`text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md border ${isSelected
+                                      ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                      : 'bg-gray-100 text-[#374151] border-gray-200'
+                                      }`}
                                   >
                                     {item.tag}
                                   </span>
                                 </div>
                                 <span
-                                  className={`flex h-6 w-6 items-center justify-center rounded-full transition shadow-xs ${
-                                    isSelected
-                                      ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
-                                      : 'border-2 border-gray-400 bg-gray-50'
-                                  }`}
+                                  className={`flex h-6 w-6 items-center justify-center rounded-full transition shadow-xs ${isSelected
+                                    ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
+                                    : 'border-2 border-gray-400 bg-gray-50'
+                                    }`}
                                 >
                                   {isSelected ? <Icons.Check size={14} className="stroke-[3]" /> : null}
                                 </span>
                               </div>
-                              <div
-                                className={`text-base font-black tracking-tight ${
-                                  isSelected ? 'text-[#9A3412]' : 'text-gray-900'
-                                }`}
-                              >
+                              <div className="text-base font-black tracking-tight !text-[#111827] text-gray-950" style={{ color: '#111827' }}>
                                 {item.label}
                               </div>
-                              <div
-                                className={`text-xs mt-1 leading-relaxed ${
-                                  isSelected ? 'text-[#7C2D12] font-semibold' : 'text-gray-600'
-                                }`}
-                              >
+                              <div className="text-xs mt-1 leading-relaxed !text-[#374151] font-semibold" style={{ color: '#374151' }}>
                                 {item.desc}
                               </div>
                             </div>
@@ -1394,11 +1674,10 @@ export default function NivaasAiStudio({
                           key={num}
                           type="button"
                           onClick={() => setMasterBedrooms(num)}
-                          className={`py-5 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
-                            masterBedrooms === num
-                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
-                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
-                          }`}
+                          className={`py-5 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${masterBedrooms === num
+                            ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                            : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                            }`}
                         >
                           {num}
                         </button>
@@ -1428,11 +1707,10 @@ export default function NivaasAiStudio({
                           key={num}
                           type="button"
                           onClick={() => setMarriedCouples(num)}
-                          className={`py-5 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
-                            marriedCouples === num
-                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
-                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
-                          }`}
+                          className={`py-5 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${marriedCouples === num
+                            ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                            : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                            }`}
                         >
                           {num}
                         </button>
@@ -1462,11 +1740,10 @@ export default function NivaasAiStudio({
                           key={num}
                           type="button"
                           onClick={() => setKidsCount(num)}
-                          className={`py-5 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
-                            kidsCount === num
-                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
-                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
-                          }`}
+                          className={`py-5 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${kidsCount === num
+                            ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                            : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                            }`}
                         >
                           {num}
                         </button>
@@ -1496,11 +1773,10 @@ export default function NivaasAiStudio({
                           key={choice}
                           type="button"
                           onClick={() => setKidsBedroom(choice as 'Yes' | 'No')}
-                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
-                            kidsBedroom === choice
-                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
-                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
-                          }`}
+                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${kidsBedroom === choice
+                            ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                            : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                            }`}
                         >
                           {choice}
                         </button>
@@ -1536,31 +1812,29 @@ export default function NivaasAiStudio({
                             key={item.id}
                             type="button"
                             onClick={() => setKitchenFloor(item.id)}
-                            className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 relative flex items-center justify-between cursor-pointer ${
-                              isSelected
-                                ? 'border-[#E76F2E] bg-gradient-to-br from-[#FFF8F0] via-[#FFEDD5] to-[#FED7AA] shadow-lg ring-2 ring-[#E76F2E] scale-[1.01]'
-                                : 'border-gray-300 bg-white hover:border-[#E76F2E] hover:bg-orange-50/30 shadow-sm'
-                            }`}
+                            className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 relative flex items-center justify-between cursor-pointer ${isSelected
+                              ? 'border-[#E76F2E] bg-gradient-to-br from-[#FFF8F0] via-[#FFEDD5] to-[#FED7AA] shadow-lg ring-2 ring-[#E76F2E] scale-[1.01]'
+                              : 'border-gray-300 bg-white hover:border-[#E76F2E] hover:bg-orange-50/30 shadow-sm'
+                              }`}
                           >
                             <div className="flex items-center gap-3">
                               <span className="text-2xl p-1.5 rounded-xl bg-white/90 border border-gray-200 shadow-2xs">
                                 {item.emoji}
                               </span>
                               <div>
-                                <div className={`text-sm font-black ${isSelected ? 'text-[#9A3412]' : 'text-gray-900'}`}>
+                                <div className="text-sm font-black text-[#111827]">
                                   {item.label}
                                 </div>
-                                <div className={`text-xs mt-0.5 ${isSelected ? 'text-[#7C2D12] font-semibold' : 'text-gray-600'}`}>
+                                <div className="text-xs mt-0.5 text-[#374151] font-medium">
                                   {item.desc}
                                 </div>
                               </div>
                             </div>
                             <span
-                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition shadow-xs ml-3 ${
-                                isSelected
-                                  ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
-                                  : 'border-2 border-gray-400 bg-gray-50'
-                              }`}
+                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition shadow-xs ml-3 ${isSelected
+                                ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
+                                : 'border-2 border-gray-400 bg-gray-50'
+                                }`}
                             >
                               {isSelected ? <Icons.Check size={14} className="stroke-[3]" /> : null}
                             </span>
@@ -1595,11 +1869,10 @@ export default function NivaasAiStudio({
                           key={item.id}
                           type="button"
                           onClick={() => setKitchenType(item.id as 'Open' | 'Close')}
-                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2.5 relative ${
-                            kitchenType === item.id
-                              ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
-                              : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
-                          }`}
+                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2.5 relative ${kitchenType === item.id
+                            ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
+                            : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
+                            }`}
                         >
                           <div className="h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-gray-100 relative">
                             <img src={item.img} alt={item.label} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
@@ -1643,11 +1916,10 @@ export default function NivaasAiStudio({
                           key={item.id}
                           type="button"
                           onClick={() => setMandirPreference(item.id)}
-                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2.5 relative ${
-                            mandirPreference === item.id
-                              ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
-                              : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
-                          }`}
+                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2.5 relative ${mandirPreference === item.id
+                            ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
+                            : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
+                            }`}
                         >
                           <div className="h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-gray-100 relative">
                             <img src={item.img} alt={item.label} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
@@ -1688,11 +1960,10 @@ export default function NivaasAiStudio({
                           key={choice}
                           type="button"
                           onClick={() => setBalconies(choice as 'Yes' | 'No')}
-                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
-                            balconies === choice
-                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
-                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
-                          }`}
+                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${balconies === choice
+                            ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                            : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                            }`}
                         >
                           {choice}
                         </button>
@@ -1722,11 +1993,10 @@ export default function NivaasAiStudio({
                           key={choice}
                           type="button"
                           onClick={() => setOfficeSpace(choice as 'Yes' | 'No')}
-                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
-                            officeSpace === choice
-                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
-                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
-                          }`}
+                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${officeSpace === choice
+                            ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                            : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                            }`}
                         >
                           {choice}
                         </button>
@@ -1763,42 +2033,39 @@ export default function NivaasAiStudio({
                             key={item.id}
                             type="button"
                             onClick={() => setParking(item.id)}
-                            className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 relative flex flex-col justify-between cursor-pointer ${
-                              isSelected
-                                ? 'border-[#E76F2E] bg-gradient-to-br from-[#FFF8F0] via-[#FFEDD5] to-[#FED7AA] shadow-xl ring-2 ring-[#E76F2E] scale-[1.02]'
-                                : 'border-gray-300 bg-white hover:border-[#E76F2E] hover:bg-orange-50/30 shadow-sm'
-                            }`}
+                            className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 relative flex flex-col justify-between cursor-pointer ${isSelected
+                              ? 'border-[#E76F2E] bg-[#FFF8F0] shadow-md ring-2 ring-[#E76F2E]/30 scale-[1.01]'
+                              : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E] hover:bg-orange-50/20 shadow-xs'
+                              }`}
                           >
                             <div>
-                              <div className="flex items-center justify-between w-full mb-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-2xl p-1.5 rounded-xl bg-white/90 border border-gray-200 shadow-2xs">
+                              <div className="flex items-center justify-between w-full mb-2.5">
+                                <div className="flex items-center gap-2.5">
+                                  <span className="text-2xl p-1.5 rounded-xl bg-white border border-[#E7E0D7] shadow-2xs">
                                     {item.emoji}
                                   </span>
                                   <span
-                                    className={`text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md border ${
-                                      isSelected
-                                        ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
-                                        : 'bg-gray-100 text-gray-700 border-gray-200'
-                                    }`}
+                                    className={`text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md border ${isSelected
+                                      ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                      : 'bg-gray-100 text-[#374151] border-gray-200'
+                                      }`}
                                   >
                                     {item.tag}
                                   </span>
                                 </div>
                                 <span
-                                  className={`flex h-6 w-6 items-center justify-center rounded-full transition shadow-xs ${
-                                    isSelected
-                                      ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
-                                      : 'border-2 border-gray-400 bg-gray-50'
-                                  }`}
+                                  className={`flex h-6 w-6 items-center justify-center rounded-full transition shadow-xs ${isSelected
+                                    ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
+                                    : 'border-2 border-gray-400 bg-gray-50'
+                                    }`}
                                 >
                                   {isSelected ? <Icons.Check size={14} className="stroke-[3]" /> : null}
                                 </span>
                               </div>
-                              <div className={`text-base font-black tracking-tight ${isSelected ? 'text-[#9A3412]' : 'text-gray-900'}`}>
+                              <div className="text-base font-black tracking-tight !text-[#111827] text-gray-950" style={{ color: '#111827' }}>
                                 {item.label}
                               </div>
-                              <div className={`text-xs mt-1 leading-relaxed ${isSelected ? 'text-[#7C2D12] font-semibold' : 'text-gray-600'}`}>
+                              <div className="text-xs mt-1 leading-relaxed !text-[#374151] font-semibold" style={{ color: '#374151' }}>
                                 {item.desc}
                               </div>
                             </div>
@@ -1830,11 +2097,10 @@ export default function NivaasAiStudio({
                           key={choice}
                           type="button"
                           onClick={() => setGarden(choice as 'Yes' | 'No')}
-                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
-                            garden === choice
-                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
-                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
-                          }`}
+                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${garden === choice
+                            ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                            : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                            }`}
                         >
                           {choice}
                         </button>
@@ -1864,11 +2130,10 @@ export default function NivaasAiStudio({
                           key={choice}
                           type="button"
                           onClick={() => setLift(choice as 'Yes' | 'No')}
-                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${
-                            lift === choice
-                              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
-                              : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
-                          }`}
+                          className={`py-6 rounded-2xl border-2 text-center transition font-display font-extrabold text-2xl relative ${lift === choice
+                            ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-md ring-2 ring-[#E76F2E]/30 scale-105'
+                            : 'border-[#E7E0D7] bg-white text-[#292826] hover:border-[#E76F2E]'
+                            }`}
                         >
                           {choice}
                         </button>
@@ -1887,7 +2152,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Bathroom Size Preference
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#1F2937] font-medium mt-1">
                         Dry/wet partition separation with wall-hung WC fittings.
                       </p>
                     </div>
@@ -1902,11 +2167,10 @@ export default function NivaasAiStudio({
                           key={item.id}
                           type="button"
                           onClick={() => setBathroomChoice(item.id as any)}
-                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2 relative ${
-                            bathroomChoice === item.id
-                              ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
-                              : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
-                          }`}
+                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2 relative cursor-pointer ${bathroomChoice === item.id
+                            ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
+                            : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
+                            }`}
                         >
                           <div className="h-20 sm:h-24 w-full rounded-xl overflow-hidden bg-gray-100 relative">
                             <img src={item.img} alt={item.label} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
@@ -1916,9 +2180,9 @@ export default function NivaasAiStudio({
                               </div>
                             )}
                           </div>
-                          <div className="p-1.5">
-                            <div className={`font-bold text-xs ${bathroomChoice === item.id ? 'text-[#C65320]' : 'text-[#292826]'}`}>{item.label}</div>
-                            <div className="text-[9px] text-[#54504A] mt-0.5">{item.desc}</div>
+                          <div className="p-2">
+                            <div className={`font-black text-xs sm:text-sm ${bathroomChoice === item.id ? 'text-[#C65320]' : 'text-black'}`}>{item.label}</div>
+                            <div className="text-[11px] text-[#1F2937] font-semibold mt-1 leading-snug">{item.desc}</div>
                           </div>
                         </button>
                       ))}
@@ -1936,7 +2200,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Main Road Facing Direction
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#1F2937] font-medium mt-1">
                         Rotate the Vastu compass dial to align your plot's main entrance.
                       </p>
                     </div>
@@ -1951,7 +2215,7 @@ export default function NivaasAiStudio({
                           <span className="text-3xl sm:text-4xl font-black font-display text-[#E76F2E]">
                             {plotDirection}
                           </span>
-                          <span className="text-xs font-bold text-[#54504A] block mt-0.5">
+                          <span className="text-xs font-extrabold text-[#1F2937] block mt-1">
                             {activeCompassDir.tag}
                           </span>
                         </div>
@@ -1963,11 +2227,10 @@ export default function NivaasAiStudio({
                             key={d.name}
                             type="button"
                             onClick={() => setPlotDirection(d.name)}
-                            className={`py-2 px-1 rounded-xl text-xs font-bold border transition ${
-                              plotDirection === d.name
-                                ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
-                                : 'bg-[#FDFCF9] text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E]'
-                            }`}
+                            className={`py-2 px-1 rounded-xl text-xs font-bold border transition cursor-pointer ${plotDirection === d.name
+                              ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
+                              : 'bg-[#FDFCF9] text-black border-[#E7E0D7] hover:border-[#E76F2E]'
+                              }`}
                           >
                             {d.label} ({d.name})
                           </button>
@@ -1987,7 +2250,7 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Choose 3D Front Facade Style
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#1F2937] font-medium mt-1">
                         Ultra-photorealistic 3D elevations engineered for Indian weather and materials.
                       </p>
                     </div>
@@ -2019,11 +2282,10 @@ export default function NivaasAiStudio({
                           key={item.id}
                           type="button"
                           onClick={() => setElevationStyle(item.id)}
-                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2.5 relative ${
-                            elevationStyle === item.id
-                              ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
-                              : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
-                          }`}
+                          className={`group overflow-hidden rounded-2xl border-2 text-left transition p-2.5 relative cursor-pointer ${elevationStyle === item.id
+                            ? 'border-[#E76F2E] shadow-lg ring-2 ring-[#E76F2E] bg-[#FFF6E8]/40'
+                            : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
+                            }`}
                         >
                           <div className="h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-gray-100 relative">
                             <img src={item.img} alt={item.id} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
@@ -2034,8 +2296,8 @@ export default function NivaasAiStudio({
                             )}
                           </div>
                           <div className="p-2">
-                            <div className={`font-bold text-xs sm:text-sm ${elevationStyle === item.id ? 'text-[#C65320]' : 'text-[#292826]'}`}>{item.id}</div>
-                            <div className="text-[10px] text-[#54504A] mt-0.5 line-clamp-2">{item.desc}</div>
+                            <div className={`font-black text-xs sm:text-sm ${elevationStyle === item.id ? 'text-[#C65320]' : 'text-black'}`}>{item.id}</div>
+                            <div className="text-xs text-[#1F2937] font-medium mt-1 line-clamp-2 leading-snug">{item.desc}</div>
                           </div>
                         </button>
                       ))}
@@ -2053,90 +2315,90 @@ export default function NivaasAiStudio({
                       <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
                         Select Material Quality &amp; Budget Grade
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
+                      <p className="text-xs sm:text-sm text-[#1F2937] font-medium mt-1">
                         Specifies structure materials, sanitaryware, electricals, and flooring.
                       </p>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-3.5">
                       {[
                         {
-                          id: 'Standard Solid Build (~₹1,800/sq.ft)',
-                          title: 'Standard Solid Build',
+                          id: 'Standard Solid Build (~₹1,450-₹1,800/sq.ft)',
+                          name: 'Standard',
+                          subTitle: 'Solid Budget Build',
                           emoji: '🧱',
-                          rate: '₹1,800 / sq.ft',
+                          rate: '₹1,450 / sq.ft',
                           tag: 'Budget Efficient',
-                          desc: 'Red clay bricks, Kajaria vitrified tiles, Cera sanitaryware, Anchor switches',
+                          tagColor: 'bg-stone-100 text-stone-800 border-stone-300',
+                          desc: 'Red clay bricks, Kajaria vitrified tiles (2x2), Cera sanitaryware, Anchor Roma switches & ISI copper wiring.',
                         },
                         {
-                          id: 'Premium Executive (~₹2,350/sq.ft)',
-                          title: 'Premium Executive (Most Popular)',
+                          id: 'Premium Executive (~₹1,750-₹2,350/sq.ft)',
+                          name: 'Premium',
+                          subTitle: 'Executive Living',
                           emoji: '💎',
-                          rate: '₹2,350 / sq.ft',
-                          tag: '⭐ Highest Rated',
-                          desc: 'AAC blockwork, 4x2 GVT tiles, Kohler/Jaquar fittings, Teak main door, Legrand switches',
+                          rate: '₹1,750 / sq.ft',
+                          tag: '⭐ Most Popular',
+                          tagColor: 'bg-amber-100 text-amber-900 border-amber-300',
+                          desc: 'AAC blockwork, 4x2 GVT glazed tiles, Kohler/Jaquar bath fittings, Teak main door, Legrand modular switches.',
                         },
                         {
-                          id: 'Ultra-Luxury Villa Grade (~₹3,200+/sq.ft)',
-                          title: 'Ultra-Luxury Villa Grade',
+                          id: 'Ultra-Luxury Villa Grade (~₹2,200-₹3,200+/sq.ft)',
+                          name: 'Luxury',
+                          subTitle: 'Ultra Villa Grade',
                           emoji: '🏛️',
-                          rate: '₹3,200+ / sq.ft',
+                          rate: '₹2,200+ / sq.ft',
                           tag: 'Luxury Bespoke',
-                          desc: 'Italian marble, Grohe/Toto automation, double-glazed soundproof glass, VRV AC ready',
+                          tagColor: 'bg-purple-100 text-purple-900 border-purple-300',
+                          desc: 'Italian marble flooring, Grohe/Toto smart automation, double-glazed soundproof UPVC, VRV AC ducting ready.',
                         },
                       ].map((item) => {
-                        const isSelected = materialGrade === item.id
+                        const isSelected = materialGrade.startsWith(item.name) || materialGrade === item.id
                         return (
                           <button
-                            key={item.id}
+                            key={item.name}
                             type="button"
                             onClick={() => setMaterialGrade(item.id)}
-                            className={`w-full p-4 rounded-2xl border-2 text-left transition-all duration-200 flex items-center justify-between cursor-pointer ${
-                              isSelected
-                                ? 'border-[#E76F2E] bg-gradient-to-br from-[#FFF8F0] via-[#FFEDD5] to-[#FED7AA] shadow-lg ring-2 ring-[#E76F2E] scale-[1.01]'
-                                : 'border-gray-300 bg-white hover:border-[#E76F2E] hover:bg-orange-50/30 shadow-sm'
-                            }`}
+                            className={`w-full p-4.5 rounded-2xl border-2 text-left transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer ${isSelected
+                              ? 'border-[#E76F2E] bg-[#FFF8F0] shadow-md ring-2 ring-[#E76F2E]/30 scale-[1.01]'
+                              : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E] hover:bg-orange-50/20 shadow-xs'
+                              }`}
                           >
-                            <div className="flex items-center gap-3">
-                              <span className="text-2xl p-2 rounded-xl bg-white/90 border border-gray-200 shadow-2xs">
+                            <div className="flex items-start gap-3.5">
+                              <span className="text-2xl sm:text-3xl p-2.5 rounded-xl bg-white border border-[#E7E0D7] shadow-2xs shrink-0">
                                 {item.emoji}
                               </span>
                               <div>
-                                <div className="flex items-center gap-2">
-                                  <span className={`text-sm sm:text-base font-black ${isSelected ? 'text-[#9A3412]' : 'text-gray-900'}`}>
-                                    {item.title}
+                                <div className="flex items-center gap-2.5 flex-wrap">
+                                  <span className="text-lg font-black text-[#111827] tracking-tight">
+                                    {item.name}
                                   </span>
-                                  <span
-                                    className={`text-[9px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded border ${
-                                      isSelected
-                                        ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
-                                        : 'bg-gray-100 text-gray-700 border-gray-200'
-                                    }`}
-                                  >
+                                  <span className="text-xs font-semibold text-[#4B5563]">
+                                    ({item.subTitle})
+                                  </span>
+                                  <span className={`text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded border ${item.tagColor}`}>
                                     {item.tag}
                                   </span>
                                 </div>
-                                <div className={`text-xs mt-0.5 ${isSelected ? 'text-[#7C2D12] font-semibold' : 'text-gray-600'}`}>
+                                <p className="text-xs mt-1.5 font-medium text-[#374151] leading-relaxed">
                                   {item.desc}
-                                </div>
+                                </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-3 shrink-0 ml-3">
+                            <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
                               <span
-                                className={`text-xs sm:text-sm font-black px-2.5 py-1 rounded-lg border ${
-                                  isSelected
-                                    ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
-                                    : 'bg-orange-50 text-[#C65320] border-orange-200'
-                                }`}
+                                className={`text-xs sm:text-sm font-black px-3 py-1.5 rounded-xl border ${isSelected
+                                  ? 'bg-[#E76F2E] text-white border-[#E76F2E]'
+                                  : 'bg-orange-50 text-[#C65320] border-orange-200'
+                                  }`}
                               >
                                 {item.rate}
                               </span>
                               <span
-                                className={`flex h-6 w-6 items-center justify-center rounded-full transition shadow-xs ${
-                                  isSelected
-                                    ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
-                                    : 'border-2 border-gray-400 bg-gray-50'
-                                }`}
+                                className={`flex h-6 w-6 items-center justify-center rounded-full transition shadow-xs ${isSelected
+                                  ? 'bg-[#E76F2E] text-white ring-2 ring-[#E76F2E]/30'
+                                  : 'border-2 border-gray-400 bg-gray-50'
+                                  }`}
                               >
                                 {isSelected ? <Icons.Check size={14} className="stroke-[3]" /> : null}
                               </span>
@@ -2290,77 +2552,357 @@ export default function NivaasAiStudio({
                 )}
 
                 {/* ------------------------------------------------------------- */}
-                {/* LEAD CAPTURE STAGE */}
+                {/* FREE PREVIEW & LEAD / AUTHENTICATION GATE */}
                 {/* ------------------------------------------------------------- */}
                 {currentStepKey === 'lead' && (
                   <div className="space-y-6 animate-fadeIn">
-                    <div className="text-center">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-                        <span>✓</span> Requirements Verified &amp; Synthesized
-                      </div>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-3 text-[#292826]">
-                        Your 2D Blueprint &amp; 3D Facade are Ready!
-                      </h3>
-                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
-                        Enter your details to view full interactive dimensions and receive softcopy drawings via WhatsApp.
-                      </p>
-                    </div>
+                    {user?.role === 'ADMIN' ? (
+                      /* STATE 0: ADMIN LIVE TEST MODE */
+                      <div className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-emerald-500/40 shadow-sm text-center space-y-5">
+                        <div className="h-12 w-12 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xl border border-emerald-200 shadow-xs">
+                          🧪
+                        </div>
+                        <div>
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 mb-2">
+                            <span>🛡️ Admin Test Simulation Active</span> · Zero Customer Credits Deducted
+                          </div>
+                          <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#111827]">
+                            Render Plan in Admin Test Mode
+                          </h3>
+                          <p className="text-xs sm:text-sm text-[#54504A] mt-2 font-medium max-w-md mx-auto leading-relaxed">
+                            You are previewing as Platform Administrator ({user?.name || user?.email}). You can test full 2D and 3D floorplan rendering without consuming user free limits or pass credits.
+                          </p>
+                        </div>
 
-                    <form onSubmit={handleSubmitLead} className="bg-white p-6 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-4">
-                      <div>
-                        <label className="block text-xs font-bold text-[#292826] mb-1">Full Name</label>
-                        <input
-                          type="text"
-                          required
-                          value={leadName}
-                          onChange={(e) => setLeadName(e.target.value)}
-                          placeholder="e.g. Ramesh Chandra"
-                          className="w-full px-4 py-3 rounded-xl border border-[#E7E0D7] text-sm focus:ring-2 focus:ring-[#E76F2E] outline-none"
-                        />
-                      </div>
+                        {/* Summary of Configuration */}
+                        <div className="bg-[#FAF7F2] p-4 sm:p-5 rounded-xl border border-[#E7E0D7] text-left grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Plot Area:</span>
+                            <span className="font-bold text-[#292826]">{isRegular ? `${plotWidth}×${plotDepth} ft (${rawPlotAreaSqFt} sq.ft)` : `${rawPlotAreaSqFt} sq.ft`}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Configuration:</span>
+                            <span className="font-bold text-[#292826]">{masterBedrooms} BHK · {floors.split(' ')[0]}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Vastu &amp; Facing:</span>
+                            <span className="font-bold text-[#E76F2E]">{plotDirection} Facing (100% Vastu)</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Built-up Area:</span>
+                            <span className="font-bold text-[#292826]">~{builtUpArea} sq.ft</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Elevation Style:</span>
+                            <span className="font-bold text-[#292826]">{elevationStyle}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Test Mode:</span>
+                            <span className="font-bold text-emerald-700">Preview Bypass Active</span>
+                          </div>
+                        </div>
 
-                      <div>
-                        <label className="block text-xs font-bold text-[#292826] mb-1">WhatsApp Mobile Number</label>
-                        <div className="flex">
-                          <span className="inline-flex items-center px-3.5 rounded-l-xl border border-r-0 border-[#E7E0D7] bg-[#FDFCF9] text-xs font-bold text-[#292826]">
-                            🇮🇳 +91
-                          </span>
-                          <input
-                            type="tel"
-                            required
-                            pattern="[0-9]{10}"
-                            value={leadPhone}
-                            onChange={(e) => setLeadPhone(e.target.value)}
-                            placeholder="10-digit mobile number"
-                            className="w-full px-4 py-3 rounded-r-xl border border-[#E7E0D7] text-sm focus:ring-2 focus:ring-[#E76F2E] outline-none"
-                          />
+                        <div className="pt-2 max-w-md mx-auto space-y-3">
+                          <button
+                            type="button"
+                            onClick={() => setStep(resultsStep)}
+                            className="w-full py-4 rounded-xl bg-gradient-to-r from-[#292826] to-[#454340] hover:bg-black text-white font-display text-sm font-bold shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                          >
+                            <Icons.Sparkles size={16} />
+                            <span>Simulate &amp; View 2D / 3D Layout (Admin Preview)</span>
+                          </button>
                         </div>
                       </div>
+                    ) : !isAuthenticated || !user ? (
+                      /* STATE 1: GUEST / UNAUTHENTICATED USER */
+                      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7E0D7] shadow-sm text-center space-y-5">
+                        <div className="h-12 w-12 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xl border border-amber-200 shadow-xs">
+                          🔒
+                        </div>
+                        <div>
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-xs font-bold border border-amber-200 mb-2">
+                            <span>Step Complete</span> · Login / Signup Required for Free Plan
+                          </div>
+                          <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#111827]">
+                            Sign In to Generate Free 2D Conceptual Blueprint
+                          </h3>
+                          <p className="text-xs sm:text-sm text-[#54504A] mt-2 font-medium max-w-lg mx-auto leading-relaxed">
+                            Every verified account receives 5 free conceptual 2D floor plans daily. Sign in or create an account to instantly generate and save your plan to your dashboard.
+                          </p>
+                        </div>
 
-                      <div>
-                        <label className="block text-xs font-bold text-[#292826] mb-1">City / Location</label>
-                        <input
-                          type="text"
-                          required
-                          value={leadCity}
-                          onChange={(e) => setLeadCity(e.target.value)}
-                          placeholder="e.g. Hyderabad, Bengaluru, Indore..."
-                          className="w-full px-4 py-3 rounded-xl border border-[#E7E0D7] text-sm focus:ring-2 focus:ring-[#E76F2E] outline-none"
-                        />
+                        {/* Summary of Configuration */}
+                        <div className="bg-[#FAF7F2] p-4 sm:p-5 rounded-xl border border-[#E7E0D7] text-left grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Plot Area:</span>
+                            <span className="font-bold text-[#292826]">{isRegular ? `${plotWidth}×${plotDepth} ft (${rawPlotAreaSqFt} sq.ft)` : `${rawPlotAreaSqFt} sq.ft`}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Configuration:</span>
+                            <span className="font-bold text-[#292826]">{masterBedrooms} BHK · {floors.split(' ')[0]}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Vastu &amp; Facing:</span>
+                            <span className="font-bold text-[#E76F2E]">{plotDirection} Facing (100% Vastu)</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Built-up Area:</span>
+                            <span className="font-bold text-[#292826]">~{builtUpArea} sq.ft</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Elevation Style:</span>
+                            <span className="font-bold text-[#292826]">{elevationStyle}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Material Quality:</span>
+                            <span className="font-bold text-[#292826]">{materialGrade.split(' ')[0]}</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 max-w-md mx-auto space-y-3">
+                          <button
+                            type="button"
+                            onClick={() => onOpenLogin?.()}
+                            className="w-full py-4 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white font-display text-sm font-bold shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                          >
+                            <Icons.Sparkles size={16} />
+                            <span>Sign In / Create Account to Generate (Free)</span>
+                          </button>
+                          <p className="text-[11px] text-[#8C827A] font-medium flex items-center justify-center gap-1.5">
+                            <span>🛡️</span> Your draft state is automatically preserved &amp; restored after login.
+                          </p>
+                        </div>
                       </div>
+                    ) : entitlements?.designPass.active && entitlements.designPass.creditsRemaining > 0 ? (
+                      /* STATE 1: ACTIVE DESIGN PASS HOLDER (PAID GENERATION UNLOCKED) */
+                      <div className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-amber-400/60 shadow-sm text-center space-y-5 animate-fadeIn">
+                        <div className="h-12 w-12 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xl border border-amber-300 shadow-xs">
+                          🪙
+                        </div>
+                        <div>
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 text-xs font-bold border border-amber-300 mb-2">
+                            <span>🪙 Design Pass Active</span> · {entitlements.designPass.creditsRemaining}/5 3D Credits · 2D: {entitlements.daily2D ? `${entitlements.daily2D.remaining}/5 Today` : '5/day'}
+                            {entitlements.designPass.daysRemaining > 0 && (
+                              <span> · Valid for {entitlements.designPass.daysRemaining} days</span>
+                            )}
+                          </div>
+                          <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#111827]">
+                            Your Architecture Studio is Unlocked
+                          </h3>
+                          <p className="text-xs sm:text-sm text-[#54504A] mt-2 font-medium max-w-md mx-auto leading-relaxed">
+                            Generate full photorealistic 3D front elevations, day/twilight lighting facades, and 2D CAD floor plans for your plot.
+                          </p>
+                        </div>
 
-                      <button
-                        type="submit"
-                        className="w-full py-4 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] text-white font-display text-sm font-bold shadow-md hover:opacity-95 transition flex items-center justify-center gap-2 active:scale-[0.99]"
-                      >
-                        <Icons.Sparkles size={16} />
-                        <span>Unlock Instant 2D Floor Plan &amp; 3D Elevation</span>
-                      </button>
+                        {/* Summary of Configuration */}
+                        <div className="bg-[#FAF7F2] p-4 sm:p-5 rounded-xl border border-[#E7E0D7] text-left grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Plot Area:</span>
+                            <span className="font-bold text-[#292826]">{isRegular ? `${plotWidth}×${plotDepth} ft (${rawPlotAreaSqFt} sq.ft)` : `${rawPlotAreaSqFt} sq.ft`}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Configuration:</span>
+                            <span className="font-bold text-[#292826]">{masterBedrooms} BHK · {floors.split(' ')[0]}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Vastu &amp; Facing:</span>
+                            <span className="font-bold text-[#E76F2E]">{plotDirection} Facing (100% Vastu)</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Built-up Area:</span>
+                            <span className="font-bold text-[#292826]">~{builtUpArea} sq.ft</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Elevation Style:</span>
+                            <span className="font-bold text-[#292826]">{elevationStyle}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Material Quality:</span>
+                            <span className="font-bold text-[#292826]">{materialGrade.split(' ')[0]}</span>
+                          </div>
+                        </div>
 
-                      <p className="text-[11px] text-center text-[#54504A]">
-                        🔒 100% Privacy. Instant delivery to your WhatsApp. No spam guaranteed.
-                      </p>
-                    </form>
+                        {freeGenError && (
+                          <div className="p-3.5 bg-red-50 text-red-700 text-xs font-semibold rounded-xl border border-red-200 text-left">
+                            {freeGenError}
+                          </div>
+                        )}
+
+                        <div className="pt-2 max-w-md mx-auto space-y-2.5">
+                          <button
+                            type="button"
+                            disabled={generatingPaid3D}
+                            onClick={handleGeneratePaid3DPlan}
+                            className={`w-full py-4 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white font-display text-sm font-bold shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] ${
+                              generatingPaid3D ? 'opacity-70 cursor-not-allowed' : ''
+                            }`}
+                          >
+                            {generatingPaid3D ? (
+                              <>
+                                <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                <span>Generating 3D Package &amp; Blueprints...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Icons.Sparkles size={16} />
+                                <span>Generate 3D Architectural Package (1 Credit)</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={generatingFree2D}
+                            onClick={handleGenerateFree2DPlan}
+                            className={`w-full py-3 rounded-xl bg-[#FAF7F2] hover:bg-[#F2ECE4] text-[#292826] font-display text-xs font-bold border border-[#E7E0D7] transition flex items-center justify-center gap-2 cursor-pointer ${
+                              generatingFree2D ? 'opacity-70 cursor-not-allowed' : ''
+                            }`}
+                          >
+                            {generatingFree2D ? (
+                              <>
+                                <span className="h-3.5 w-3.5 rounded-full border-2 border-[#E76F2E] border-t-transparent animate-spin" />
+                                <span>Generating 2D Floor Plan...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Icons.Blueprint size={14} className="text-[#E76F2E]" />
+                                <span>Generate 2D Floor Plan ({entitlements.daily2D ? `${entitlements.daily2D.remaining}/5 Today` : '5/day'})</span>
+                              </>
+                            )}
+                          </button>
+
+                          <p className="text-[11px] text-[#8C827A] font-medium">
+                            🪙 3D models use 1 of your {entitlements.designPass.creditsRemaining} remaining 3D Pass credits. 2D plans use your 5 daily quota without consuming 3D credits.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (entitlements?.free2D ? entitlements.free2D.remaining > 0 : entitlements?.freeEntitlement && !entitlements.freeEntitlement.claimed && entitlements.freeEntitlement.creditsRemaining > 0) ? (
+                      /* STATE 2: AUTHENTICATED USER — FREE 2D PREVIEWS AVAILABLE (5 LIFETIME QUOTA) */
+                      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7E0D7] shadow-sm text-center space-y-5 animate-fadeIn">
+                        <div className="h-12 w-12 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xl border border-emerald-200 shadow-xs">
+                          ✓
+                        </div>
+                        <div>
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 mb-2">
+                            🎉 Free 2D Quota · {entitlements?.free2D?.remaining ?? entitlements?.freeEntitlement?.creditsRemaining ?? 5}/5 Remaining · {user?.name || user?.email || 'Verified Account'}
+                          </div>
+                          <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#111827]">
+                            Your 2D Blueprint is Ready to Generate
+                          </h3>
+                          <p className="text-xs sm:text-sm text-[#54504A] mt-2 font-medium max-w-md mx-auto leading-relaxed">
+                            Click below to generate your conceptual 2D floor plan blueprint. It will be permanently saved under your projects dashboard.
+                          </p>
+                        </div>
+
+                        {/* Summary of Configuration */}
+                        <div className="bg-[#FAF7F2] p-4 sm:p-5 rounded-xl border border-[#E7E0D7] text-left grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Plot Area:</span>
+                            <span className="font-bold text-[#292826]">{isRegular ? `${plotWidth}×${plotDepth} ft (${rawPlotAreaSqFt} sq.ft)` : `${rawPlotAreaSqFt} sq.ft`}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Configuration:</span>
+                            <span className="font-bold text-[#292826]">{masterBedrooms} BHK · {floors.split(' ')[0]}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Vastu &amp; Facing:</span>
+                            <span className="font-bold text-[#E76F2E]">{plotDirection} Facing</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Built-up Area:</span>
+                            <span className="font-bold text-[#292826]">~{builtUpArea} sq.ft</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Elevation Style:</span>
+                            <span className="font-bold text-[#292826]">{elevationStyle}</span>
+                          </div>
+                          <div>
+                            <span className="text-[#8C827A] block font-medium">Material Quality:</span>
+                            <span className="font-bold text-[#292826]">{materialGrade.split(' ')[0]}</span>
+                          </div>
+                        </div>
+
+                        {freeGenError && (
+                          <div className="p-3.5 bg-red-50 text-red-700 text-xs font-semibold rounded-xl border border-red-200 text-left">
+                            {freeGenError}
+                          </div>
+                        )}
+
+                        <div className="pt-2 max-w-md mx-auto space-y-3">
+                          <button
+                            type="button"
+                            disabled={generatingFree2D}
+                            onClick={handleGenerateFree2DPlan}
+                            className={`w-full py-4 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white font-display text-sm font-bold shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] ${
+                              generatingFree2D ? 'opacity-70 cursor-not-allowed' : ''
+                            }`}
+                          >
+                            {generatingFree2D ? (
+                              <>
+                                <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                <span>Generating &amp; Saving Free Plan...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Icons.Sparkles size={16} />
+                                <span>Generate Free 2D Plan ({entitlements?.free2D?.remaining ?? entitlements?.freeEntitlement?.creditsRemaining ?? 5}/5 Left)</span>
+                              </>
+                            )}
+                          </button>
+                          
+                          <button
+                            type="button"
+                            onClick={() => setShowPassModal(true)}
+                            className="w-full py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold border border-amber-200 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <span>✨ Want 3D Facades &amp; Renders? Upgrade to ₹299 Pass</span>
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* STATE 3: FREE PREVIEW CONSUMED & NO ACTIVE PASS */
+                      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7E0D7] shadow-sm text-center space-y-5 animate-fadeIn">
+                        <div className="h-12 w-12 mx-auto rounded-full bg-orange-50 text-[#E76F2E] flex items-center justify-center font-bold text-xl border border-orange-200 shadow-xs">
+                          ⚡
+                        </div>
+                        <div>
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 text-[#C65320] text-xs font-bold border border-orange-200 mb-2">
+                            <span>⚡ Today's Free 2D Quota Completed (5/5 Used)</span>
+                          </div>
+                          <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#111827]">
+                            Unlock 3D Designs &amp; Instant Quota (₹299 Pass)
+                          </h3>
+                          <p className="text-xs sm:text-sm text-[#54504A] mt-2 font-medium max-w-md mx-auto leading-relaxed">
+                            You have used your 5 free 2D floor plan generations for today. Daily quota resets at midnight, or upgrade to the 30-Day Design Pass (₹299) to unlock 5 photorealistic 3D architectural packages right now.
+                          </p>
+                        </div>
+
+                        {freeGenError && (
+                          <div className="p-3.5 bg-red-50 text-red-700 text-xs font-semibold rounded-xl border border-red-200 text-left">
+                            {freeGenError}
+                          </div>
+                        )}
+
+                        <div className="pt-2 max-w-md mx-auto space-y-3">
+                          <button
+                            type="button"
+                            onClick={() => setShowPassModal(true)}
+                            className="w-full py-4 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white font-display text-sm font-bold shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                          >
+                            <Icons.Sparkles size={16} />
+                            <span>Unlock 5 3D Generations &amp; 5 2D/Day (₹299 Pass)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStep(resultsStep)}
+                            className="w-full py-3 rounded-xl bg-[#FAF7F2] hover:bg-[#F2ECE4] text-[#292826] font-display text-xs font-bold border border-[#E7E0D7] transition flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <span>View Synthesized 2D Floor Plan Preview</span>
+                            <Icons.ChevronRight size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -2369,38 +2911,53 @@ export default function NivaasAiStudio({
                 {/* ------------------------------------------------------------- */}
                 {currentStepKey === 'results' && (
                   <div className="space-y-6 animate-fadeIn pb-6">
-                    {/* Top Result Banner */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-[#FFF6E8] to-[#F7ECE1] p-4 rounded-2xl border border-[#E76F2E]/30">
+                    {/* Top Result Banner (Restructured without overflow) */}
+                    <div className="w-full bg-gradient-to-r from-[#FFF6E8] via-[#FFF3E3] to-[#F7ECE1] p-5 rounded-2xl border border-[#E76F2E]/40 shadow-sm space-y-4">
+                      {/* Row 1: Badges & Headings */}
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded-full bg-[#E76F2E] text-white text-[10px] font-bold tracking-wider uppercase">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-2.5 py-0.5 rounded-md bg-[#E76F2E] text-white text-[11px] font-extrabold tracking-wider uppercase shadow-xs">
                             96% AI Matched
                           </span>
-                          <span className="text-xs font-bold text-[#292826]">
-                            {isRegular ? 'Rectangular Vastu Blueprint' : 'Asymmetric Optimized Blueprint'}
+                          <span className="text-xs font-extrabold text-[#1F2937]">
+                            {isRegular ? 'Conceptual 2D Floor-Plan Preview' : 'Asymmetric Optimized Layout'}
+                          </span>
+                          <span className="text-[11px] font-semibold text-[#6B7280]">
+                            · Conceptual Planning Reference
                           </span>
                         </div>
-                        <h4 className="font-display font-extrabold text-lg sm:text-xl text-[#292826] mt-1">
-                          {isRegular ? `${plotWidth}x${plotDepth} ft` : `~${rawPlotAreaSqFt} sq.ft Asymmetric`} {plotDirection} Facing {floors.split(' ')[0]} Residence
+                        <h4 className="font-display font-black text-xl sm:text-2xl text-[#111827] mt-1.5">
+                          {isRegular ? `${plotWidth}x${plotDepth} ft` : `${rawPlotAreaSqFt} sq.ft Asymmetric`} {plotDirection} Facing {floors.split(' ')[0]} Residence
                         </h4>
-                        <p className="text-xs text-[#54504A]">
-                          Engineered for {leadName || 'You'} ({leadCity || 'India'}) · {isRegular ? '100% Vastu & Setback Compliant' : 'Asymmetric Corner Remedy Applied'}
+                        <p className="text-xs text-[#374151] font-medium mt-1">
+                          Designed for your Indore plot requirements · Vastu &amp; Setback Planning Reference
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      {/* Row 2: Action Buttons */}
+                      <div className="flex items-center gap-2.5 flex-wrap pt-1 border-t border-[#E7E0D7]/60">
+                        {!is3DUnlocked && (
+                          <button
+                            type="button"
+                            onClick={() => setShowPassModal(true)}
+                            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white text-xs font-black shadow-md transition flex items-center gap-1.5 active:scale-[0.98] cursor-pointer"
+                          >
+                            <span>Unlock 3D Designs (₹299)</span>
+                            <Icons.Sparkles size={14} />
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={handleSharePlan}
-                          className="px-3 py-2 rounded-xl bg-white border border-[#E7E0D7] text-xs font-bold text-[#292826] hover:bg-[#FDFCF9] transition flex items-center gap-1.5"
+                          className="px-4 py-2.5 rounded-xl bg-white border border-[#E7E0D7] text-xs font-bold text-[#1F2937] hover:border-[#E76F2E] hover:bg-[#FFF6E8] transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
                         >
-                          <Icons.Share size={13} />
-                          <span>{copiedLink ? 'Copied Link!' : 'Share'}</span>
+                          <Icons.Share size={13} className="text-[#E76F2E]" />
+                          <span>{copiedLink ? '✓ Link Copied!' : 'Share Plan'}</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => onOpenConsult?.(`AI Generated Plan for ${plotWidth}x${plotDepth} ft ${plotDirection} Facing Plot`)}
-                          className="px-4 py-2 rounded-xl bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] transition shadow-sm flex items-center gap-1.5"
+                          className="px-4 py-2.5 rounded-xl bg-[#292826] text-white text-xs font-bold hover:bg-[#1F1E1D] transition shadow-xs flex items-center gap-1.5 cursor-pointer"
                         >
                           <span>Talk to Architect</span>
                           <Icons.ChevronRight size={13} />
@@ -2408,187 +2965,475 @@ export default function NivaasAiStudio({
                       </div>
                     </div>
 
-                    {/* Key Technical Specs Grid */}
+                    {/* Key Technical Specs Grid (High Contrast) */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
-                        <span className="text-[10px] font-bold uppercase text-[#54504A] block">Total Plot Area</span>
-                        <span className="font-display font-extrabold text-base text-[#292826]">
+                      <div className="bg-white p-3.5 rounded-xl border border-[#E7E0D7] text-center shadow-xs">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#4B5563] block">Total Plot Area</span>
+                        <span className="font-display font-black text-lg text-[#111827] mt-0.5 block">
                           {rawPlotAreaSqFt} sq.ft
                         </span>
-                        <span className="text-[10px] text-[#54504A] block">~{plotAreaSqYards} sq.yards</span>
+                        <span className="text-[11px] text-[#4B5563] font-semibold block">{plotAreaSqYards} sq.yards</span>
                       </div>
 
-                      <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
-                        <span className="text-[10px] font-bold uppercase text-[#54504A] block">
-                          {isRegular ? 'Super Built-Up' : 'Buildable Base'}
+                      <div className="bg-white p-3.5 rounded-xl border border-[#E7E0D7] text-center shadow-xs">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#4B5563] block">
+                          {isRegular ? 'Super Built-Up Area' : 'Buildable Base'}
                         </span>
-                        <span className="font-display font-extrabold text-base text-[#C65320]">
+                        <span className="font-display font-black text-lg text-[#9A3412] mt-0.5 block">
                           {builtUpArea} sq.ft
                         </span>
-                        <span className="text-[10px] text-[#54504A] block">Carpet: ~{carpetArea} sq.ft</span>
+                        <span className="text-[11px] text-[#4B5563] font-semibold block">Carpet: {carpetArea} sq.ft</span>
                       </div>
 
-                      <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
-                        <span className="text-[10px] font-bold uppercase text-[#54504A] block">Est. Cost Range</span>
-                        <span className="font-display font-extrabold text-base text-emerald-700">
+                      <div className="bg-white p-3.5 rounded-xl border border-[#E7E0D7] text-center shadow-xs">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#4B5563] block">Est. Cost Range</span>
+                        <span className="font-display font-black text-lg text-[#047857] mt-0.5 block">
                           ₹{estimatedCostLakhs} L
                         </span>
-                        <span className="text-[10px] text-[#54504A] block">@ ₹{finalRatePerSqFt}/sq.ft</span>
+                        <span className="text-[11px] text-[#4B5563] font-semibold block">@ ₹{finalRatePerSqFt}/sq.ft</span>
                       </div>
 
-                      <div className="bg-white p-3 rounded-xl border border-[#E7E0D7] text-center">
-                        <span className="text-[10px] font-bold uppercase text-[#54504A] block">Vastu Score</span>
-                        <span className="font-display font-extrabold text-base text-[#E76F2E]">
+                      <div className="bg-white p-3.5 rounded-xl border border-[#E7E0D7] text-center shadow-xs">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#4B5563] block">Vastu Score</span>
+                        <span className="font-display font-black text-lg text-[#1E40AF] mt-0.5 block">
                           98 / 100
                         </span>
-                        <span className="text-[10px] text-[#54504A] block">Ishan + Agneya Align</span>
+                        <span className="text-[11px] text-[#4B5563] font-semibold block">Ishan + Agneya Aligned</span>
                       </div>
                     </div>
 
                     {/* Interactive 3D Render & 2D CAD Blueprint Display */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {/* 3D Photorealistic Exterior */}
+                      {/* 3D Photorealistic Exterior / Paywalled Teaser */}
                       <div className="bg-white rounded-2xl border border-[#E7E0D7] overflow-hidden shadow-sm flex flex-col">
                         <div className="p-3.5 border-b border-[#EEE9E3] flex items-center justify-between bg-[#FDFCF9]">
                           <div className="flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-[#E76F2E]" />
-                            <span className="font-bold text-xs text-[#292826]">
-                              3D Facade: {elevationStyle}
+                            <span className={`h-2.5 w-2.5 rounded-full ${is3DUnlocked ? 'bg-emerald-500' : 'bg-[#E76F2E]'}`} />
+                            <span className="font-black text-xs text-[#111827]">
+                              {is3DUnlocked ? `3D Elevation & Walkthrough (${elevationStyle})` : '3D Elevation (Locked Preview)'}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1 bg-[#EEE9E3] p-0.5 rounded-lg text-[10px] font-bold">
+                          {is3DUnlocked ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                ✓ Pass Active · {creditsRemaining || 5} Credits
+                              </span>
+                              {is3DGenerated && (
+                                <div className="flex items-center gap-1 bg-[#EEE9E3] p-0.5 rounded-lg text-[10px] font-bold">
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsNightLighting(false)}
+                                    className={`px-2.5 py-0.5 rounded transition ${!isNightLighting ? 'bg-white text-black shadow-xs' : 'text-[#1F2937]'
+                                      }`}
+                                  >
+                                    Daylight
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsNightLighting(true)}
+                                    className={`px-2.5 py-0.5 rounded transition ${isNightLighting ? 'bg-[#292826] text-white shadow-xs' : 'text-[#1F2937]'
+                                      }`}
+                                  >
+                                    Twilight
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">
+                              🔒 ₹299 Design Pass
+                            </span>
+                          )}
+                        </div>
+
+                        {/* If 3D is NOT unlocked: Show Watermarked Teaser Card with ₹299 Paywall */}
+                        {!is3DUnlocked && (
+                          <div className="relative min-h-[340px] bg-slate-900 overflow-hidden group flex items-center justify-center p-4 sm:p-6">
+                            {/* Blurred Teaser Image Background */}
+                            <img
+                              src={getElevationImage()}
+                              alt="3D Teaser Preview"
+                              className="absolute inset-0 w-full h-full object-cover blur-[6px] opacity-30 scale-105"
+                            />
+
+                            {/* Watermark Diagonal Banner */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none rotate-[-15deg] opacity-25">
+                              <span className="text-white font-black text-xl sm:text-2xl tracking-[0.2em] whitespace-nowrap uppercase border-y-2 border-white/40 py-2">
+                                INDORE HOUSE MAKERS PREVIEW
+                              </span>
+                            </div>
+
+                            {/* Paywall Overlay Card */}
+                            <div className="relative z-10 w-full max-w-sm bg-white/95 backdrop-blur-md p-5 rounded-2xl border border-[#E76F2E]/40 shadow-2xl text-center space-y-3">
+                              <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E76F2E] to-[#C94F36] text-white shadow-md font-bold text-xl mx-auto">
+                                🔒
+                              </div>
+                              <div>
+                                <h5 className="font-display font-black text-base sm:text-lg text-[#111827]">
+                                  Premium 3D Concept Model
+                                </h5>
+                                <p className="text-xs text-[#4B5563] mt-1 font-medium leading-relaxed">
+                                  Unlock 5 complete 3D design packages · Day &amp; Twilight renders · Floor-by-floor dollhouse views · Interactive walkthrough
+                                </p>
+                              </div>
+
+                              <div className="pt-1">
+                                <div className="inline-block px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-900 mb-2.5">
+                                  ₹299 one-time · 30 Days Validity · 5 Credits
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassModal(true)}
+                                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white font-black text-xs shadow-lg shadow-orange-500/20 transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                                >
+                                  <span>Unlock 3D Designs (₹299)</span>
+                                  <Icons.ChevronRight size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* If 3D IS unlocked but not yet generated: Show 1-Credit Confirmation */}
+                        {is3DUnlocked && !is3DGenerated && (
+                          <div className="aspect-[4/3] bg-[#FAF7F2] p-6 flex flex-col items-center justify-center text-center space-y-4">
+                            <div className="h-12 w-12 rounded-2xl bg-emerald-100 border border-emerald-300 text-emerald-700 flex items-center justify-center font-bold text-xl shadow-xs">
+                              ✨
+                            </div>
+                            <div>
+                              <h5 className="font-display font-extrabold text-lg text-black">
+                                3D Access Unlocked!
+                              </h5>
+                              <p className="text-xs text-[#4B5563] mt-1 font-medium max-w-xs mx-auto">
+                                Credits available: <strong className="text-emerald-700">{creditsRemaining || 5}</strong> · This generation will consume <strong className="text-black">1 credit</strong>.
+                              </p>
+                            </div>
                             <button
                               type="button"
-                              onClick={() => setIsNightLighting(false)}
-                              className={`px-2 py-0.5 rounded transition ${
-                                !isNightLighting ? 'bg-white text-[#292826] shadow-xs' : 'text-[#54504A]'
-                              }`}
+                              disabled={generating3D}
+                              onClick={async () => {
+                                setGenerating3D(true)
+                                try {
+                                  const authHeader: Record<string, string> = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+                                  
+                                  // 1. Authoritative Backend 3D Generation & Ledger Deduction
+                                  if (accessToken) {
+                                    try {
+                                      const genRes = await startPaid3DGeneration(`wiz_studio_${Date.now()}`, authHeader)
+                                      if (genRes?.creditsRemaining !== undefined) {
+                                        setCreditsRemaining(genRes.creditsRemaining)
+                                        notifyDataChanged('generations')
+                                        notifyDataChanged('credits')
+                                      }
+                                    } catch (err: any) {
+                                      console.warn('Backend 3D generation notice:', err?.message)
+                                    }
+                                  }
+
+                                  // 2. Persist Project with explicit dimensions & 3D attributes
+                                  if (accessToken) {
+                                    const plotDimensionStr = isRegular ? `${plotWidth}×${plotDepth} ft` : `${rawPlotAreaSqFt} sq.ft`
+                                    const projectPayload = {
+                                      title: `${plotDimensionStr} ${plotDirection} Facing ${floors.split(' ')[0]} Residence`,
+                                      plotSize: plotDimensionStr,
+                                      dimensions: plotDimensionStr,
+                                      plotWidth: isRegular ? plotWidth : Math.round(Math.sqrt(rawPlotAreaSqFt)),
+                                      plotDepth: isRegular ? plotDepth : Math.round(Math.sqrt(rawPlotAreaSqFt)),
+                                      rawPlotAreaSqFt,
+                                      plotAreaSqFt: rawPlotAreaSqFt,
+                                      plotAreaSqYards,
+                                      facing: `${plotDirection} Facing`,
+                                      bhk: `${suggestedBHK} BHK`,
+                                      floors,
+                                      elevationStyle,
+                                      materialGrade,
+                                      builtUpArea,
+                                      carpetArea,
+                                      estimatedCostLakhs,
+                                      vastuScore: 98,
+                                      leadName: user?.name || 'Indore Client',
+                                      leadCity: (user as any)?.city || 'Indore, MP',
+                                      image: getElevationImage(),
+                                      has3D: true,
+                                      is3DUnlocked: true,
+                                      status: 'COMPLETED',
+                                    }
+                                    await createUserProject(
+                                      {
+                                        jobType: 'THREE_D_GENERATION',
+                                        inputPayload: projectPayload,
+                                      },
+                                      authHeader
+                                    ).catch(() => null)
+                                  }
+
+                                  // 3. Refresh user balances across the app
+                                  await refreshEntitlements().catch(() => null)
+                                  await refreshAuth().catch(() => null)
+
+                                  setIs3DGenerated(true)
+                                } catch {
+                                  setIs3DGenerated(true)
+                                } finally {
+                                  setGenerating3D(false)
+                                }
+                              }}
+                              className="py-3 px-6 rounded-xl bg-[#E76F2E] hover:bg-[#C65320] text-white font-extrabold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                             >
-                              Daylight
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setIsNightLighting(true)}
-                              className={`px-2 py-0.5 rounded transition ${
-                                isNightLighting ? 'bg-[#292826] text-white shadow-xs' : 'text-[#54504A]'
-                              }`}
-                            >
-                              Twilight
+                              {generating3D ? (
+                                <>
+                                  <span className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                  <span>Synthesizing 3D Walkthrough &amp; Saving...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>Use 1 Credit &amp; Generate 3D Design</span>
+                                  <Icons.Sparkles size={14} />
+                                </>
+                              )}
                             </button>
                           </div>
-                        </div>
-                        <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden group">
-                          <img
-                            src={getElevationImage()}
-                            alt="3D Elevation Render"
-                            className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
-                          />
-                          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-white text-[10px] font-bold">
-                            Ultra-Realistic Indian Weather Materials
+                        )}
+
+                        {/* If 3D IS unlocked & generated: Show full photorealistic render with CTAs */}
+                        {is3DUnlocked && is3DGenerated && (
+                          <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden group">
+                            <img
+                              src={getElevationImage()}
+                              alt="3D Elevation Render"
+                              className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
+                            />
+                            <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded-lg text-white text-[10.5px] font-bold border border-white/20 shadow-md flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                              <span>Full 3D Elevation &amp; Walkthrough Unlocked</span>
+                            </div>
+                            <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => window.open(getElevationImage(), '_blank')}
+                                className="px-3 py-1.5 rounded-lg bg-black/80 hover:bg-black text-white text-[11px] font-bold backdrop-blur-md border border-white/20 shadow-md transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <Icons.Eye size={12} />
+                                <span>View HD</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSharePlan}
+                                className="px-3 py-1.5 rounded-lg bg-white/95 hover:bg-white text-black text-[11px] font-bold backdrop-blur-md shadow-md transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <Icons.Share size={12} />
+                                <span>{copiedLink ? 'Copied' : 'Share'}</span>
+                              </button>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
 
-                      {/* 2D Architectural CAD Floor Plan */}
+                      {/* Conceptual 2D Floor Plan Preview (High-Contrast Blueprint) */}
                       <div className="bg-white rounded-2xl border border-[#E7E0D7] overflow-hidden shadow-sm flex flex-col">
                         <div className="p-3.5 border-b border-[#EEE9E3] flex items-center justify-between bg-[#FDFCF9]">
                           <div className="flex items-center gap-2">
-                            <Icons.Blueprint size={14} className="text-[#E76F2E]" />
-                            <span className="font-bold text-xs text-[#292826]">
-                              2D Working CAD Layout
+                            <Icons.Blueprint size={15} className="text-[#E76F2E]" />
+                            <span className="font-bold text-xs text-black">
+                              Conceptual 2D Floor Plan Preview
                             </span>
                           </div>
                           <div className="flex items-center gap-1 bg-[#EEE9E3] p-0.5 rounded-lg text-[10px] font-bold">
                             <button
                               type="button"
                               onClick={() => setActiveFloorView('ground')}
-                              className={`px-2 py-0.5 rounded transition ${
-                                activeFloorView === 'ground' ? 'bg-white text-[#292826] shadow-xs' : 'text-[#54504A]'
-                              }`}
+                              className={`px-2.5 py-0.5 rounded transition ${activeFloorView === 'ground' ? 'bg-white text-black shadow-xs' : 'text-[#1F2937]'
+                                }`}
                             >
                               Ground Plan
                             </button>
                             <button
                               type="button"
                               onClick={() => setActiveFloorView('first')}
-                              className={`px-2 py-0.5 rounded transition ${
-                                activeFloorView === 'first' ? 'bg-white text-[#292826] shadow-xs' : 'text-[#54504A]'
-                              }`}
+                              className={`px-2.5 py-0.5 rounded transition ${activeFloorView === 'first' ? 'bg-white text-black shadow-xs' : 'text-[#1F2937]'
+                                }`}
                             >
                               First Floor
                             </button>
                           </div>
                         </div>
 
-                        {/* Interactive Blueprint Vector Mockup */}
-                        <div className="p-4 bg-[#1E293B] flex-1 flex flex-col justify-between text-white font-mono text-[11px] select-none">
-                          <div className="flex justify-between items-center text-slate-400 text-[10px] border-b border-slate-700 pb-2">
-                            <span>SCALE 1:100 CAD WORKING DWG</span>
-                            <span>VASTU GRID: {plotDirection} ENTRY</span>
+                        {/* Architectural Vector Blueprint Canvas */}
+                        <div className="p-3 bg-[#0A1628] flex-1 flex flex-col justify-between text-white font-mono text-xs select-none relative overflow-hidden min-h-[360px]">
+                          {/* Top Header */}
+                          <div className="flex justify-between items-center text-[10px] font-bold border-b border-sky-500/30 pb-1.5">
+                            <span className="text-sky-300">
+                              {activeFloorView === 'ground' ? 'GROUND FLOOR LAYOUT (SCALE 1:100)' : 'FIRST FLOOR LAYOUT (SCALE 1:100)'}
+                            </span>
+                            <span className="text-amber-300">VASTU ORIENTATION: {plotDirection.toUpperCase()} ENTRY</span>
                           </div>
 
-                          <div className="my-3 grid grid-cols-2 gap-2 border-2 border-dashed border-cyan-400/50 p-3 rounded-lg bg-slate-900/60">
-                            <div className="border border-slate-700 p-2 rounded bg-slate-800/80">
-                              <span className="text-cyan-400 font-bold block text-[10px]">
-                                {activeFloorView === 'ground' ? 'LIVING & FOYER' : 'MASTER BED 01'}
-                              </span>
-                              <span className="text-slate-300 text-[10px]">
-                                {isRegular ? '14\'-6" x 18\'-0"' : 'Shape-Tuned 13\'x17\''}
-                              </span>
-                              <span className="text-[9px] text-emerald-400 block mt-0.5">✓ North-East Light</span>
-                            </div>
+                          {/* Architectural SVG Floor Plan Drawing */}
+                          <div className="my-2 flex-1 flex items-center justify-center">
+                            <svg viewBox="0 0 400 280" className="w-full h-full max-h-[260px] drop-shadow-md">
+                              {/* Background Blueprint Grid */}
+                              <defs>
+                                <pattern id="blueprintGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1E293B" strokeWidth="0.75" />
+                                </pattern>
+                              </defs>
+                              <rect width="400" height="280" fill="url(#blueprintGrid)" />
 
-                            <div className="border border-slate-700 p-2 rounded bg-slate-800/80">
-                              <span className="text-amber-400 font-bold block text-[10px]">
-                                {activeFloorView === 'ground' ? 'KITCHEN (AGNI)' : 'BEDROOM 02'}
-                              </span>
-                              <span className="text-slate-300 text-[10px]">10'-0" x 12'-6"</span>
-                              <span className="text-[9px] text-amber-300 block mt-0.5">✓ South-East Corner</span>
-                            </div>
+                              {/* Outer Boundary Wall (Heavy Double Line) */}
+                              <rect x="20" y="20" width="360" height="240" fill="#0F172A" stroke="#38BDF8" strokeWidth="3" rx="2" />
+                              <rect x="25" y="25" width="350" height="230" fill="none" stroke="#0284C7" strokeWidth="1" strokeDasharray="4 2" />
 
-                            <div className="border border-slate-700 p-2 rounded bg-slate-800/80">
-                              <span className="text-indigo-400 font-bold block text-[10px]">
-                                {activeFloorView === 'ground' ? 'PARKING & PORCH' : 'BALCONY SITOUT'}
-                              </span>
-                              <span className="text-slate-300 text-[10px]">11'-0" x 16'-0"</span>
-                              <span className="text-[9px] text-cyan-300 block mt-0.5">✓ Gate Front Access</span>
-                            </div>
+                              {activeFloorView === 'ground' ? (
+                                /* GROUND FLOOR ROOMS */
+                                <g>
+                                  {/* Living Room & Foyer (Top-Left / North-East) */}
+                                  <rect x="25" y="25" width="200" height="135" fill="#1E293B" stroke="#38BDF8" strokeWidth="2" />
+                                  <text x="125" y="75" fill="#38BDF8" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                                    LIVING &amp; FOYER
+                                  </text>
+                                  <text x="125" y="93" fill="#94A3B8" fontSize="9.5" textAnchor="middle" fontFamily="monospace">
+                                    {isRegular ? '14\'-6" x 18\'-0"' : '13\'-0" x 17\'-0"'}
+                                  </text>
+                                  <text x="125" y="110" fill="#34D399" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                                    ✓ North-East Light
+                                  </text>
 
-                            <div className="border border-slate-700 p-2 rounded bg-slate-800/80">
-                              <span className="text-emerald-400 font-bold block text-[10px]">
-                                {mandirPreference.includes('Dedicated') ? 'POOJA MANDIR' : 'UTILITY / OTS'}
-                              </span>
-                              <span className="text-slate-300 text-[10px]">6'-0" x 6'-6"</span>
-                              <span className="text-[9px] text-emerald-400 block mt-0.5">✓ Ishanya Sacred Zone</span>
-                            </div>
+                                  {/* Pooja Mandir (Top-Right / Ishan Corner) */}
+                                  <rect x="225" y="25" width="75" height="70" fill="#1A2E35" stroke="#38BDF8" strokeWidth="2" />
+                                  <text x="262" y="55" fill="#FBBF24" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                                    POOJA
+                                  </text>
+                                  <text x="262" y="70" fill="#CBD5E1" fontSize="8" textAnchor="middle" fontFamily="monospace">
+                                    6'x6'
+                                  </text>
+
+                                  {/* Kitchen (Agni / South-East Corner) */}
+                                  <rect x="300" y="25" width="75" height="135" fill="#2E201B" stroke="#38BDF8" strokeWidth="2" />
+                                  <text x="337" y="80" fill="#FB923C" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                                    KITCHEN
+                                  </text>
+                                  <text x="337" y="98" fill="#CBD5E1" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                                    10'x12'
+                                  </text>
+                                  <text x="337" y="115" fill="#FBBF24" fontSize="7.5" textAnchor="middle" fontFamily="sans-serif">
+                                    (Agni SE)
+                                  </text>
+
+                                  {/* Master Bedroom (Bottom-Right / South-West) */}
+                                  <rect x="200" y="160" width="175" height="95" fill="#1E2235" stroke="#38BDF8" strokeWidth="2" />
+                                  <text x="287" y="200" fill="#A78BFA" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                                    MASTER BEDROOM
+                                  </text>
+                                  <text x="287" y="218" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="monospace">
+                                    14'-0" x 13'-6"
+                                  </text>
+                                  <text x="287" y="235" fill="#818CF8" fontSize="8" textAnchor="middle" fontFamily="sans-serif">
+                                    ✓ Nairutya Zone
+                                  </text>
+
+                                  {/* Car Porch / Parking & Stairs (Bottom-Left) */}
+                                  <rect x="25" y="160" width="175" height="95" fill="#16232E" stroke="#38BDF8" strokeWidth="2" />
+                                  <text x="112" y="200" fill="#67E8F9" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                                    PARKING &amp; PORCH
+                                  </text>
+                                  <text x="112" y="218" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="monospace">
+                                    11'-0" x 16'-0"
+                                  </text>
+                                  <text x="112" y="235" fill="#38BDF8" fontSize="8" textAnchor="middle" fontFamily="sans-serif">
+                                    🚗 Gate Access · Stairs UP ⬆
+                                  </text>
+
+                                  {/* Main Door Swing Arc */}
+                                  <path d="M 25 90 A 25 25 0 0 1 50 115" fill="none" stroke="#34D399" strokeWidth="1.5" strokeDasharray="2 2" />
+                                  <line x1="25" y1="90" x2="25" y2="115" stroke="#34D399" strokeWidth="2" />
+                                </g>
+                              ) : (
+                                /* FIRST FLOOR ROOMS */
+                                <g>
+                                  {/* Master Bedroom 01 (Top-Left) */}
+                                  <rect x="25" y="25" width="180" height="120" fill="#1E2235" stroke="#38BDF8" strokeWidth="2" />
+                                  <text x="115" y="75" fill="#A78BFA" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                                    MASTER BED 01
+                                  </text>
+                                  <text x="115" y="93" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="monospace">
+                                    14'-0" x 16'-0"
+                                  </text>
+
+                                  {/* Bedroom 02 (Top-Right) */}
+                                  <rect x="205" y="25" width="170" height="120" fill="#1E293B" stroke="#38BDF8" strokeWidth="2" />
+                                  <text x="290" y="75" fill="#38BDF8" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                                    BEDROOM 02
+                                  </text>
+                                  <text x="290" y="93" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="monospace">
+                                    12'-0" x 14'-0"
+                                  </text>
+
+                                  {/* Family Lounge (Bottom-Left) */}
+                                  <rect x="25" y="145" width="200" height="110" fill="#1B2838" stroke="#38BDF8" strokeWidth="2" />
+                                  <text x="125" y="195" fill="#67E8F9" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                                    FAMILY LOUNGE
+                                  </text>
+                                  <text x="125" y="213" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="monospace">
+                                    14'-6" x 12'-0"
+                                  </text>
+
+                                  {/* Balcony Sitout (Bottom-Right) */}
+                                  <rect x="225" y="145" width="150" height="110" fill="#132F2B" stroke="#38BDF8" strokeWidth="2" />
+                                  <text x="300" y="195" fill="#34D399" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                                    BALCONY SITOUT
+                                  </text>
+                                  <text x="300" y="213" fill="#94A3B8" fontSize="9" textAnchor="middle" fontFamily="monospace">
+                                    11'-0" x 8'-6"
+                                  </text>
+                                </g>
+                              )}
+
+                              {/* Dimension Lines (Outer Reference) */}
+                              <line x1="20" y1="12" x2="380" y2="12" stroke="#38BDF8" strokeWidth="1" />
+                              <text x="200" y="9" fill="#38BDF8" fontSize="8" textAnchor="middle" fontFamily="monospace">
+                                {isRegular ? `${plotWidth}'-0"` : '30\'-0"'} WIDTH
+                              </text>
+
+                              {/* Compass Rose (Top-Right Corner) */}
+                              <g transform="translate(355, 45)">
+                                <circle cx="0" cy="0" r="14" fill="#0F172A" stroke="#38BDF8" strokeWidth="1" />
+                                <polygon points="0,-12 3,0 0,2 -3,0" fill="#EF4444" />
+                                <polygon points="0,12 3,0 0,-2 -3,0" fill="#94A3B8" />
+                                <text x="0" y="-14" fill="#EF4444" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">N</text>
+                              </g>
+                            </svg>
                           </div>
 
-                          <div className="flex justify-between items-center text-[10px] text-slate-400 pt-2 border-t border-slate-700">
-                            <span>AUTOCAD .DWG &amp; REVIT COMPATIBLE</span>
-                            <span className="text-emerald-400 font-bold">● READY FOR DOWNLOAD</span>
+                          {/* Blueprint Footer Bar */}
+                          <div className="flex justify-between items-center text-[10px] font-bold pt-1.5 border-t border-sky-500/30">
+                            <span className="text-sky-300 font-sans">INDORE HOUSE MAKERS · CONCEPTUAL REFERENCE</span>
+                            <span className="text-emerald-400 font-extrabold flex items-center gap-1">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              2D PREVIEW READY
+                            </span>
                           </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="p-4 bg-white rounded-2xl border border-[#E7E0D7] flex flex-col sm:flex-row items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 text-xs text-[#54504A]">
-                        <Icons.Check size={16} className="text-emerald-600" />
-                        <span>High-Resolution CAD Softcopy Sent to WhatsApp ({leadPhone || '+91 98765 43210'})</span>
+                    <div className="p-4 bg-white rounded-2xl border border-[#E7E0D7] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-[#1F2937]">
+                        <Icons.Check size={16} className="text-emerald-600 shrink-0 font-bold" />
+                        <span>Conceptual Floor Plan Preview Generated for Verified Account (<strong className="text-black">{user?.phone || user?.email || '+91 Verified Mobile'}</strong>)</span>
                       </div>
                       <div className="flex gap-2 w-full sm:w-auto">
                         <button
                           type="button"
                           onClick={() => setStep(1)}
-                          className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-[#E7E0D7] text-xs font-bold text-[#292826] hover:bg-[#FDFCF9]"
+                          className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-[#E7E0D7] text-xs font-bold text-[#1F2937] hover:border-[#E76F2E] hover:bg-[#FFF6E8] transition cursor-pointer"
                         >
                           Modify Parameters
                         </button>
                         <button
                           type="button"
-                          onClick={() => onOpenConsult?.(`Consultation regarding generated plan for ${leadName || 'client'}`)}
-                          className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] shadow-md flex items-center justify-center gap-1.5"
+                          onClick={() => onOpenConsult?.(`Consultation regarding generated plan for ${user?.name || 'client'}`)}
+                          className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] shadow-md flex items-center justify-center gap-1.5 transition cursor-pointer"
                         >
                           <Icons.Phone size={14} />
                           <span>Book Free Architect Review</span>
@@ -2607,11 +3452,10 @@ export default function NivaasAiStudio({
                   type="button"
                   onClick={handleBack}
                   disabled={step === 1}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${
-                    step === 1
-                      ? 'opacity-40 border-[#E7E0D7] text-[#54504A] cursor-not-allowed'
-                      : 'border-[#E7E0D7] text-[#292826] hover:border-[#292826] bg-white'
-                  }`}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${step === 1
+                    ? 'opacity-40 border-[#E7E0D7] text-[#54504A] cursor-not-allowed'
+                    : 'border-[#E7E0D7] text-[#292826] hover:border-[#292826] bg-white'
+                    }`}
                 >
                   <Icons.ChevronLeft size={16} />
                   <span>Back</span>
@@ -2726,14 +3570,13 @@ export default function NivaasAiStudio({
                     </div>
                   )}
                   <div
-                    className={`max-w-[88%] sm:max-w-[80%] rounded-2xl p-3.5 sm:p-4 shadow-xs leading-relaxed ${
-                      msg.from === 'user'
-                        ? 'bg-[#E76F2E] text-white rounded-tr-none font-medium'
-                        : 'bg-white text-[#292826] border border-[#E7E0D7] rounded-tl-none whitespace-pre-line'
-                    }`}
+                    className={`max-w-[88%] sm:max-w-[80%] rounded-2xl p-3.5 sm:p-4 shadow-xs leading-relaxed ${msg.from === 'user'
+                      ? 'bg-[#E76F2E] text-white rounded-tr-none font-medium'
+                      : 'bg-white text-[#292826] border border-[#E7E0D7] rounded-tl-none whitespace-pre-line'
+                      }`}
                   >
                     <div className="text-xs sm:text-[13px]">{msg.text}</div>
-                    
+
                     {/* Bot Message Contextual Action Buttons */}
                     {msg.from === 'bot' && (
                       <div className="mt-3 pt-2.5 border-t border-[#EEE9E3] flex flex-wrap items-center gap-2">
@@ -2762,9 +3605,8 @@ export default function NivaasAiStudio({
                     )}
 
                     <div
-                      className={`text-[9px] mt-1.5 text-right ${
-                        msg.from === 'user' ? 'text-white/80' : 'text-[#54504A]'
-                      }`}
+                      className={`text-[9px] mt-1.5 text-right ${msg.from === 'user' ? 'text-white/80' : 'text-[#54504A]'
+                        }`}
                     >
                       {msg.time}
                     </div>
@@ -2840,6 +3682,35 @@ export default function NivaasAiStudio({
           </div>
         )}
       </div>
+
+      {/* 30-Day Design Pass Upgrade Modal */}
+      <DesignPassModal
+        open={showPassModal}
+        onClose={() => setShowPassModal(false)}
+        token={accessToken || (typeof window !== 'undefined' ? localStorage.getItem('ihm_access_token') : null)}
+        user={user}
+        activePassInfo={
+          entitlements?.designPass
+            ? {
+                active: !!entitlements.designPass.active,
+                remainingCredits: entitlements.designPass.creditsRemaining || 0,
+                expiresAt: entitlements.designPass.expiresAt,
+              }
+            : null
+        }
+        onSuccess={async () => {
+          setIs3DUnlocked(true)
+          await refreshEntitlements().catch(() => null)
+          await refreshAuth().catch(() => null)
+        }}
+        onRequireAuth={() => {
+          if (onOpenLogin) {
+            onOpenLogin()
+          } else {
+            onOpenConsult?.('Authenticate for Design Pass')
+          }
+        }}
+      />
     </div>
   )
 }

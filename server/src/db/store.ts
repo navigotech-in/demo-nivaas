@@ -8,6 +8,7 @@ import {
   Payment,
   AccessPass,
   CreditTransaction,
+  CreditTransactionType,
   GenerationJob,
   Lead,
   AuditLog,
@@ -26,12 +27,18 @@ class DatabaseStore {
   public generationJobs: Map<string, GenerationJob> = new Map()
   public leads: Map<string, Lead> = new Map()
   public auditLogs: AuditLog[] = []
+  public blogs: Map<string, any> = new Map()
 
   constructor() {
     this.seedDefaultProduct()
   }
 
   public reset() {
+    if (process.env.NODE_ENV !== 'test') {
+      throw new Error(
+        'DatabaseStore.reset() is restricted to test mode. Refusing to wipe in-memory state outside tests.'
+      )
+    }
     this.users.clear()
     this.sessions.clear()
     this.accessPasses.clear()
@@ -50,8 +57,12 @@ class DatabaseStore {
       code: 'DESIGN_PASS_299',
       description: 'Full access to AI Planner & Design Desk with 5 high-definition export credits valid for 30 days.',
       priceInr: 299,
+      priceInPaise: 29900,
+      currency: 'INR',
+      creditType: 'THREE_D_GENERATION',
       creditsGranted: 5,
       durationDays: 30,
+      autoRenewal: false,
       isActive: true,
       createdAt: new Date().toISOString(),
     }
@@ -109,7 +120,7 @@ class DatabaseStore {
     }
   }
 
-  private isSetupLocked = false
+  public isSetupLocked = false
 
   // 3. Explicit Bootstrap Admin Helper with Atomic Race Protection
   public bootstrapAdminAtomically(email: string, password: string, name = 'Indore House Makers Admin'): User {
@@ -199,10 +210,24 @@ class DatabaseStore {
     return updated
   }
 
-  public createCreditTransaction(tx: Omit<CreditTransaction, 'id' | 'createdAt'>): CreditTransaction {
+  public createCreditTransaction(tx: {
+    userId: string
+    amount: number
+    type: CreditTransactionType
+    description?: string
+    balanceAfter?: number
+    idempotencyKey?: string
+    passId?: string
+    referenceType?: 'PURCHASE' | 'GENERATION_JOB' | 'MANUAL'
+    referenceId?: string
+  }): CreditTransaction {
+    const currentBalance = this.calculateUserBalance(tx.userId)
+    const balanceAfter = tx.balanceAfter !== undefined ? tx.balanceAfter : currentBalance + tx.amount
     const entry: CreditTransaction = {
       id: 'ctx_' + crypto.randomBytes(8).toString('hex'),
+      description: tx.description || `${tx.type} of ${tx.amount} credits`,
       ...tx,
+      balanceAfter,
       createdAt: new Date().toISOString(),
     }
     this.creditTransactions.push(entry)

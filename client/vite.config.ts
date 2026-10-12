@@ -13,6 +13,15 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    port: 4173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:7000',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     target: 'esnext',
     cssCodeSplit: true,

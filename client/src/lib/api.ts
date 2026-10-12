@@ -32,6 +32,7 @@ export interface UserProject {
   status: string
   inputPayload: Record<string, any>
   resultPayload: Record<string, any>
+  outputPayload?: Record<string, any>
   createdAt: string
   updatedAt: string
 }
@@ -136,7 +137,7 @@ export async function createUserProject(
   if (!res.ok || !json.success) {
     throw new Error(json.error?.message || 'Failed to create project')
   }
-  return json.data.project
+  return json.data?.project || json.data
 }
 
 export async function fetchUserCredits(headers: Record<string, string>): Promise<{
@@ -157,6 +158,7 @@ export async function fetchUserCredits(headers: Record<string, string>): Promise
 export async function fetchUserPass(headers: Record<string, string>): Promise<{
   hasActivePass: boolean
   pass: any
+  activePass?: any
   daysRemaining?: number
 }> {
   const res = await fetch(`${BASE}/users/me/pass`, {
@@ -167,7 +169,15 @@ export async function fetchUserPass(headers: Record<string, string>): Promise<{
   if (!res.ok || !json.success) {
     throw new Error(json.error?.message || 'Failed to fetch pass status')
   }
-  return json.data
+  const d = json.data || {}
+  const passObj = d.pass || d.activePass || null
+  const hasActive = Boolean(d.hasActivePass ?? (passObj && (passObj.status === 'ACTIVE' || passObj.status === 'ACTIVE')))
+  return {
+    hasActivePass: hasActive,
+    pass: passObj,
+    activePass: passObj,
+    daysRemaining: d.daysRemaining ?? passObj?.daysRemaining ?? 0,
+  }
 }
 
 export async function fetchUserConsultations(headers: Record<string, string>): Promise<UserConsultationItem[]> {
@@ -249,4 +259,194 @@ export async function changeUserPassword(
   if (!res.ok || !json.success) {
     throw new Error(json.error?.message || 'Failed to change password')
   }
+}
+
+// === Phase 3: Design Pass, Wizard, 2D/3D Generation & Chatbot APIs ===
+
+export async function fetchDesignPassProduct(): Promise<any> {
+  const res = await fetch(`${BASE}/products/design-pass`)
+  const json = await res.json()
+  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to fetch product')
+  return json.data
+}
+
+export interface UserEntitlements {
+  free2D?: {
+    total: number
+    used: number
+    remaining: number
+  }
+  daily2D?: {
+    limit: number
+    used: number
+    remaining: number
+    resetAt: string
+  }
+  freeEntitlement: {
+    claimed: boolean
+    status: 'AVAILABLE' | 'CONSUMED' | 'RESERVED'
+    creditsTotal: number
+    creditsUsed: number
+    creditsRemaining: number
+  }
+  designPass: {
+    active: boolean
+    expiresAt: string | null
+    daysRemaining: number
+    creditsTotal: number
+    creditsUsed?: number
+    creditsRemaining: number
+  }
+  canGenerate2D?: boolean
+  canGenerate3D?: boolean
+  canGenerate: boolean
+  generationMode: 'DESIGN_PASS' | 'FREE_2D' | 'UPGRADE_REQUIRED'
+}
+
+export async function fetchUserEntitlements(headers: Record<string, string>): Promise<UserEntitlements> {
+  const res = await fetch(`${BASE}/users/me/entitlements`, {
+    headers: { 'Content-Type': 'application/json', ...headers },
+    credentials: 'include',
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to fetch entitlements')
+  return json.data
+}
+
+export async function createRazorpayOrder(
+  headers: Record<string, string>,
+  options?: { forceRenewal?: boolean }
+): Promise<{
+  orderId: string
+  purchaseId: string
+  amountInPaise: number
+  currency: string
+  product: any
+  keyId: string
+  user?: {
+    name?: string
+    email?: string
+    phone?: string
+  }
+}> {
+  const res = await fetch(`${BASE}/payments/razorpay/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    credentials: 'include',
+    body: JSON.stringify({ forceRenewal: !!options?.forceRenewal }),
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) {
+    const error: any = new Error(json.error?.message || 'Failed to create order')
+    error.code = json.error?.code
+    error.activePass = json.error?.activePass
+    throw error
+  }
+  return json.data
+}
+
+export async function verifyRazorpayPayment(
+  payload: { orderId: string; paymentId: string; signature?: string },
+  headers: Record<string, string>
+): Promise<any> {
+  const res = await fetch(`${BASE}/payments/razorpay/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Payment verification failed')
+  return json.data
+}
+
+export async function saveWizardDraft(
+  payload: { sessionId?: string; stage?: number; wizardData: any },
+  headers?: Record<string, string>
+): Promise<any> {
+  const res = await fetch(`${BASE}/wizard/sessions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(headers || {}) },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to save wizard draft')
+  return json.data
+}
+
+export async function confirmWizardRequirements(
+  sessionId: string,
+  headers?: Record<string, string>
+): Promise<any> {
+  const res = await fetch(`${BASE}/wizard/sessions/${sessionId}/confirm`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(headers || {}) },
+    credentials: 'include',
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to confirm requirements')
+  return json.data
+}
+
+export async function fetchFreePreviewEligibility(headers: Record<string, string>): Promise<{
+  eligible: boolean
+  status: string
+  existingJobId?: string | null
+  existing2DPlan?: any | null
+}> {
+  const res = await fetch(`${BASE}/wizard/entitlements/free-preview`, {
+    headers: { 'Content-Type': 'application/json', ...headers },
+    credentials: 'include',
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to check eligibility')
+  return json.data
+}
+
+export async function generateFree2DPreview(
+  payload: { wizardSessionId?: string; wizardData?: any; idempotencyKey?: string } | string,
+  headers: Record<string, string>
+): Promise<any> {
+  const bodyData = typeof payload === 'string' ? { wizardSessionId: payload } : payload
+  const res = await fetch(`${BASE}/wizard/generate-free-2d`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    credentials: 'include',
+    body: JSON.stringify(bodyData),
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Free generation failed')
+  return json.data
+}
+
+export async function startPaid3DGeneration(
+  wizardSessionId: string,
+  headers: Record<string, string>
+): Promise<any> {
+  const res = await fetch(`${BASE}/generations/3d`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    credentials: 'include',
+    body: JSON.stringify({ wizardSessionId }),
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) throw new Error(json.error?.message || '3D generation request failed')
+  return json.data
+}
+
+export async function fetchChatQuota(headers?: Record<string, string>): Promise<{
+  allowed: boolean
+  remaining: number
+  limit: number
+  resetAt: string
+  isPassHolder: boolean
+}> {
+  const res = await fetch(`${BASE}/ai/chat/quota`, {
+    headers: { 'Content-Type': 'application/json', ...(headers || {}) },
+    credentials: 'include',
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to check chat quota')
+  return json.data
 }

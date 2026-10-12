@@ -85,8 +85,7 @@ router.get('/me/credits', async (req: Request, res: Response, next: NextFunction
 router.get('/me/pass', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.user!.sub
-    const user = await prismaDb.findUserById(userId)
-    const activePass = user?.passes && user.passes.length > 0 ? user.passes[0] : null
+    const activePass = await prismaDb.getActivePass(userId)
 
     let daysRemaining = 0
     if (activePass) {
@@ -94,20 +93,109 @@ router.get('/me/pass', async (req: Request, res: Response, next: NextFunction): 
       daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
     }
 
+    const hasActivePass = !!activePass && (activePass.status === 'ACTIVE' || (activePass.status as any) === 'ACTIVE') && daysRemaining > 0
+
+    const passPayload = activePass
+      ? {
+          id: activePass.id,
+          passType: activePass.passType,
+          status: activePass.status,
+          startsAt: activePass.startsAt ? new Date(activePass.startsAt).toISOString() : new Date().toISOString(),
+          expiresAt: activePass.expiresAt ? new Date(activePass.expiresAt).toISOString() : new Date().toISOString(),
+          creditsGranted: activePass.creditsGranted,
+          daysRemaining,
+        }
+      : null
+
     res.json({
       success: true,
       data: {
-        activePass: activePass
-          ? {
-              id: activePass.id,
-              passType: activePass.passType,
-              status: activePass.status,
-              startsAt: activePass.startsAt.toISOString(),
-              expiresAt: activePass.expiresAt.toISOString(),
-              creditsGranted: activePass.creditsGranted,
-              daysRemaining,
-            }
-          : null,
+        hasActivePass,
+        activePass: passPayload,
+        pass: passPayload,
+        daysRemaining,
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// 4b. Single Source of Truth Entitlements (Free 2D 5-count + Daily 2D 5/day for Paid + Paid Pass & 3D Credits)
+router.get('/me/entitlements', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.user!.sub
+    const isAdmin = req.user?.role === 'ADMIN'
+
+    // 1. Daily 2D Quota for All Signed-In Users (5 Conceptual Plans / Day Resetting at Midnight UTC)
+    const dailyJobsCount = await prismaDb.getDaily2DGenerationsCount(userId)
+    const dailyLimit = 5
+    const dailyUsed = Math.min(5, dailyJobsCount)
+    const dailyRemaining = Math.max(0, dailyLimit - dailyUsed)
+    const resetDate = new Date()
+    resetDate.setUTCHours(24, 0, 0, 0)
+    const resetAt = resetDate.toISOString()
+
+    // 2. Paid Design Pass & 3D Credit Ledger
+    const activePass = await prismaDb.getActivePass(userId)
+    const paidCreditsRemaining = await prismaDb.calculateCreditBalance(userId)
+    const passCreditsTotal = activePass?.creditsGranted || 5
+    const passCreditsUsed = Math.max(0, passCreditsTotal - paidCreditsRemaining)
+
+    let daysRemaining = 0
+    if (activePass) {
+      const diffMs = new Date(activePass.expiresAt).getTime() - Date.now()
+      daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
+    }
+
+    const hasActivePass = !!activePass && (activePass.status === 'ACTIVE' || activePass.status === ('ACTIVE' as any)) && daysRemaining > 0
+    const hasPaid3DCredits = paidCreditsRemaining > 0
+    const canGenerate2D = dailyRemaining > 0 || isAdmin
+    const canGenerate3D = (hasActivePass && hasPaid3DCredits) || isAdmin
+    const canUseFree2D = canGenerate2D
+    const freeCreditsTotal = dailyLimit
+    const freeCreditsUsed = dailyUsed
+    const freeCreditsRemaining = dailyRemaining
+    const freeClaimed = dailyUsed >= dailyLimit
+
+    res.json({
+      success: true,
+      data: {
+        free2D: {
+          total: freeCreditsTotal,
+          used: freeCreditsUsed,
+          remaining: freeCreditsRemaining,
+        },
+        daily2D: {
+          limit: dailyLimit,
+          used: dailyUsed,
+          remaining: dailyRemaining,
+          resetAt,
+        },
+        designPass: {
+          active: hasActivePass,
+          expiresAt: activePass?.expiresAt ? new Date(activePass.expiresAt).toISOString() : null,
+          daysRemaining,
+          creditsTotal: passCreditsTotal,
+          creditsUsed: passCreditsUsed,
+          creditsRemaining: paidCreditsRemaining,
+        },
+        // Backward compatibility
+        freeEntitlement: {
+          claimed: freeClaimed,
+          status: freeClaimed ? 'CONSUMED' : 'AVAILABLE',
+          creditsTotal: freeCreditsTotal,
+          creditsUsed: freeCreditsUsed,
+          creditsRemaining: freeCreditsRemaining,
+        },
+        canGenerate2D,
+        canGenerate3D,
+        canGenerate: canGenerate2D || canGenerate3D,
+        generationMode: hasActivePass
+          ? 'DESIGN_PASS'
+          : canUseFree2D
+          ? 'FREE_2D'
+          : 'UPGRADE_REQUIRED',
       },
     })
   } catch (err) {

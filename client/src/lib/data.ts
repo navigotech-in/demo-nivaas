@@ -920,9 +920,9 @@ export const ventures = [
 
 export const paymentPartners = ['Razorpay', 'HDFC Bank', 'ICICI Bank', 'SBI', 'Paytm', 'UPI']
 
-export function img(url: string): string {
+export function img(url: string, width = 640, height = 480): string {
   if (url.includes('images.pexels.com')) {
-    return url + '?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop'
+    return `${url}?auto=compress&cs=tinysrgb&w=${width}&h=${height}&fit=crop`
   }
-  return url + '?auto=format&fit=crop&w=1200&q=75'
+  return `${url}?auto=format&fit=crop&w=${width}&q=75`
 }

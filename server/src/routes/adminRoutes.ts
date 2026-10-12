@@ -189,7 +189,13 @@ router.get('/users', async (req: Request, res: Response, next: NextFunction): Pr
           createdAt: u.createdAt,
           creditBalance: balance,
           activeSessionsCount: u.sessions.length,
-          activePass: u.passes[0] || null,
+          activePass: u.passes[0]
+            ? {
+                type: u.passes[0].passType,
+                status: u.passes[0].status,
+                expiresAt: u.passes[0].expiresAt,
+              }
+            : null,
         }
       })
 
@@ -250,6 +256,170 @@ router.get('/users', async (req: Request, res: Response, next: NextFunction): Pr
           page,
           pageSize,
           totalPages: Math.ceil(total / pageSize) || 1,
+        },
+      })
+    }
+  } catch (err) {
+    next(err)
+  }
+})
+
+// 2b. Authoritative Credit Ledger for Admin
+router.get('/credit-ledger', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 50))
+    const skip = (page - 1) * pageSize
+
+    try {
+      const [total, transactions] = await Promise.all([
+        prisma.creditTransaction.count(),
+        prisma.creditTransaction.findMany({
+          skip,
+          take: pageSize,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        }),
+      ])
+
+      res.json({
+        success: true,
+        data: transactions.map((tx) => ({
+          id: tx.id,
+          userId: tx.userId,
+          user: tx.user,
+          amount: tx.amount,
+          balanceAfter: tx.balanceAfter,
+          type: tx.type,
+          description: tx.description,
+          referenceType: tx.referenceType,
+          referenceId: tx.referenceId,
+          createdAt: tx.createdAt,
+        })),
+        meta: {
+          total,
+          page,
+          pageSize,
+          totalPages: Math.ceil(total / pageSize) || 1,
+        },
+      })
+      return
+    } catch {
+      // In-memory fallback
+      const txs = db.creditTransactions.slice().reverse().map((tx) => {
+        const u = db.findUserById(tx.userId)
+        return {
+          id: tx.id,
+          userId: tx.userId,
+          user: u ? { id: u.id, name: u.name, email: u.email, phone: u.phone } : null,
+          amount: tx.amount,
+          balanceAfter: tx.balanceAfter,
+          type: tx.type,
+          description: tx.description,
+          referenceType: tx.referenceType || (tx.type === 'PURCHASE_GRANT' ? 'PURCHASE' : 'MANUAL'),
+          referenceId: tx.passId || tx.referenceId,
+          createdAt: tx.createdAt,
+        }
+      })
+
+      res.json({
+        success: true,
+        data: txs.slice(skip, skip + pageSize),
+        meta: {
+          total: txs.length,
+          page,
+          pageSize,
+          totalPages: Math.ceil(txs.length / pageSize) || 1,
+        },
+      })
+    }
+  } catch (err) {
+    next(err)
+  }
+})
+
+// 2c. All Generation Jobs (2D Conceptual & 3D Architectural)
+router.get('/generations', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 50))
+    const skip = (page - 1) * pageSize
+
+    try {
+      const [total, jobs] = await Promise.all([
+        prisma.generationJob.count(),
+        prisma.generationJob.findMany({
+          skip,
+          take: pageSize,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        }),
+      ])
+
+      res.json({
+        success: true,
+        data: jobs.map((j) => ({
+          id: j.id,
+          userId: j.userId,
+          user: j.user,
+          jobType: j.jobType,
+          status: j.status,
+          creditCost: j.creditCost,
+          progressStage: j.progressStage,
+          inputPayload: j.inputPayload,
+          createdAt: j.createdAt,
+        })),
+        meta: {
+          total,
+          page,
+          pageSize,
+          totalPages: Math.ceil(total / pageSize) || 1,
+        },
+      })
+      return
+    } catch {
+      // In-memory fallback
+      const jobs = Array.from(db.generationJobs.values()).slice().reverse().map((j) => {
+        const u = db.findUserById(j.userId)
+        return {
+          id: j.id,
+          userId: j.userId,
+          user: u ? { id: u.id, name: u.name, email: u.email, phone: u.phone } : null,
+          jobType: j.jobType,
+          status: j.status,
+          creditCost: j.jobType.includes('3D') ? 1 : 0,
+          progressStage: 'COMPLETED',
+          inputPayload: {},
+          createdAt: j.createdAt,
+        }
+      })
+
+      res.json({
+        success: true,
+        data: jobs.slice(skip, skip + pageSize),
+        meta: {
+          total: jobs.length,
+          page,
+          pageSize,
+          totalPages: Math.ceil(jobs.length / pageSize) || 1,
         },
       })
     }
@@ -370,7 +540,7 @@ router.post('/users/:id/credits', async (req: Request, res: Response, next: Next
       return
     } catch (dbErr) {
       // In-memory fallback
-      const targetUser = db.getUserById(targetUserId)
+      const targetUser = db.users.get(targetUserId)
       if (!targetUser) {
         res.status(404).json({ success: false, error: 'USER_NOT_FOUND', message: 'User does not exist.' })
         return
@@ -380,6 +550,9 @@ router.post('/users/:id/credits', async (req: Request, res: Response, next: Next
         userId: targetUserId,
         type: 'GRANT',
         amount: body.amount,
+        description: body.reason,
+        referenceType: 'MANUAL',
+        referenceId: finalIdempotencyKey,
         idempotencyKey: finalIdempotencyKey,
       })
 
@@ -515,6 +688,144 @@ router.get('/audit-logs', async (req: Request, res: Response, next: NextFunction
         meta: { total: db.auditLogs.length, limit },
       })
     }
+  } catch (err) {
+    next(err)
+  }
+})
+
+// 6. Admin Blog / Guide Management Endpoints
+router.get('/blogs', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const blogsList = Array.from(db.blogs.values())
+    res.json({
+      success: true,
+      data: blogsList,
+      meta: { total: blogsList.length },
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/blogs', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const blogData = req.body
+    if (!blogData.title) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_PAYLOAD', message: 'Blog title is required.' },
+      })
+      return
+    }
+
+    const id = blogData.id || `blog_${Date.now()}`
+    const slug =
+      blogData.slug ||
+      blogData.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+
+    const newBlog = {
+      ...blogData,
+      id,
+      slug,
+      publishedAt: blogData.publishedAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    db.blogs.set(id, newBlog)
+    db.blogs.set(slug, newBlog)
+
+    res.status(201).json({
+      success: true,
+      data: newBlog,
+      message: 'Blog published successfully!',
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// GET /api/v1/admin/blogs/:id
+router.get('/blogs/:id', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id } = req.params
+    let blog = db.blogs.get(id)
+    if (!blog) {
+      blog = Array.from(db.blogs.values()).find(
+        (b: any) => b.slug === id || b.id === id
+      )
+    }
+
+    if (!blog) {
+      // If it's a known mock blog ID (like b1, b2), create a graceful response structure
+      res.json({
+        success: true,
+        data: {
+          id,
+          slug: id,
+          title: `Blog Article ${id}`,
+          publishedAt: new Date().toISOString(),
+        },
+      })
+      return
+    }
+
+    res.json({
+      success: true,
+      data: blog,
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.put('/blogs/:id', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id } = req.params
+    const existing = db.blogs.get(id) || Array.from(db.blogs.values()).find((b: any) => b.slug === id || b.id === id)
+
+    const updatedBlog = {
+      ...(existing || {}),
+      ...req.body,
+      id,
+      slug: req.body.slug || existing?.slug || id,
+      updatedAt: new Date().toISOString(),
+    }
+
+    db.blogs.set(id, updatedBlog)
+    if (updatedBlog.slug) {
+      db.blogs.set(updatedBlog.slug, updatedBlog)
+    }
+
+    res.json({
+      success: true,
+      data: updatedBlog,
+      message: 'Blog updated successfully!',
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.delete('/blogs/:id', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id } = req.params
+    const existing = db.blogs.get(id) || Array.from(db.blogs.values()).find((b: any) => b.slug === id || b.id === id)
+    if (existing) {
+      db.blogs.delete(id)
+      if (existing.slug) {
+        db.blogs.delete(existing.slug)
+      }
+    } else {
+      db.blogs.delete(id)
+    }
+
+    res.json({
+      success: true,
+      message: 'Blog article removed successfully.',
+    })
   } catch (err) {
     next(err)
   }

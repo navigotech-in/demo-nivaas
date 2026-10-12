@@ -12,16 +12,18 @@ interface ImgProps {
 }
 
 // Automatically optimize remote CDN images (Unsplash/Pexels) to prevent massive payloads
-function optimizeImageUrl(url: string): string {
+function optimizeImageUrl(url: string, targetWidth?: number | string): string {
   if (!url) return url
+  const numW = targetWidth && !isNaN(Number(targetWidth)) ? Number(targetWidth) : 550
+  const w = Math.max(300, Math.min(numW, 800))
   if (url.includes('images.unsplash.com')) {
     if (!url.includes('w=')) {
-      return url.includes('?') ? `${url}&w=800&auto=format&fit=crop&q=75` : `${url}?w=800&auto=format&fit=crop&q=75`
+      return url.includes('?') ? `${url}&w=${w}&auto=format&fit=crop&q=70` : `${url}?w=${w}&auto=format&fit=crop&q=70`
     }
   }
   if (url.includes('images.pexels.com')) {
     if (!url.includes('w=')) {
-      return url.includes('?') ? `${url}&w=800&auto=compress&cs=tinysrgb` : `${url}?w=800&auto=compress&cs=tinysrgb`
+      return url.includes('?') ? `${url}&w=${w}&auto=compress&cs=tinysrgb` : `${url}?w=${w}&auto=compress&cs=tinysrgb`
     }
   }
   return url
@@ -60,7 +62,7 @@ export default function Img({
     )
   }
 
-  const optimizedSrc = optimizeImageUrl(src)
+  const optimizedSrc = optimizeImageUrl(src, width)
 
   return (
     <img

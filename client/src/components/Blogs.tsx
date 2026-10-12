@@ -1,12 +1,26 @@
-import { blogPosts } from '../lib/data'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { getAllBlogArticles, type BlogArticle } from '../lib/blogsData'
 import Img from './Img'
 import { Icons } from './Icons'
 
 interface BlogsProps {
-  onOpenConsult: (topic?: string) => void
+  onOpenConsult?: (topic?: string) => void
 }
 
-export default function Blogs({ onOpenConsult }: BlogsProps) {
+export default function Blogs({ onOpenConsult: _onOpenConsult }: BlogsProps) {
+  const [articles, setArticles] = useState<BlogArticle[]>(() => getAllBlogArticles())
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setArticles(getAllBlogArticles())
+    }
+    window.addEventListener('ihm_blogs_updated', handleUpdate)
+    return () => window.removeEventListener('ihm_blogs_updated', handleUpdate)
+  }, [])
+
+  const featuredPosts = articles.slice(0, 4)
+
   return (
     <section id="blog" className="py-20 bg-[#FDFCF9] border-t border-[#E7E0D7]">
       <div className="container-content">
@@ -16,58 +30,71 @@ export default function Blogs({ onOpenConsult }: BlogsProps) {
               <Icons.FileText size={14} /> Architectural Insights
             </span>
             <h2 className="section-title mt-2">
-              Design Stories, Vastu & Construction Guides
+              Design Stories, Vastu &amp; Construction Guides
             </h2>
             <p className="mt-2 text-sm text-[#54504A] max-w-2xl">
-              Practical guides written by our chief architects on plot zoning, local municipal bylaws, Vastu compliance, and material budgeting.
+              Practical guides written by certified architects and civil consultants on plot sizing, material pricing ranges, Vastu orientation, and modern elevations.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => onOpenConsult('Subscribe to Indore House Makers Journal')}
-            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-white border border-[#E76F2E] text-[#E76F2E] hover:bg-[#F1ECE5] hover:border-[#C65320] transition shadow-sm"
+          <Link
+            to="/guides"
+            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-white border border-[#C94F36] text-[#C94F36] hover:bg-[#F1ECE5] hover:border-[#B3432D] transition shadow-sm"
           >
             <Icons.FileText size={15} />
-            <span>Read All Articles →</span>
-          </button>
+            <span>Read All 10 Guides &amp; Articles →</span>
+          </Link>
         </div>
 
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {blogPosts.map((post) => (
+          {featuredPosts.map((post) => (
             <article
               key={post.id}
               className="group flex flex-col overflow-hidden rounded-xl border border-[#E7E0D7] bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
             >
-              <div className="relative aspect-[16/10] overflow-hidden bg-[#F1ECE5]">
+              <Link
+                to={`/guides/${post.slug}`}
+                className="relative aspect-[16/10] overflow-hidden bg-[#F1ECE5] block"
+              >
                 <Img
-                  src={post.image}
-                  alt={post.title}
+                  src={post.featuredImage}
+                  alt={post.featuredImageAlt}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-              </div>
+                <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#292826]/85 text-white backdrop-blur-xs">
+                  {post.category}
+                </span>
+              </Link>
 
               <div className="p-5 flex flex-1 flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between text-[11px] text-[#54504A] mb-2 font-medium">
-                    <span className="text-[#54504A]">{post.time}</span>
+                  <div className="flex items-center justify-between text-xs text-[#1F2937] mb-2 font-semibold">
+                    <span className="text-[#E76F2E] font-bold">{post.tag}</span>
+                    <span className="flex items-center gap-1"><Icons.Clock size={12} className="text-[#E76F2E]" /> {post.readTime}</span>
                   </div>
-                  <h3 className="font-display text-base font-bold text-[#292826] leading-snug line-clamp-2">
-                    {post.title}
-                  </h3>
-                  <p className="mt-2 text-xs text-[#54504A] leading-relaxed line-clamp-2">
+                  <Link to={`/guides/${post.slug}`}>
+                    <h3
+                      style={{ color: '#E76F2E' }}
+                      className="font-display text-base font-bold leading-snug line-clamp-2 hover:underline hover:text-[#C65320] transition-colors"
+                    >
+                      {post.title}
+                    </h3>
+                  </Link>
+                  <p className="mt-2 text-xs sm:text-sm text-[#1F2937] leading-relaxed line-clamp-2 font-normal">
                     {post.excerpt}
                   </p>
                 </div>
 
                 <div className="mt-5 pt-3.5 border-t border-[#EEE9E3]">
-                  <button
-                    type="button"
-                    onClick={() => onOpenConsult(`Read Guide: ${post.title}`)}
-                    className="text-xs font-bold text-[#E76F2E] hover:text-[#C65320] flex items-center gap-1 cursor-pointer"
+                  <Link
+                    to={`/guides/${post.slug}`}
+                    className="text-xs font-bold text-[#E76F2E] hover:text-[#C65320] flex items-center gap-1 cursor-pointer transition"
                   >
                     <span>Read Full Guide</span>
-                    <Icons.ChevronRight size={14} className="transform group-hover:translate-x-0.5 transition-transform" />
-                  </button>
+                    <Icons.ChevronRight
+                      size={14}
+                      className="transform group-hover:translate-x-0.5 transition-transform"
+                    />
+                  </Link>
                 </div>
               </div>
             </article>

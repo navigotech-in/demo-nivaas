@@ -11,7 +11,7 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
-  title = 'Indore House Makers',
+  title = 'Indore House Makers — Admin',
   badgeText,
   sidebarItems,
   sidebarFooter,

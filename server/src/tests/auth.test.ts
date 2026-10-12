@@ -54,8 +54,9 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
     expect(res.body.data.user.role).toBe('USER')
 
     // Verify Set-Cookie header
-    const cookies = res.headers['set-cookie']
-    expect(cookies).toBeDefined()
+    const rawCookies = res.headers['set-cookie']
+    const cookies = Array.isArray(rawCookies) ? rawCookies : [rawCookies].filter(Boolean) as string[]
+    expect(cookies.length).toBeGreaterThan(0)
     expect(cookies.some((c: string) => c.includes('ihm_refresh_token'))).toBe(true)
   })
 
@@ -158,7 +159,8 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
     })
 
     const rawCookies = signupRes.headers['set-cookie']
-    const cookieHeader = rawCookies.map((c: string) => c.split(';')[0]).join('; ')
+    const cookieList = Array.isArray(rawCookies) ? rawCookies : [rawCookies].filter(Boolean) as string[]
+    const cookieHeader = cookieList.map((c: string) => c.split(';')[0]).join('; ')
 
     // 1st Refresh: Rotates token successfully
     const firstRefresh = await request(app)
@@ -179,7 +181,8 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
 
     // Verify the newly issued cookie is still valid
     const newCookies = firstRefresh.headers['set-cookie']
-    const newCookieHeader = newCookies.map((c: string) => c.split(';')[0]).join('; ')
+    const newCookieList = Array.isArray(newCookies) ? newCookies : [newCookies].filter(Boolean) as string[]
+    const newCookieHeader = newCookieList.map((c: string) => c.split(';')[0]).join('; ')
 
     const validNewRefresh = await request(app)
       .post('/api/v1/auth/refresh')

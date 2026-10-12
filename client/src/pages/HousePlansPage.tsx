@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { fallbackProjects } from '../lib/data'
 import { Icons } from '../components/Icons'
 import { cityAliases, masterIndianCities } from '../components/useDesignCatalogFilters'
@@ -41,13 +41,27 @@ const parseBuiltUp = (area: string) => {
 }
 
 export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
-  const [selectedBhk, setSelectedBhk] = useState('All')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlQuery = searchParams.get('q') || ''
+  const urlBhk = searchParams.get('bhk') || 'All'
+  const urlCity = searchParams.get('city') || 'All Cities'
+  const urlDirection = searchParams.get('direction') || 'All Directions'
+
+  const [queryTerm, setQueryTerm] = useState(urlQuery)
+  const [selectedBhk, setSelectedBhk] = useState(urlBhk)
   const [selectedArea, setSelectedArea] = useState('All Areas')
-  const [selectedDirection, setSelectedDirection] = useState('All Directions')
-  const [selectedCity, setSelectedCity] = useState('All Cities')
+  const [selectedDirection, setSelectedDirection] = useState(urlDirection)
+  const [selectedCity, setSelectedCity] = useState(urlCity)
   const [citySearch, setCitySearch] = useState('')
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false)
   const cityDropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (urlQuery !== queryTerm) setQueryTerm(urlQuery)
+    if (urlBhk !== selectedBhk && urlBhk !== 'All') setSelectedBhk(urlBhk)
+    if (urlCity !== selectedCity && urlCity !== 'All Cities') setSelectedCity(urlCity)
+    if (urlDirection !== selectedDirection && urlDirection !== 'All Directions') setSelectedDirection(urlDirection)
+  }, [urlQuery, urlBhk, urlCity, urlDirection])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -79,6 +93,20 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
 
   const filteredProjects = useMemo(() => {
     return fallbackProjects.filter((p) => {
+      // Query text search filter
+      if (queryTerm.trim()) {
+        const q = queryTerm.toLowerCase()
+        const matchTitle = p.title.toLowerCase().includes(q)
+        const matchDim = (p.dimension || p.size || '').toLowerCase().includes(q)
+        const matchBhk = p.bhk.toLowerCase().includes(q)
+        const matchCity = (p.city || '').toLowerCase().includes(q)
+        const matchPlot = (p.plotDetails || '').toLowerCase().includes(q)
+        const matchFacing = (p.facing || '').toLowerCase().includes(q)
+        if (!matchTitle && !matchDim && !matchBhk && !matchCity && !matchPlot && !matchFacing) {
+          return false
+        }
+      }
+
       // BHK filter
       if (selectedBhk !== 'All' && !p.bhk.includes(selectedBhk)) {
         return false
@@ -107,21 +135,24 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
 
       return true
     })
-  }, [selectedBhk, selectedArea, selectedDirection, selectedCity])
+  }, [queryTerm, selectedBhk, selectedArea, selectedDirection, selectedCity])
 
   const hasActiveFilters =
+    Boolean(queryTerm.trim()) ||
     selectedBhk !== 'All' ||
     selectedArea !== 'All Areas' ||
     selectedDirection !== 'All Directions' ||
     selectedCity !== 'All Cities'
 
   const clearAllFilters = () => {
+    setQueryTerm('')
     setSelectedBhk('All')
     setSelectedArea('All Areas')
     setSelectedDirection('All Directions')
     setSelectedCity('All Cities')
     setCitySearch('')
     setCityDropdownOpen(false)
+    setSearchParams({})
   }
 
   return (
@@ -151,6 +182,28 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
 
         {/* Filter Bar Toolbar */}
         <div className="mt-6 pt-5 border-t border-[#E7E0D7] space-y-3.5">
+          {queryTerm && (
+            <div className="flex items-center gap-2 bg-[#FFF6E8] border border-[#E76F2E]/30 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#292826] w-fit">
+              <Icons.Search size={13} className="text-[#E76F2E]" />
+              <span>Search: <strong>"{queryTerm}"</strong></span>
+              <button
+                type="button"
+                onClick={() => {
+                  setQueryTerm('')
+                  setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev)
+                    next.delete('q')
+                    return next
+                  })
+                }}
+                className="ml-1 text-[#54504A] hover:text-[#C94F36] p-0.5 rounded cursor-pointer"
+                title="Clear search query"
+              >
+                <Icons.Close size={13} />
+              </button>
+            </div>
+          )}
+
           {/* 1. BHK Filter Pills (Horizontally scrollable on mobile) */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
             {bhkOptions.map((b) => (
@@ -311,6 +364,7 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
                     src={plan.image}
                     alt={plan.title}
                     loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   {/* Maximum one clean badge */}

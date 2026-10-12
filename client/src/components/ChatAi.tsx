@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { site } from '../lib/data'
 import { Icons } from './Icons'
+import { fetchChatQuota } from '../lib/api'
 
 interface Message {
+  id?: string
   from: 'bot' | 'user'
   text: string
   time?: string
+  toolResult?: any
+  actionCard?: any
 }
 
 interface ChatAiProps {
@@ -13,232 +16,347 @@ interface ChatAiProps {
   onClose: () => void
   onOpenConsult?: (query?: string) => void
   onOpenGenerator?: () => void
-}
-
-const getBotReply = (input: string): string => {
-  const q = input.toLowerCase()
-  if (/(hi|hello|namaste|hey)\b/.test(q))
-    return 'Namaste! 🙏 I am your Indore House Makers AI assistant. Ask me anything about 2D floor plans, ₹299 AI Starter plans, 3D elevations, Vastu directions, or construction costs in Indore.'
-  if (/(299|plan pack|credit|subscription|package|pricing)/.test(q))
-    return '✨ Indore House Makers AI Starter Plan (₹299/mo):\n• 5 Full AI Design Generations per billing cycle\n• High-Resolution 2D CAD Layouts with Room Dimensions\n• Area Statements, Built-up & Carpet Area Summary\n• Photorealistic 3D Front Elevation Renders\n• Watermark-free PDF & PNG Downloads\n• 1 Free Plan Regeneration within 7 days\n\n📌 Note: All designs are conceptual recommendations. Construction requires verification by a licensed architect/structural engineer.'
-  if (/(price|cost|charge|rates?|fee|budget|sq\.? ?ft)/.test(q))
-    return '💰 Construction Cost Benchmarks in Indore & MP:\n• Economy: ₹1,550 – ₹1,750 / sq.ft\n• Premium Executive: ₹2,100 – ₹2,450 / sq.ft (Most Popular)\n• Luxury Ultra: ₹2,900 – ₹3,500 / sq.ft\n\nFull custom 2D CAD working drawings start at ₹4,999, and 3D Front Elevations at ₹2,499.'
-  if (/(30x50|20x40|20x50|30x60|plot|dimension|siz|sq\.? ?ft)/.test(q))
-    return '📐 For standard Indian plots like 30x50 ft (1,500 sq.ft plot / ~2,175 sq.ft built-up), we recommend a G+1 Duplex (3 BHK + Pooja Room + Covered Car Parking). You can explore dimensioned layouts in our House Plans section!'
-  if (/(vastu|vaastu|east facing|purva|direction|kitchen|mandir|pooja)/.test(q))
-    return '🧭 100% Vastu Shastra Guidelines:\n• Pooja Mandir: North-East (Ishanya) — Most auspicious corner\n• Kitchen: South-East (Agneya) or North-West (Vayavya)\n• Master Bedroom: South-West (Nairutya) for prosperity & stability\n• Staircase: South/West wall in clockwise rotation\n• Main Gate: North/East facing'
-  if (/(3d|elevation|exterior|facade|render)/.test(q))
-    return '🏛️ Our 3D Front Elevations come in ultra-modern, contemporary jaali, Kerala tropical, and classical villa styles with photorealistic Day and Twilight lighting renders.'
-  if (/(interior|kitchen|bedroom|wardrobe|modular)/.test(q))
-    return 'We plan complete turnkey modular interiors — modular kitchens, TV media consoles, pooja niches, and false ceiling LED concepts starting at ₹599/sq.ft.'
-  if (/(2d|layout|floor plan|house plan|blueprint)/.test(q))
-    return 'Every 2D layout includes dimensioned floor plans, door-window schedules, area statements, and structural column grid recommendations.'
-  if (/(contact|whatsapp|call|phone|email|talk|architect|consult)/.test(q))
-    return `You can reach our Senior Architects directly on ${site.phone} or write to ${site.email}. Click "Book Free Consultation" to schedule an instant callback.`
-  return 'I can help with house plans, Vastu, pricing, 3D elevations, and construction cost estimates. Try asking "Price of a 30x50 plan?" or "What is included in ₹299 plan?".'
+  token?: string | null
+  onOpenPassModal?: () => void
 }
 
 const suggestionChips = [
-  { label: '📐 30x50 East Facing Plan', query: '30x50 East Facing House Plan' },
-  { label: '💰 Indore Construction Cost', query: 'Construction cost in Indore' },
-  { label: '✨ ₹299 AI Plan Package', query: 'What is included in the ₹299 AI Plan?' },
-  { label: '🧭 Vastu for Mandir & Kitchen', query: 'Vastu rules for Kitchen and Pooja room' },
-  { label: '🏛️ Modern 3D Front Elevation', query: 'Tell me about 3D front elevations' },
-  { label: '📞 Talk to Senior Architect', query: 'I want to talk to an architect' },
+  { label: '💰 30x50 Indore Construction Cost', query: '30x50 East Facing house construction cost in Indore' },
+  { label: '📐 3 BHK Duplex House Plans', query: 'Show me 3 BHK East facing duplex plans' },
+  { label: '✨ What is in ₹299 Design Pass?', query: 'What is included in the ₹299 30-Day Design Pass?' },
+  { label: '🧭 Vastu for Mandir & Kitchen', query: 'Vastu rules for Kitchen in Agneya and Mandir in Ishanya' },
+  { label: '🏛️ Modern 3D Front Elevations', query: 'Tell me about 3D front elevations and lighting' },
+  { label: '📞 Talk to Senior Architect', query: 'I want to schedule an architect consultation' },
 ]
 
-export default function ChatAi({ open, onClose, onOpenConsult, onOpenGenerator }: ChatAiProps) {
+export default function ChatAi({
+  open,
+  onClose,
+  onOpenConsult,
+  onOpenGenerator,
+  token,
+  onOpenPassModal,
+}: ChatAiProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       from: 'bot',
-      text: 'Namaste! 🙏 I am your Indore House Makers AI Assistant. Ask me anything about house plans, ₹299 AI plan starter, Vastu compliance, 3D elevations, or construction rates in Indore.',
+      text: 'Namaste! 🙏 I am your Indore House Makers AI Assistant. Ask me anything about 2D floor plans, ₹299 Design Pass (5 Credits), Vastu compliance, 3D elevations, or verified construction rates in Indore.',
       time: 'Just now',
     },
   ])
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
+  const [sessionId] = useState(() => 'sess_' + Math.random().toString(36).substring(2, 10))
+  const [quota, setQuota] = useState<{ remaining: number; limit: number; isPassHolder: boolean } | null>(null)
+  const [consentChecked, setConsentChecked] = useState(false)
+  const [consultSubmitted, setConsultSubmitted] = useState(false)
   const bodyRef = useRef<HTMLDivElement>(null)
+
+  // Load quota on open
+  useEffect(() => {
+    if (open) {
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined
+      fetchChatQuota(headers)
+        .then((data) => setQuota({ remaining: data.remaining, limit: data.limit, isPassHolder: data.isPassHolder }))
+        .catch(() => setQuota({ remaining: 5, limit: 5, isPassHolder: false }))
+    }
+  }, [open, token])
 
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, typing, open])
 
-  const pushMessage = (from: 'bot' | 'user', text: string) => {
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    setMessages((prev) => [...prev, { from, text, time }])
-  }
+  const handleSendMessage = async (textToSend?: string) => {
+    const text = (textToSend || input).trim()
+    if (!text || typing) return
 
-  const handleAsk = (text: string) => {
-    const clean = text.trim()
-    if (!clean) return
-    pushMessage('user', clean)
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const userMsg: Message = { from: 'user', text, time: now }
+    setMessages((prev) => [...prev, userMsg])
     setInput('')
     setTyping(true)
-    window.setTimeout(() => {
+
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+
+      const response = await fetch(`/api/v1/ai/chat/sessions/${sessionId}/messages`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ message: text }),
+      })
+
+      if (!response.ok || !response.body) {
+        throw new Error('Chat service temporarily unavailable.')
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder('utf-8')
+      let buffer = ''
+      let botResponseText = ''
+      let toolData: any = null
+      let actionData: any = null
+
+      const botMsgId = 'bot_' + Date.now()
+      setMessages((prev) => [
+        ...prev,
+        { id: botMsgId, from: 'bot', text: '', time: now },
+      ])
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n\n')
+        buffer = lines.pop() || ''
+
+        for (const block of lines) {
+          const eventMatch = block.match(/^event:\s*(.+)$/m)
+          const dataMatch = block.match(/^data:\s*(.+)$/m)
+
+          if (eventMatch && dataMatch) {
+            const eventType = eventMatch[1].trim()
+            try {
+              const parsedData = JSON.parse(dataMatch[1].trim())
+
+              if (eventType === 'response.delta' && parsedData.text) {
+                botResponseText = parsedData.text
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === botMsgId ? { ...m, text: botResponseText } : m
+                  )
+                )
+              } else if (eventType === 'tool.result') {
+                toolData = parsedData
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === botMsgId ? { ...m, toolResult: toolData } : m
+                  )
+                )
+              } else if (eventType === 'action.confirmation_required') {
+                actionData = parsedData
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === botMsgId ? { ...m, actionCard: actionData } : m
+                  )
+                )
+              } else if (eventType === 'response.failed') {
+                botResponseText = `⚠️ ${parsedData.message}`
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === botMsgId ? { ...m, text: botResponseText } : m
+                  )
+                )
+              }
+            } catch {
+              // continue
+            }
+          }
+        }
+      }
+
+      // Decrement local quota
+      setQuota((prev) => prev ? { ...prev, remaining: Math.max(0, prev.remaining - 1) } : null)
+    } catch (err: any) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          from: 'bot',
+          text: `Indore House Makers AI: Main aapki queries solve karne ke liye ready hoon. Aap 2D plans, ₹299 Design Pass, ya Indore construction costs pooch sakte hain. (${err.message})`,
+          time: now,
+        },
+      ])
+    } finally {
       setTyping(false)
-      pushMessage('bot', getBotReply(clean))
-    }, 600)
+    }
   }
 
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1A1815]/75 backdrop-blur-sm p-2 sm:p-4 animate-fadeIn">
-      <div className="w-full max-w-md sm:max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl border border-[#E7E0D7] text-[#292826] flex flex-col h-[82vh] sm:h-[560px] max-h-[580px]">
+      <div className="w-full max-w-md sm:max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl border border-[#E7E0D7] text-[#292826] flex flex-col h-[85vh] sm:h-[620px] max-h-[640px]">
         {/* Header */}
-        <header className="bg-white px-4 sm:px-5 py-3.5 text-[#292826] flex items-center justify-between border-b border-[#EEE9E3] shrink-0">
+        <header className="bg-white px-4 sm:px-5 py-3 text-[#292826] flex items-center justify-between border-b border-[#EEE9E3] shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#E76F2E] to-[#C94F36] text-white shadow-sm ring-2 ring-[#E76F2E]/20 font-black">
               <Icons.Sparkles size={20} />
             </div>
             <div>
               <div className="font-display font-extrabold text-sm sm:text-base text-[#292826] flex items-center gap-1.5">
-                Indore House Makers <span className="text-[#C94F36]">AI Desk</span>
+                Indore House Makers <span className="text-[#C94F36]">AI Architecture Desk</span>
               </div>
               <div className="text-[11px] text-emerald-700 flex items-center gap-1.5 font-medium">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Online • Instant Vastu &amp; Cost Guidance
+                Online • SSE Streaming &amp; Verified Rates
               </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-8 w-8 rounded-lg flex items-center justify-center text-[#54504A] hover:text-[#292826] hover:bg-[#F4EFEA] border border-[#E7E0D7] transition cursor-pointer"
-            aria-label="Close AI assistant"
-          >
-            <Icons.Close size={18} />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {quota && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose()
+                  onOpenPassModal?.()
+                }}
+                className={`text-[10px] px-2 py-0.5 rounded-md font-extrabold border cursor-pointer transition ${
+                  quota.remaining > 0 ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100' : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
+                }`}
+              >
+                {quota.remaining}/{quota.limit} msgs left
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="h-8 w-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-500 hover:text-black transition cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
         </header>
 
-        {/* Messages */}
-        <div ref={bodyRef} className="flex-1 space-y-3.5 overflow-y-auto bg-[#FDFCF9] p-3 sm:p-4 text-xs">
-          {/* Welcome Card if first message */}
-          {messages.length <= 1 && (
-            <div className="p-3.5 rounded-xl bg-white border border-[#E7E0D7] shadow-xs space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#C94F36] flex items-center gap-1">
-                  <Icons.Sparkles size={12} /> Architectural AI Capabilities
-                </span>
-                <span className="text-[10px] text-[#54504A]">Instant Responses</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <div className="p-2 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3]">
-                  <span className="font-bold text-[#292826]">📐 Vastu Floor Plans</span>
-                  <p className="text-[10px] text-[#54504A] mt-0.5">30x50, 20x40 &amp; duplex layouts</p>
-                </div>
-                <div className="p-2 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3]">
-                  <span className="font-bold text-[#292826]">💰 Cost Estimator</span>
-                  <p className="text-[10px] text-[#54504A] mt-0.5">Indore &amp; MP material benchmarks</p>
-                </div>
-              </div>
-            </div>
-          )}
+        {/* Top Quick Action Bar */}
+        <div className="px-4 py-2 bg-[#FFF6E8] border-b border-[#E76F2E]/20 flex items-center justify-between text-xs text-[#1F2937]">
+          <span className="font-semibold text-[11px]">Generate custom 2D &amp; 3D designs for your plot</span>
+          <button
+            type="button"
+            onClick={() => {
+              onClose()
+              onOpenGenerator?.()
+            }}
+            className="px-2.5 py-1 bg-[#E76F2E] hover:bg-[#C65320] text-white text-[11px] font-bold rounded-lg shadow-xs transition cursor-pointer"
+          >
+            Launch Studio
+          </button>
+        </div>
 
-          {messages.map((m, idx) =>
-            m.from === 'bot' ? (
-              <div key={idx} className="flex items-start gap-2 animate-fadeIn">
-                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#E76F2E] to-[#C94F36] text-[10px] font-extrabold text-white shadow-xs">
-                  AI
-                </div>
-                <div className="max-w-[85%] rounded-2xl rounded-tl-none border border-[#E7E0D7] bg-white p-3.5 leading-relaxed text-[#292826] shadow-xs whitespace-pre-line text-xs sm:text-[13px]">
-                  {m.text}
+        {/* Chat Messages Body */}
+        <div ref={bodyRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAF8F5]">
+          {messages.map((m, idx) => (
+            <div
+              key={idx}
+              className={`flex flex-col ${m.from === 'user' ? 'items-end' : 'items-start'}`}
+            >
+              <div
+                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-xs ${
+                  m.from === 'user'
+                    ? 'bg-[#E76F2E] text-white font-medium rounded-tr-xs'
+                    : 'bg-white text-[#1F2937] border border-[#E7E0D7] rounded-tl-xs whitespace-pre-line'
+                }`}
+              >
+                {m.text}
 
-                  {/* Contextual actions for bot */}
-                  <div className="mt-2.5 pt-2 border-t border-[#EEE9E3] flex flex-wrap gap-1.5">
-                    {onOpenGenerator && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onClose()
-                          onOpenGenerator()
-                        }}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#FFF6E8] border border-[#E76F2E]/30 text-[#C65320] text-[10.5px] font-bold hover:bg-[#E76F2E] hover:text-white transition"
-                      >
-                        <Icons.Blueprint size={11} />
-                        <span>Launch 20-Step AI Generator</span>
-                      </button>
-                    )}
-                    {onOpenConsult && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onClose()
-                          onOpenConsult('AI Consultation Enquiry')
-                        }}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F4EFEA] border border-[#E7E0D7] text-[#54504A] text-[10.5px] font-semibold hover:text-[#292826] hover:bg-[#E7E0D7] transition"
-                      >
-                        <Icons.Phone size={10} />
-                        <span>Book Architect Review</span>
-                      </button>
+                {/* Tool Result Widget */}
+                {m.toolResult && m.toolResult.tool === 'calculate_construction_cost' && (
+                  <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-orange-200 text-xs text-[#1F2937] space-y-1.5">
+                    <div className="flex items-center justify-between font-extrabold text-black">
+                      <span>{m.toolResult.package} Package ({m.toolResult.city})</span>
+                      <span className="text-[#C65320] text-sm">{m.toolResult.estimatedTotalInLakhs}</span>
+                    </div>
+                    <div className="text-[11px] text-gray-600 font-semibold">
+                      Rate: ₹{m.toolResult.ratePerSqFt}/sq.ft · Built-up: {m.toolResult.builtUpArea} sq.ft
+                    </div>
+                    <p className="text-[10px] text-gray-500 italic mt-1">{m.toolResult.disclaimer}</p>
+                  </div>
+                )}
+
+                {/* Action Card Widget with Mandatory Consent */}
+                {m.actionCard && (
+                  <div className="mt-3 p-3.5 rounded-xl bg-white border border-[#E76F2E]/40 shadow-xs text-xs text-[#1F2937] space-y-2.5">
+                    <div className="font-extrabold text-black flex items-center gap-1.5">
+                      <Icons.Phone size={14} className="text-[#E76F2E]" />
+                      <span>{m.actionCard.title}</span>
+                    </div>
+                    <div className="text-[11px] text-gray-600 space-y-0.5">
+                      <div>City: <strong>{m.actionCard.fields.city}</strong></div>
+                      <div>Service: <strong>{m.actionCard.fields.suggestedService}</strong></div>
+                    </div>
+
+                    {!consultSubmitted ? (
+                      <div className="pt-2 border-t border-gray-100 space-y-2">
+                        <label className="flex items-start gap-2 text-[11px] text-[#374151] cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={consentChecked}
+                            onChange={(e) => setConsentChecked(e.target.checked)}
+                            className="mt-0.5 rounded border-[#D1C9BE] text-[#E76F2E] focus:ring-[#E76F2E]"
+                          />
+                          <span>{m.actionCard.fields.mandatoryConsent}</span>
+                        </label>
+                        <button
+                          type="button"
+                          disabled={!consentChecked}
+                          onClick={() => {
+                            setConsultSubmitted(true)
+                            onOpenConsult?.('AI Chat Consultation Request')
+                          }}
+                          className="w-full py-2 px-3 rounded-lg bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] transition disabled:opacity-50 cursor-pointer"
+                        >
+                          Confirm &amp; Book Architect Call
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-2 bg-emerald-50 text-emerald-800 rounded-lg text-xs font-bold text-center">
+                        ✓ Consultation request submitted successfully!
+                      </div>
                     )}
                   </div>
-                </div>
+                )}
               </div>
-            ) : (
-              <div key={idx} className="flex justify-end animate-fadeIn">
-                <div className="max-w-[85%] rounded-2xl rounded-tr-none bg-[#E76F2E] px-4 py-2.5 text-white shadow-xs text-xs sm:text-[13px] font-medium leading-relaxed">
-                  {m.text}
-                </div>
-              </div>
-            )
-          )}
+              <span className="text-[10px] text-[#8C8881] mt-1 px-1">{m.time}</span>
+            </div>
+          ))}
+
           {typing && (
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#E76F2E] to-[#C94F36] text-[10px] font-extrabold text-white">
-                AI
-              </div>
-              <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-none border border-[#E7E0D7] bg-white px-3.5 py-2.5 shadow-xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#E76F2E] animate-bounce" />
-                <span className="h-1.5 w-1.5 rounded-full bg-[#E76F2E] animate-bounce [animation-delay:120ms]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-[#E76F2E] animate-bounce [animation-delay:240ms]" />
-              </div>
+            <div className="flex items-center gap-2 p-3 bg-white border border-[#E7E0D7] rounded-2xl rounded-tl-xs max-w-[120px]">
+              <span className="h-2 w-2 rounded-full bg-[#E76F2E] animate-bounce" />
+              <span className="h-2 w-2 rounded-full bg-[#E76F2E] animate-bounce [animation-delay:0.2s]" />
+              <span className="h-2 w-2 rounded-full bg-[#E76F2E] animate-bounce [animation-delay:0.4s]" />
             </div>
           )}
         </div>
 
-        {/* Suggestion chips */}
-        <div className="px-3 py-2 bg-white border-t border-[#EEE9E3] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-          <span className="text-[10px] font-bold uppercase text-[#54504A] shrink-0 flex items-center gap-1">
-            <Icons.Sparkles size={11} className="text-[#E76F2E]" /> Quick:
-          </span>
-          {suggestionChips.map((s) => (
+        {/* Suggestion Chips */}
+        <div className="px-4 py-2 border-t border-[#EEE9E3] bg-white overflow-x-auto flex gap-1.5 shrink-0 scrollbar-none">
+          {suggestionChips.map((chip, idx) => (
             <button
-              key={s.label}
+              key={idx}
               type="button"
-              onClick={() => handleAsk(s.query)}
-              className="shrink-0 rounded-lg border border-[#E7E0D7] bg-[#FAF8F5] hover:border-[#E76F2E] hover:bg-[#FFF6E8] px-2.5 py-1 text-[11px] font-semibold text-[#292826] hover:text-[#E76F2E] transition cursor-pointer active:scale-95"
+              onClick={() => handleSendMessage(chip.query)}
+              className="px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#E7E0D7] text-[11px] font-semibold text-[#4B5563] hover:border-[#E76F2E] hover:text-[#C65320] hover:bg-[#FFF6E8] transition whitespace-nowrap cursor-pointer shrink-0"
             >
-              {s.label}
+              {chip.label}
             </button>
           ))}
         </div>
 
-        {/* Input */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            handleAsk(input)
-          }}
-          className="flex gap-2 bg-white p-2.5 sm:p-3 border-t border-[#EEE9E3] shrink-0"
-        >
+        {/* Input Bar */}
+        <div className="p-3 border-t border-[#EEE9E3] bg-white flex items-center gap-2 shrink-0">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about 30x50 plans, ₹299 starter, Vastu, Indore rates..."
-            className="w-full rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] px-3.5 py-2.5 text-xs sm:text-sm outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20 transition"
+            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+            placeholder="Type your message (e.g. 30x50 plot cost in Indore)..."
+            className="flex-1 px-4 py-2.5 text-xs sm:text-sm rounded-xl border border-[#D1C9BE] text-black placeholder-gray-400 focus:outline-none focus:border-[#E76F2E] focus:ring-1 focus:ring-[#E76F2E]"
           />
           <button
-            type="submit"
-            disabled={!input.trim()}
-            className="shrink-0 rounded-xl bg-[#E76F2E] px-4 py-2.5 text-white font-bold text-xs sm:text-sm transition hover:bg-[#C65320] active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1"
-            aria-label="Send message"
+            type="button"
+            disabled={!input.trim() || typing}
+            onClick={() => handleSendMessage()}
+            className="h-10 px-4 rounded-xl bg-[#E76F2E] hover:bg-[#C65320] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs"
           >
             <span>Send</span>
-            <Icons.ChevronRight size={14} />
+            <Icons.ChevronRight size={13} />
           </button>
-        </form>
+        </div>
       </div>
     </div>
   )

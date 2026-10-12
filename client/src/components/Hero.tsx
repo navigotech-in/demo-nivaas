@@ -84,12 +84,12 @@ export default function Hero({ onCalculate }: HeroProps) {
           </p>
         </div>
 
-        {/* Clean Light-Frosted Transparent Estimator Box (Matte Edges, Clean White Accents, Well-Proportioned) */}
+        {/* Clean Light-Frosted Glass Estimator Box */}
         <div className="relative max-w-[810px] mx-auto mt-4 sm:mt-6 md:mt-8">
-          {/* Master Clean-Matte Transparent Frame */}
+          {/* Master Frosted Frame */}
           <form
             onSubmit={handleSubmit}
-            className="relative overflow-hidden w-full rounded-2xl sm:rounded-3xl border border-white/20 bg-white/[0.095] backdrop-blur-sm p-3 sm:p-4 md:p-4.5 shadow-[0_16px_36px_rgba(0,0,0,0.35)] transition-all group"
+            className="relative overflow-hidden w-full rounded-2xl sm:rounded-3xl border border-white/25 bg-white/[0.12] backdrop-blur-md p-3 sm:p-4 md:p-4.5 shadow-[0_16px_36px_rgba(0,0,0,0.25)] transition-all group"
           >
             {/* Top Bar of Glass Card */}
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 mb-2.5 border-b border-white/15">
@@ -101,15 +101,15 @@ export default function Hero({ onCalculate }: HeroProps) {
                   <div className="font-display text-sm sm:text-base font-extrabold text-white leading-tight drop-shadow-md">
                     Quick Construction Cost Estimator
                   </div>
-                  <div className="text-[11px] text-white/90 font-medium mt-0.5 drop-shadow-sm">
+                  <div className="text-[11px] text-white/95 font-medium mt-0.5 drop-shadow-sm">
                     Instant turnkey budget & material calculation for your plot
                   </div>
                 </div>
               </div>
 
               {/* Cost Output Badge */}
-              <div className="flex items-center sm:flex-col sm:items-end justify-between bg-white/[0.08] backdrop-blur-sm px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl border border-white/15 shadow-inner">
-                <div className="text-[9px] font-bold uppercase tracking-wider text-white/80">
+              <div className="flex items-center sm:flex-col sm:items-end justify-between bg-white/[0.10] backdrop-blur-sm px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl border border-white/15 shadow-inner">
+                <div className="text-[9px] font-bold uppercase tracking-wider text-white/85">
                   Est. Turnkey Cost
                 </div>
                 <div className="font-display text-base sm:text-lg md:text-xl font-black text-white leading-none">
@@ -118,10 +118,10 @@ export default function Hero({ onCalculate }: HeroProps) {
               </div>
             </div>
 
-            {/* 3 Light-Frosted Transparent Pods Grid: Area Slider | Quality | Floors (2.5% Vertically Expanded) */}
+            {/* 3 Frosted Pods Grid: Area Slider | Quality | Floors */}
             <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-3 items-stretch">
               {/* Ground Area Slider Pod */}
-              <div className="bg-white/[0.07] hover:bg-white/[0.10] backdrop-blur-sm rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between hover:border-white/25 shadow-sm">
+              <div className="bg-white/[0.08] hover:bg-white/[0.12] backdrop-blur-sm rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between hover:border-white/25 shadow-sm">
                 <div>
                   <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-white mb-2">
                     <span className="flex items-center gap-1.5">
@@ -140,7 +140,7 @@ export default function Hero({ onCalculate }: HeroProps) {
                     value={area}
                     aria-label="Plot ground area in square feet"
                     onChange={(e) => setArea(Number(e.target.value))}
-                    className="w-full accent-[#E76F2E] h-1.5 bg-white/15 rounded-lg cursor-pointer transition shadow-inner border border-white/15"
+                    className="w-full accent-[#E76F2E] h-1.5 bg-white/20 rounded-lg cursor-pointer transition shadow-inner border border-white/15"
                   />
                 </div>
                 <div className="flex justify-between text-[9px] text-white/90 mt-2 font-medium pt-1.5 border-t border-white/10">
@@ -151,7 +151,7 @@ export default function Hero({ onCalculate }: HeroProps) {
               </div>
 
               {/* Build Quality Package Pod */}
-              <div className="bg-white/[0.07] hover:bg-white/[0.10] backdrop-blur-sm rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between hover:border-white/25 shadow-sm">
+              <div className="bg-white/[0.08] hover:bg-white/[0.12] backdrop-blur-sm rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between hover:border-white/25 shadow-sm">
                 <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white mb-2">
                   <Icons.Layers size={13} className="text-[#FFA366]" />
                   <span>Build Quality Package</span>
@@ -163,10 +163,10 @@ export default function Hero({ onCalculate }: HeroProps) {
                       type="button"
                       aria-label={`Select ${key} construction quality`}
                       onClick={() => setQuality(key)}
-                      className={`py-1.5 sm:py-2 px-1 rounded-lg border text-[10px] font-bold text-center transition-all duration-150 ${
+                      className={`py-1.5 sm:py-2 px-1 rounded-lg border text-[10px] font-extrabold text-center transition-all duration-150 ${
                         quality === key
-                          ? 'border-white/70 bg-[#E76F2E] text-white shadow-md'
-                          : 'border-white/15 bg-white/[0.08] hover:bg-white/[0.16] text-white/95 active:scale-95'
+                          ? 'border-white bg-[#C65320] text-white shadow-md'
+                          : 'border-white/20 bg-black/40 hover:bg-black/60 text-white active:scale-95'
                       }`}
                     >
                       {key[0].toUpperCase() + key.slice(1)}
@@ -176,7 +176,7 @@ export default function Hero({ onCalculate }: HeroProps) {
               </div>
 
               {/* Floors Pod */}
-              <div className="bg-white/[0.07] hover:bg-white/[0.10] backdrop-blur-sm rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between hover:border-white/25 shadow-sm">
+              <div className="bg-white/[0.08] hover:bg-white/[0.12] backdrop-blur-sm rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between hover:border-white/25 shadow-sm">
                 <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white mb-2">
                   <Icons.Building size={13} className="text-[#FFA366]" />
                   <span>Number of Floors</span>
@@ -193,10 +193,10 @@ export default function Hero({ onCalculate }: HeroProps) {
                       type="button"
                       aria-label={`Select ${fl.label} floor plan`}
                       onClick={() => setFloors(fl.val)}
-                      className={`py-1.5 sm:py-2 px-0.5 rounded-lg border text-[10px] font-bold text-center transition-all duration-150 ${
+                      className={`py-1.5 sm:py-2 px-0.5 rounded-lg border text-[10px] font-extrabold text-center transition-all duration-150 ${
                         floors === fl.val
-                          ? 'border-white/70 bg-[#E76F2E] text-white shadow-md'
-                          : 'border-white/15 bg-white/[0.08] hover:bg-white/[0.16] text-white/95 active:scale-95'
+                          ? 'border-white bg-[#C65320] text-white shadow-md'
+                          : 'border-white/20 bg-black/40 hover:bg-black/60 text-white active:scale-95'
                       }`}
                     >
                       {fl.label}

@@ -140,12 +140,6 @@ export class AuthService {
 
     // In-memory test mirror
     db.createUser(newUser)
-    db.createCreditTransaction({
-      userId: newUser.id,
-      type: 'GRANT',
-      amount: 100,
-      idempotencyKey: `welcome_${newUser.id}`,
-    })
 
     try {
       await prisma.$transaction(async (tx) => {
@@ -159,22 +153,16 @@ export class AuthService {
             role: 'USER',
           },
         })
-
-        // 100 Free Welcome AI Credits
-        await tx.creditTransaction.create({
-          data: {
-            id: 'ctx_' + crypto.randomBytes(8).toString('hex'),
-            userId: newUser.id,
-            type: 'GRANT',
-            amount: 100,
-            description: '100 Free Welcome AI Credits',
-            referenceType: 'WELCOME_BONUS',
-          },
-        })
       })
     } catch (dbErr: any) {
       if (dbErr.code === 'P2002') {
         throw new Error('EMAIL_EXISTS')
+      }
+      if (config.dataStore === 'postgres') {
+        // Never silently hide persistence failures in postgres mode — the user
+        // record must land in the real database or signup fails loudly instead
+        // of existing only in memory and vanishing on the next restart.
+        throw dbErr
       }
     }
 
@@ -536,11 +524,14 @@ export class AuthService {
           activePass: activePass
             ? {
                 id: activePass.id,
-                passType: activePass.type,
-                status: activePass.status,
+                userId: pUser.id,
+                passType: activePass.passType as any,
+                status: activePass.status as any,
                 startsAt: activePass.startsAt.toISOString(),
                 expiresAt: activePass.expiresAt.toISOString(),
                 creditsGranted: activePass.creditsGranted,
+                createdAt: activePass.createdAt.toISOString(),
+                updatedAt: activePass.updatedAt.toISOString(),
               }
             : null,
           totalCredits,

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { subscribeDataChanged } from './syncEvents'
 
 export interface AccessPassSummary {
   id: string
@@ -28,8 +29,8 @@ interface AuthContextType {
   isLoading: boolean
   isAuthenticated: boolean
   isAdmin: boolean
-  login: (identifier: string, password: string) => Promise<void>
-  signup: (params: { name: string; email: string; password: string; phone: string }) => Promise<void>
+  login: (identifier: string, password: string) => Promise<UserProfile>
+  signup: (params: { name: string; email: string; password: string; phone: string }) => Promise<UserProfile>
   logout: () => Promise<void>
   refreshAuth: () => Promise<boolean>
   getAuthHeaders: () => Record<string, string>
@@ -154,13 +155,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [])
 
-  // Startup initialization: Attempt silent refresh
+  // Real-time synchronization & focus revalidation: Keeps credits & pass up-to-date without page reload
+  useEffect(() => {
+    const handleFocus = () => {
+      if (tokenRef.current) {
+        refreshAuth().catch(() => null)
+      }
+    }
+    window.addEventListener('focus', handleFocus)
+
+    const unsubscribeSync = subscribeDataChanged((type) => {
+      if (tokenRef.current && (type === 'all' || type === 'credits' || type === 'passes' || type === 'profile')) {
+        refreshAuth().catch(() => null)
+      }
+    })
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      unsubscribeSync()
+    }
+  }, [refreshAuth])
+
+  // Startup initialization: Attempt silent refresh only if session hint exists
   useEffect(() => {
     let isMounted = true
     async function initAuth() {
+      const hasSessionHint = typeof window !== 'undefined' && localStorage.getItem('ihm_has_session') === '1'
+      if (!hasSessionHint) {
+        setIsLoading(false)
+        return
+      }
+
       setIsLoading(true)
       try {
-        await refreshAuth()
+        const ok = await refreshAuth()
+        if (!ok && typeof window !== 'undefined') {
+          localStorage.removeItem('ihm_has_session')
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false)
@@ -189,6 +220,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setAccessToken(json.data.accessToken)
     setUser(json.data.user)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ihm_has_session', '1')
+    }
 
     // Notify other tabs
     authChannel?.postMessage({
@@ -196,10 +230,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       accessToken: json.data.accessToken,
       user: json.data.user,
     })
+
+    return json.data.user as UserProfile
   }
 
   // Signup
-  const signup = async (params: { name: string; email: string; password: string; phone?: string }) => {
+  const signup = async (params: { name: string; email: string; password: string; phone?: string }): Promise<UserProfile> => {
     const res = await fetch(`${BASE_URL}/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -214,17 +250,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setAccessToken(json.data.accessToken)
     setUser(json.data.user)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ihm_has_session', '1')
+    }
 
     authChannel?.postMessage({
       type: 'AUTH_REFRESHED',
       accessToken: json.data.accessToken,
       user: json.data.user,
     })
+
+    return json.data.user as UserProfile
   }
 
   // Logout
   const logout = async () => {
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('ihm_has_session')
+      }
       await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST',
         headers: {
@@ -232,10 +276,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ...getAuthHeaders(),
         },
         credentials: 'include',
-      })
+      }).catch(() => {})
     } finally {
       setAccessToken(null)
       setUser(null)
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('ihm_has_session')
+      }
       authChannel?.postMessage({ type: 'AUTH_LOGOUT' })
     }
   }

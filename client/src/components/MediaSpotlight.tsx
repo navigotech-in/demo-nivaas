@@ -24,7 +24,7 @@ export default function MediaSpotlight() {
               className="flex flex-col justify-between rounded-lg border border-[#E7E0D7] bg-white p-4 text-center transition hover:border-[#E7E0D7] hover:shadow-sm group"
             >
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E76F2E] bg-[#F1ECE5] px-2 py-0.5 rounded-lg inline-block mb-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#9B3814] bg-[#FFF0E6] border border-[#E76F2E]/25 px-2 py-0.5 rounded-lg inline-block mb-2">
                   {media.tag}
                 </span>
                 <h3 className="font-display text-base font-bold text-[#292826] group-hover:text-[#292826] transition">

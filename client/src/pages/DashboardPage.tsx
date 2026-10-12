@@ -12,10 +12,9 @@ import {
   EmptyState,
 } from '../components/dashboard'
 import {
-  fetchUserDashboard,
   fetchUserProjects,
   fetchUserCredits,
-  fetchUserPass,
+  fetchUserEntitlements,
   fetchUserConsultations,
   fetchUserSessions,
   revokeUserSession,
@@ -23,12 +22,12 @@ import {
   updateUserProfile,
   changeUserPassword,
   createUserProject,
-  type UserDashboardMetrics,
   type UserProject,
   type CreditTransactionItem,
   type UserSessionItem,
   type UserConsultationItem,
 } from '../lib/api'
+import { subscribeDataChanged } from '../lib/syncEvents'
 
 type DashboardTab = 'overview' | 'projects' | 'credits' | 'consultations' | 'security'
 
@@ -55,12 +54,12 @@ export default function DashboardPage({
   // Data states
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-  const [metrics, setMetrics] = useState<UserDashboardMetrics | null>(null)
   const [projects, setProjects] = useState<UserProject[]>([])
   const [creditsData, setCreditsData] = useState<{
     availableBalance: number
     transactions: CreditTransactionItem[]
   } | null>(null)
+  const [creditsTotal, setCreditsTotal] = useState<number>(5)
   const [passData, setPassData] = useState<{
     hasActivePass: boolean
     pass: any
@@ -70,10 +69,17 @@ export default function DashboardPage({
   const [sessions, setSessions] = useState<UserSessionItem[]>([])
 
   // Profile & Password form states
-  const [profileName, setProfileName] = useState('')
-  const [profilePhone, setProfilePhone] = useState('')
+  const [profileName, setProfileName] = useState(user?.name || '')
+  const [profilePhone, setProfilePhone] = useState(user?.phone || '')
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileFeedback, setProfileFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  useEffect(() => {
+    if (user) {
+      if (user.name) setProfileName(user.name)
+      if (user.phone) setProfilePhone(user.phone)
+    }
+  }, [user])
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -88,6 +94,7 @@ export default function DashboardPage({
   const [newBhk, setNewBhk] = useState('3 BHK')
   const [newFacing, setNewFacing] = useState('East Facing')
 
+  // Critical Path Loader: Only fetch what is needed for initial dashboard paint
   const loadDashboardData = useCallback(async () => {
     if (!isAuthenticated || user?.role === 'ADMIN') {
       setLoading(false)
@@ -98,43 +105,105 @@ export default function DashboardPage({
     const headers = getAuthHeaders()
 
     try {
-      const [dash, proj, cred, pass, cons, sess] = await Promise.all([
-        fetchUserDashboard(headers).catch(() => null),
+      const [proj, ent] = await Promise.all([
         fetchUserProjects(headers).catch(() => []),
-        fetchUserCredits(headers).catch(() => ({ availableBalance: 0, transactions: [] })),
-        fetchUserPass(headers).catch(() => ({ hasActivePass: false, pass: null })),
-        fetchUserConsultations(headers).catch(() => []),
-        fetchUserSessions(headers).catch(() => []),
+        fetchUserEntitlements(headers).catch(() => null),
       ])
 
-      if (dash) {
-        setMetrics(dash.metrics || null)
-        if (dash.user) {
-          setProfileName(dash.user.name || '')
-          setProfilePhone(dash.user.phone || '')
-        }
-      }
       setProjects(Array.isArray(proj) ? proj : [])
-      setCreditsData(
-        cred && Array.isArray(cred.transactions)
-          ? cred
-          : { availableBalance: cred?.availableBalance ?? 0, transactions: [] }
-      )
-      setPassData(pass || { hasActivePass: false, pass: null })
-      setConsultations(Array.isArray(cons) ? cons : [])
-      setSessions(Array.isArray(sess) ? sess : [])
+
+      // Single Source of Truth: Entitlements
+      const isPassActive = Boolean(ent?.designPass && ent.designPass.active)
+      const passObject = ent?.designPass?.active ? ent.designPass : null
+      const daysRemaining = ent?.designPass?.daysRemaining ?? 0
+      const liveCredits = (ent?.designPass && ent.designPass.active)
+        ? ent.designPass.creditsRemaining
+        : (user?.totalCredits ?? 0)
+
+      setPassData({
+        hasActivePass: isPassActive,
+        pass: passObject,
+        daysRemaining,
+      })
+
+      setCreditsTotal(Math.max(ent?.designPass?.creditsTotal ?? 5, liveCredits))
+
+      setCreditsData((prev) => ({
+        availableBalance: liveCredits,
+        transactions: prev?.transactions || [],
+      }))
     } catch (err: any) {
       setError(err?.message || 'Failed to load dashboard data.')
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated, user?.role, getAuthHeaders])
+  }, [isAuthenticated, user?.role, user?.totalCredits, getAuthHeaders])
 
+  // Secondary data loaders with automatic fresh fetch on tab switch
+  const loadConsultations = useCallback(async () => {
+    try {
+      const cons = await fetchUserConsultations(getAuthHeaders())
+      setConsultations(Array.isArray(cons) ? cons : [])
+    } catch {}
+  }, [getAuthHeaders])
+
+  const loadSessions = useCallback(async () => {
+    try {
+      const sess = await fetchUserSessions(getAuthHeaders())
+      setSessions(Array.isArray(sess) ? sess : [])
+    } catch {}
+  }, [getAuthHeaders])
+
+  const loadLedger = useCallback(async () => {
+    try {
+      const cred = await fetchUserCredits(getAuthHeaders())
+      if (cred) {
+        setCreditsData((prev) => ({
+          availableBalance: cred.availableBalance ?? prev?.availableBalance ?? 0,
+          transactions: Array.isArray(cred.transactions) ? cred.transactions : [],
+        }))
+      }
+    } catch {}
+  }, [getAuthHeaders])
+
+  // Automatically fetch fresh data whenever user switches tabs
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'USER') {
+    if (!isAuthenticated || user?.role !== 'USER') return
+    if (activeTab === 'overview' || activeTab === 'projects') {
       loadDashboardData()
+    } else if (activeTab === 'consultations') {
+      loadConsultations()
+    } else if (activeTab === 'credits') {
+      loadLedger()
+    } else if (activeTab === 'security') {
+      loadSessions()
     }
-  }, [isAuthenticated, user?.role, loadDashboardData])
+  }, [activeTab, isAuthenticated, user?.role, loadDashboardData, loadConsultations, loadLedger, loadSessions])
+
+  // Real-time synchronization & focus revalidation: Keeps dashboard data up to date without page reload
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'USER') return
+
+    const handleFocus = () => {
+      loadDashboardData()
+      if (activeTab === 'credits') loadLedger()
+      if (activeTab === 'consultations') loadConsultations()
+      if (activeTab === 'security') loadSessions()
+    }
+    window.addEventListener('focus', handleFocus)
+
+    const unsubscribe = subscribeDataChanged((type) => {
+      loadDashboardData()
+      if (type === 'credits' || type === 'all') loadLedger()
+      if (type === 'leads' || type === 'all') loadConsultations()
+      if (type === 'all') loadSessions()
+    })
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      unsubscribe()
+    }
+  }, [isAuthenticated, user?.role, activeTab, loadDashboardData, loadLedger, loadConsultations, loadSessions])
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -180,24 +249,65 @@ export default function DashboardPage({
     }
   }
 
-  const handleRevokeSession = async (sessionId: string) => {
-    if (!confirm('Sign out this device session?')) return
-    try {
-      await revokeUserSession(sessionId, getAuthHeaders())
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId))
-    } catch (err: any) {
-      alert(err?.message || 'Failed to revoke session.')
-    }
+  const [sessionConfirmModal, setSessionConfirmModal] = useState<{
+    open: boolean
+    title: string
+    message: string
+    confirmText: string
+    isDestructive?: boolean
+    onConfirm: () => Promise<void>
+  } | null>(null)
+  const [sessionToast, setSessionToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [revokingLoading, setRevokingLoading] = useState(false)
+
+  const handleRevokeSession = (sessionId: string) => {
+    setSessionConfirmModal({
+      open: true,
+      title: 'Sign Out Device Session?',
+      message: 'Are you sure you want to sign out this active device session? It will require logging in again on that device.',
+      confirmText: 'Sign Out Device',
+      isDestructive: true,
+      onConfirm: async () => {
+        setRevokingLoading(true)
+        try {
+          await revokeUserSession(sessionId, getAuthHeaders())
+          setSessions((prev) => prev.filter((s) => s.id !== sessionId))
+          setSessionToast({ type: 'success', text: 'Device session signed out successfully.' })
+          setTimeout(() => setSessionToast(null), 3500)
+        } catch (err: any) {
+          setSessionToast({ type: 'error', text: err?.message || 'Failed to revoke session.' })
+          setTimeout(() => setSessionToast(null), 4000)
+        } finally {
+          setRevokingLoading(false)
+          setSessionConfirmModal(null)
+        }
+      },
+    })
   }
 
-  const handleRevokeAllOther = async () => {
-    if (!confirm('Log out from all other devices?')) return
-    try {
-      await revokeAllOtherSessions(getAuthHeaders())
-      setSessions((prev) => prev.filter((s) => s.isCurrent))
-    } catch (err: any) {
-      alert(err?.message || 'Failed to revoke other sessions.')
-    }
+  const handleRevokeAllOther = () => {
+    setSessionConfirmModal({
+      open: true,
+      title: 'Sign Out All Other Devices?',
+      message: 'This will instantly terminate all active logins on your other phones, tablets, and computers. Your current browser session will stay active.',
+      confirmText: 'Sign Out All Other Devices',
+      isDestructive: true,
+      onConfirm: async () => {
+        setRevokingLoading(true)
+        try {
+          await revokeAllOtherSessions(getAuthHeaders())
+          setSessions((prev) => prev.filter((s) => s.isCurrent))
+          setSessionToast({ type: 'success', text: 'Successfully signed out from all other devices.' })
+          setTimeout(() => setSessionToast(null), 3500)
+        } catch (err: any) {
+          setSessionToast({ type: 'error', text: err?.message || 'Failed to revoke other sessions.' })
+          setTimeout(() => setSessionToast(null), 4000)
+        } finally {
+          setRevokingLoading(false)
+          setSessionConfirmModal(null)
+        }
+      },
+    })
   }
 
   const handleCreateDraftProject = async (e: React.FormEvent) => {
@@ -217,9 +327,6 @@ export default function DashboardPage({
         getAuthHeaders()
       )
       setProjects((prev) => [newProj, ...prev])
-      if (metrics) {
-        setMetrics({ ...metrics, totalProjects: metrics.totalProjects + 1 })
-      }
       setActiveTab('projects')
     } catch (err: any) {
       alert(err?.message || 'Failed to create layout project.')
@@ -228,7 +335,7 @@ export default function DashboardPage({
     }
   }
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-[#FDFCF9] flex items-center justify-center p-6">
         <div className="flex flex-col items-center gap-2">
@@ -360,12 +467,26 @@ export default function DashboardPage({
             subtitle={`Welcome back, ${user?.name || 'Client'}. Here is your architectural workspace summary.`}
             actions={
               <div className="flex items-center gap-2">
+                {loading && (
+                  <span className="text-[11px] text-[#74706A] flex items-center gap-1 font-medium bg-[#FAF8F5] px-2.5 py-1 rounded border border-[#E7E0D7]">
+                    <Icons.RefreshCw size={11} className="animate-spin text-[#C94F36]" />
+                    <span>Syncing...</span>
+                  </span>
+                )}
+                <button
+                  onClick={() => loadDashboardData()}
+                  title="Refresh Data"
+                  className="px-2.5 py-2 rounded-md border border-[#E7E0D7] bg-white hover:bg-[#FAF8F5] text-xs font-semibold text-[#292826] flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Icons.RefreshCw size={13} className={loading ? 'animate-spin text-[#C94F36]' : ''} />
+                  <span className="hidden sm:inline">Refresh</span>
+                </button>
                 <button
                   onClick={onOpenAiStudio}
                   className="px-3.5 py-2 rounded-md bg-[#C94F36] hover:bg-[#b0422c] text-white text-xs font-semibold flex items-center gap-1.5 transition"
                 >
                   <Icons.Plus size={14} />
-                  <span>New Floor Plan</span>
+                  <span>Create New Design</span>
                 </button>
               </div>
             }
@@ -374,41 +495,61 @@ export default function DashboardPage({
           {/* Metric Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
-              label="Available Credits"
-              value={creditsData?.availableBalance ?? user?.totalCredits ?? 0}
-              subtext="Usable across 2D & 3D generations"
+              label="3D Generation Credits"
+              value={
+                passData?.hasActivePass
+                  ? `${creditsData?.availableBalance ?? user?.totalCredits ?? 0} Remaining`
+                  : creditsData?.availableBalance ?? user?.totalCredits ?? 0
+              }
+              subtext={
+                passData?.hasActivePass
+                  ? `${Math.max(0, creditsTotal - (creditsData?.availableBalance ?? 0))} Used of ${creditsTotal} Total Credits`
+                  : 'Used for 3D model concepts & photorealistic renders'
+              }
               icon={<Icons.CreditCard size={18} />}
               action={
                 <button
                   onClick={onOpenAiStudio}
                   className="text-xs font-semibold text-[#C94F36] hover:underline"
                 >
-                  Generate Plan →
+                  Create New Design →
                 </button>
               }
             />
 
             <MetricCard
               label="Access Pass"
-              value={passData?.hasActivePass ? '₹299 Design Pass' : 'Standard'}
-              subtext={
+              value={
                 passData?.hasActivePass
+                  ? '30-Day Design Pass'
+                  : 'No Active Design Pass'
+              }
+              subtext={
+                passData?.pass?.expiresAt
+                  ? `Valid until ${new Date(passData.pass.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                  : passData?.hasActivePass
                   ? `${passData.daysRemaining ?? 30} days remaining`
-                  : 'Pay-per-design mode'
+                  : 'Buy ₹299 Pass for 5 3D generations'
               }
               icon={<Icons.Award size={18} />}
               action={
-                <StatusText
-                  status={passData?.hasActivePass ? 'Active' : 'No Active Pass'}
-                  variant={passData?.hasActivePass ? 'success' : 'neutral'}
-                />
+                passData?.hasActivePass ? (
+                  <StatusText status="Active" variant="success" />
+                ) : (
+                  <button
+                    onClick={onOpenAiStudio}
+                    className="text-xs font-bold text-[#E76F2E] hover:underline"
+                  >
+                    Buy ₹299 Pass →
+                  </button>
+                )
               }
             />
 
             <MetricCard
               label="Projects Created"
               value={projects.length}
-              subtext="Saved architectural blueprints"
+              subtext="Saved architectural concepts"
               icon={<Icons.Layers size={18} />}
               action={
                 <button
@@ -436,6 +577,107 @@ export default function DashboardPage({
             />
           </div>
 
+          {/* Dedicated Design Pass & Entitlements Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-[#FFF6E8] via-[#FAF7F2] to-[#FFF0E2] border border-[#E7E0D7] shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#E76F2E]/10 border border-[#E76F2E]/30 text-[#C65320] text-[10.5px] font-extrabold uppercase tracking-wider">
+                    <Icons.Sparkles size={12} />
+                    <span>Nivaas 30-Day Design Pass</span>
+                  </span>
+                  {passData?.hasActivePass ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10.5px] font-bold border border-emerald-300">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[10.5px] font-bold border border-gray-300">
+                      Standard Tier
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-display font-black text-lg text-[#292826]">
+                  {passData?.hasActivePass
+                    ? 'Full 3D Elevation & Layout Studio Unlocked'
+                    : 'Upgrade to 30-Day Design Pass for Full 3D Elevations'}
+                </h3>
+                <p className="text-xs text-[#74706A] max-w-2xl leading-relaxed">
+                  {passData?.hasActivePass ? (
+                    <>
+                      You have <strong>{creditsData?.availableBalance ?? user?.totalCredits ?? 0} 3D generation credits</strong> remaining.
+                      {passData.pass?.expiresAt && (
+                        <> Pass is active until <strong>{new Date(passData.pass.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</strong> ({passData.daysRemaining ?? 30} days left).</>
+                      )}
+                      {' '}All conceptual 2D floor plans are complimentary (5/day).
+                    </>
+                  ) : (
+                    <>
+                      Unlock 5 photorealistic 3D elevations, dollhouse renders, and floor-wise models for ₹299. No recurring fees or auto-renewal.
+                    </>
+                  )}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                {passData?.hasActivePass ? (
+                  <>
+                    <button
+                      onClick={onOpenAiStudio}
+                      className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Icons.Sparkles size={14} />
+                      <span>Launch 3D Studio</span>
+                    </button>
+                    <button
+                      onClick={onOpenAiStudio}
+                      className="py-2.5 px-3.5 rounded-xl bg-white border border-[#D1C9BE] text-[#292826] hover:bg-gray-50 text-xs font-bold transition cursor-pointer"
+                    >
+                      Add Credits (₹299)
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={onOpenAiStudio}
+                    className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white text-xs font-bold shadow-md transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Icons.Sparkles size={14} />
+                    <span>Get ₹299 Design Pass</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Credit progress meter if active pass */}
+            {passData?.hasActivePass && (
+              <div className="mt-4 pt-3.5 border-t border-[#E7E0D7] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3">
+                  <span className="text-[#74706A] font-semibold text-[11px] uppercase tracking-wider">3D Credit Usage:</span>
+                  <div className="w-36 h-2 rounded-full bg-gray-200 overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-600 rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, ((creditsData?.availableBalance ?? user?.totalCredits ?? 0) / (creditsTotal || 5)) * 100))}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="font-extrabold text-[#292826] text-xs">
+                    {creditsData?.availableBalance ?? user?.totalCredits ?? 0} of {creditsTotal} Available
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 text-[11.5px] text-[#74706A]">
+                  <span className="flex items-center gap-1 text-emerald-800 font-semibold">
+                    <Icons.Check size={13} className="text-emerald-600 font-bold" />
+                    <span>3D Elevations Unlocked</span>
+                  </span>
+                  <span className="flex items-center gap-1 text-emerald-800 font-semibold">
+                    <Icons.Check size={13} className="text-emerald-600 font-bold" />
+                    <span>5 2D Plans / Day</span>
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Recent Projects Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -454,22 +696,61 @@ export default function DashboardPage({
               columns={[
                 {
                   header: 'Project Title',
-                  accessor: (p) => (
-                    <div>
-                      <div className="font-semibold text-[#292826]">{p.inputPayload?.title || 'Custom Layout'}</div>
-                      <div className="text-[11px] text-[#74706A]">
-                        {p.inputPayload?.plotSize || 'Plot Area'} • {p.inputPayload?.facing || 'Vastu Verified'}
+                  accessor: (p) => {
+                    const dims =
+                      p.inputPayload?.plotSize && p.inputPayload.plotSize !== 'N/A'
+                        ? p.inputPayload.plotSize
+                        : p.inputPayload?.dimensions && p.inputPayload.dimensions !== 'N/A'
+                        ? p.inputPayload.dimensions
+                        : p.inputPayload?.plotWidth && p.inputPayload?.plotDepth
+                        ? `${p.inputPayload.plotWidth}×${p.inputPayload.plotDepth} ft`
+                        : p.inputPayload?.builtUpSqft
+                        ? `${p.inputPayload.builtUpSqft} sq.ft`
+                        : 'Custom Plot'
+                    const facing =
+                      p.inputPayload?.facing && p.inputPayload.facing !== 'N/A'
+                        ? `${p.inputPayload.facing} Facing`
+                        : 'Vastu Verified'
+                    return (
+                      <div>
+                        <div className="font-semibold text-[#292826]">{p.inputPayload?.title || 'Custom Layout'}</div>
+                        <div className="text-[11px] text-[#74706A]">
+                          {dims} • {facing}
+                        </div>
                       </div>
-                    </div>
-                  ),
+                    )
+                  },
                 },
                 {
                   header: 'Type',
-                  accessor: (p) => (
-                    <span className="text-[11px] font-medium text-[#74706A]">
-                      {p.jobType === '2D_FLOOR_PLAN' ? '2D CAD Floor Plan' : '3D Elevation'}
-                    </span>
-                  ),
+                  accessor: (p) => {
+                    const isFull =
+                      p.jobType === 'FULL_2D_3D_PLAN' ||
+                      p.inputPayload?.has3D ||
+                      p.inputPayload?.is3DUnlocked ||
+                      p.outputPayload?.render3DUrl ||
+                      p.outputPayload?.dollhouseViewUrl ||
+                      p.outputPayload?.facades?.day
+                    if (isFull) {
+                      return (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10.5px] font-bold border border-emerald-200">
+                          <span>2D Plan + 3D Elevation</span>
+                        </span>
+                      )
+                    }
+                    if (p.jobType === 'THREE_D_GENERATION') {
+                      return (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-800 text-[10.5px] font-bold border border-orange-200">
+                          <span>3D Elevation Concept</span>
+                        </span>
+                      )
+                    }
+                    return (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-800 text-[10.5px] font-bold border border-sky-200">
+                        <span>Conceptual 2D Floor Plan</span>
+                      </span>
+                    )
+                  },
                 },
                 {
                   header: 'Status',
@@ -488,14 +769,14 @@ export default function DashboardPage({
               emptyState={
                 <EmptyState
                   title="No projects generated yet"
-                  description="Generate high-resolution 2D CAD floor plans and 3D elevations customized for your plot."
+                  description="Generate conceptual 2D floor-plan previews and 3D elevation concepts customized for your plot."
                   icon={<Icons.Layers size={24} />}
                   action={
                     <button
                       onClick={onOpenAiStudio}
                       className="px-3.5 py-2 rounded-md bg-[#C94F36] hover:bg-[#b0422c] text-white text-xs font-semibold transition"
                     >
-                      Create First Blueprint
+                      Create New Design
                     </button>
                   }
                 />
@@ -512,14 +793,14 @@ export default function DashboardPage({
         <div className="space-y-6">
           <PageHeader
             title="Architectural Projects"
-            subtitle="All saved floor layouts, structural drafts, and elevation files."
+            subtitle="All saved conceptual floor layouts, Vastu drafts, and elevation files."
             actions={
               <button
                 onClick={onOpenAiStudio}
                 className="px-3.5 py-2 rounded-md bg-[#C94F36] hover:bg-[#b0422c] text-white text-xs font-semibold flex items-center gap-1.5 transition"
               >
                 <Icons.Plus size={14} />
-                <span>New Floor Plan</span>
+                <span>Create New Design</span>
               </button>
             }
           />
@@ -527,7 +808,7 @@ export default function DashboardPage({
           {/* Quick Draft Form */}
           <div className="bg-white rounded-lg border border-[#E7E0D7] p-5">
             <h3 className="text-xs font-bold text-[#292826] uppercase tracking-wider mb-3">
-              Quick Blueprint Generator
+              Quick Concept Layout Generator
             </h3>
             <form onSubmit={handleCreateDraftProject} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
               <div>
@@ -597,18 +878,61 @@ export default function DashboardPage({
             columns={[
               {
                 header: 'Title & Dimensions',
-                accessor: (p) => (
-                  <div>
-                    <div className="font-semibold text-[#292826]">{p.inputPayload?.title || 'Custom Layout'}</div>
-                    <div className="text-[11px] text-[#74706A]">
-                      {p.inputPayload?.plotSize || 'N/A'} • {p.inputPayload?.facing || 'N/A'}
+                accessor: (p) => {
+                  const dims =
+                    p.inputPayload?.plotSize && p.inputPayload.plotSize !== 'N/A'
+                      ? p.inputPayload.plotSize
+                      : p.inputPayload?.dimensions && p.inputPayload.dimensions !== 'N/A'
+                      ? p.inputPayload.dimensions
+                      : p.inputPayload?.plotWidth && p.inputPayload?.plotDepth
+                      ? `${p.inputPayload.plotWidth}×${p.inputPayload.plotDepth} ft`
+                      : p.inputPayload?.builtUpSqft
+                      ? `${p.inputPayload.builtUpSqft} sq.ft`
+                      : 'Custom Plot'
+                  const facing =
+                    p.inputPayload?.facing && p.inputPayload.facing !== 'N/A'
+                      ? `${p.inputPayload.facing} Facing`
+                      : 'Vastu Verified'
+                  return (
+                    <div>
+                      <div className="font-semibold text-[#292826]">{p.inputPayload?.title || 'Custom Layout'}</div>
+                      <div className="text-[11px] text-[#74706A]">
+                        {dims} • {facing}
+                      </div>
                     </div>
-                  </div>
-                ),
+                  )
+                },
               },
               {
                 header: 'Type',
-                accessor: (p) => p.jobType === '2D_FLOOR_PLAN' ? '2D Floor Plan' : '3D Elevation',
+                accessor: (p) => {
+                  const isFull =
+                    p.jobType === 'FULL_2D_3D_PLAN' ||
+                    p.inputPayload?.has3D ||
+                    p.inputPayload?.is3DUnlocked ||
+                    p.outputPayload?.render3DUrl ||
+                    p.outputPayload?.dollhouseViewUrl ||
+                    p.outputPayload?.facades?.day
+                  if (isFull) {
+                    return (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10.5px] font-bold border border-emerald-200">
+                        <span>2D Plan + 3D Elevation</span>
+                      </span>
+                    )
+                  }
+                  if (p.jobType === 'THREE_D_GENERATION') {
+                    return (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-800 text-[10.5px] font-bold border border-orange-200">
+                        <span>3D Elevation Concept</span>
+                      </span>
+                    )
+                  }
+                  return (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-800 text-[10.5px] font-bold border border-sky-200">
+                      <span>Conceptual 2D Floor Plan</span>
+                    </span>
+                  )
+                },
               },
               {
                 header: 'Status',
@@ -642,14 +966,14 @@ export default function DashboardPage({
         <div className="space-y-6">
           <PageHeader
             title="Credits & Ledger"
-            subtitle="Real-time transaction history of all design credits, grants, and usage."
+            subtitle="Authoritative transaction history of 3D design credits and pass entitlements."
             actions={
               <div className="flex items-center gap-2">
                 <button
                   onClick={onOpenAiStudio}
                   className="px-3.5 py-2 rounded-md bg-[#FFF6E8] text-[#C94F36] hover:bg-[#ffeecf] text-xs font-semibold border border-[#E7E0D7] transition"
                 >
-                  ₹299 Starter Pack
+                  {passData?.hasActivePass ? 'Add 3D Credits (₹299)' : 'Unlock ₹299 Pass'}
                 </button>
               </div>
             }
@@ -657,14 +981,14 @@ export default function DashboardPage({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <MetricCard
-              label="Available Balance"
+              label="Available 3D Balance"
               value={`${creditsData?.availableBalance ?? user?.totalCredits ?? 0} Credits`}
-              subtext="1 Credit = 1 Standard Floor Plan Generation"
+              subtext="1 Credit = 1 Full 3D Elevation & Layout Generation"
             />
             <MetricCard
               label="Pass Status"
-              value={passData?.hasActivePass ? '₹299 Pass' : 'Pay as you go'}
-              subtext={passData?.hasActivePass ? '5 AI Generations Pack' : 'No active subscription'}
+              value={passData?.hasActivePass ? 'Active 30-Day Pass' : 'Standard Tier'}
+              subtext={passData?.hasActivePass ? `${passData.daysRemaining ?? 30} days remaining (5 credits pack)` : '2D Conceptual layout free (5/day)'}
             />
             <MetricCard
               label="Total Transactions"
@@ -989,6 +1313,64 @@ export default function DashboardPage({
           </div>
         </div>
       )}
+
+      {/* Floating Session Toast */}
+      {sessionToast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-fadeIn flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl border bg-white text-xs font-bold text-[#1F2937]">
+          <span className={`h-2.5 w-2.5 rounded-full ${sessionToast.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+          <span>{sessionToast.text}</span>
+          <button onClick={() => setSessionToast(null)} className="ml-2 text-gray-400 hover:text-black">✕</button>
+        </div>
+      )}
+
+      {/* Custom In-App Confirmation Dialog */}
+      {sessionConfirmModal?.open && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 border border-[#E7E0D7] shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center font-bold text-lg">
+                ⚠️
+              </div>
+              <div>
+                <h3 className="font-display font-bold text-lg text-[#111827]">
+                  {sessionConfirmModal.title}
+                </h3>
+                <p className="text-xs text-[#54504A]">
+                  Active session security verification
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#374151] leading-relaxed font-medium">
+              {sessionConfirmModal.message}
+            </p>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                disabled={revokingLoading}
+                onClick={() => setSessionConfirmModal(null)}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-[#D1C9BE] text-xs font-bold text-[#4B5563] hover:bg-gray-50 transition cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={revokingLoading}
+                onClick={() => sessionConfirmModal.onConfirm()}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {revokingLoading ? (
+                  <span className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                ) : (
+                  <span>{sessionConfirmModal.confirmText}</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   )
 }
+

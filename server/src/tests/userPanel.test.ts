@@ -74,10 +74,10 @@ describe('Indore House Makers — Phase 2: User Panel API & Ownership Test Suite
     expect(res.body.data.user.email).toBe('rohan@example.com')
     expect(res.body.data.user.name).toBe('Rohan Sharma')
     expect(res.body.data.metrics.totalProjects).toBe(0)
-    expect(res.body.data.metrics.availableCredits).toBe(100) // 100 Welcome credits
+    expect(res.body.data.metrics.availableCredits).toBe(0) // Fresh signup has 0 3D credits until pass purchase
     expect(res.body.data.metrics.activePass).toBeNull()
     expect(res.body.data.recentProjects).toEqual([])
-    expect(res.body.data.recentTransactions.length).toBe(1) // 1 Welcome credit grant
+    expect(res.body.data.recentTransactions.length).toBe(0) // No rogue welcome credit grant
   })
 
   // 3. Project Creation and Listing
@@ -147,16 +147,16 @@ describe('Indore House Makers — Phase 2: User Panel API & Ownership Test Suite
       .set('Authorization', `Bearer ${userTokenA}`)
 
     expect(creditsRes.status).toBe(200)
-    expect(creditsRes.body.data.balance).toBe(104) // 100 welcome + 5 - 1 = 104
-    expect(creditsRes.body.data.totalTransactions).toBe(3)
+    expect(creditsRes.body.data.balance).toBe(4) // 5 grant - 1 reserve = 4
+    expect(creditsRes.body.data.totalTransactions).toBe(2)
 
-    // Verify User B's credit balance is strictly isolated (only their own 100 welcome credits)
+    // Verify User B's credit balance is strictly isolated (0 credits)
     const creditsResB = await request(app)
       .get('/api/v1/users/me/credits')
       .set('Authorization', `Bearer ${userTokenB}`)
 
-    expect(creditsResB.body.data.balance).toBe(100)
-    expect(creditsResB.body.data.totalTransactions).toBe(1)
+    expect(creditsResB.body.data.balance).toBe(0)
+    expect(creditsResB.body.data.totalTransactions).toBe(0)
   })
 
   // 5. Active Pass Status

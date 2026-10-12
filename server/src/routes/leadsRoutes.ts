@@ -33,12 +33,17 @@ router.post(
       const validated = leadSubmissionSchema.parse(req.body)
       const userId = req.user?.sub
 
+      const isAdminUser = req.user?.role === 'ADMIN'
       const leadId = 'lead_' + crypto.randomBytes(8).toString('hex')
+      const formattedName = isAdminUser && !validated.name.startsWith('[ADMIN TEST]')
+        ? `[ADMIN TEST] ${validated.name.trim()}`
+        : validated.name.trim()
+
       const newLead: Lead = {
         id: leadId,
         userId,
         type: validated.type,
-        name: validated.name.trim(),
+        name: formattedName,
         phone: validated.phone.trim(),
         email: validated.email?.trim(),
         city: validated.city?.trim() || 'Indore',
@@ -46,8 +51,10 @@ router.post(
         budgetRange: validated.budgetRange?.trim(),
         timeline: validated.timeline?.trim(),
         requirement: validated.requirement?.trim(),
-        message: validated.message?.trim(),
-        wizardData: validated.wizardData,
+        message: isAdminUser
+          ? `[ADMIN PREVIEW TEST] ${validated.message?.trim() || 'Admin simulated lead'}`
+          : validated.message?.trim(),
+        wizardData: { ...validated.wizardData, isAdminTest: isAdminUser },
         status: 'NEW',
         consentGiven: validated.consentGiven,
         createdAt: new Date().toISOString(),

@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Icons } from './Icons'
 import { useAuth } from '../lib/authContext'
+import LogoutConfirmModal from './LogoutConfirmModal'
 
 interface LoginModalProps {
   isOpen: boolean
@@ -9,6 +10,7 @@ interface LoginModalProps {
 }
 
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+  const navigate = useNavigate()
   const { user, login, signup, logout, isAuthenticated, isAdmin } = useAuth()
   const [mode, setMode] = useState<'LOGIN' | 'SIGNUP'>('LOGIN')
   const [identifier, setIdentifier] = useState('')
@@ -17,16 +19,64 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleConfirmLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await logout()
+      setLogoutModalOpen(false)
+      onClose()
+      navigate('/')
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   if (!isOpen) return null
+
+  const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIdentifier(e.target.value)
+    if (error) setError(null)
+  }
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value)
+    if (error) setError(null)
+  }
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value)
+    if (error) setError(null)
+  }
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 10)
+    setPhone(val)
+    if (error) setError(null)
+  }
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value)
+    if (error) setError(null)
+  }
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setSuccessMsg(null)
     setLoading(true)
     try {
-      await login(identifier, password)
+      const loggedUser = await login(identifier.trim(), password)
+      onClose()
+      if (loggedUser.role === 'ADMIN') {
+        navigate('/admin')
+      } else {
+        navigate('/dashboard')
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed')
     } finally {
@@ -37,9 +87,24 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setSuccessMsg(null)
+
+    const trimmedPhone = phone.trim()
+    if (!/^[6-9]\d{9}$/.test(trimmedPhone)) {
+      setError('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.')
+      return
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.')
+      return
+    }
+
     setLoading(true)
     try {
-      await signup({ name, email, password, phone })
+      await signup({ name: name.trim(), email: email.trim(), password, phone: trimmedPhone })
+      onClose()
+      navigate('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Signup failed')
     } finally {
@@ -47,24 +112,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     }
   }
 
-  const handleQuickDemo = async (type: 'USER' | 'ADMIN') => {
-    setError(null)
-    setLoading(true)
-    try {
-      if (type === 'ADMIN') {
-        await login('admin@indorehousemakers.in', 'Admin@IndoreHouse2026!')
-      } else {
-        await login('user@indorehousemakers.in', 'User@IndoreHouse2026!')
-      }
-    } catch (err: any) {
-      setError(err.message || 'Demo login failed')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleClose = () => {
     setError(null)
+    setSuccessMsg(null)
     onClose()
   }
 
@@ -74,13 +124,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#EEE9E3] pb-3.5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E76F2E] text-white font-bold text-xs shadow-sm">
-              <Icons.User size={16} />
+            <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${isAdmin ? 'bg-red-600' : 'bg-[#E76F2E]'} text-white font-bold text-xs shadow-sm`}>
+              {isAdmin ? <Icons.Shield size={16} /> : <Icons.User size={16} />}
             </span>
             <div>
               <h3 className="font-display text-base font-bold text-[#292826]">
                 {isAuthenticated
-                  ? 'Account Overview'
+                  ? (isAdmin ? 'Admin Console' : 'Account Overview')
                   : mode === 'LOGIN'
                   ? 'Sign In to Indore House Makers'
                   : 'Create User Account'}
@@ -88,7 +138,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <p className="text-[11px] text-[#54504A]">
                 {isAuthenticated
                   ? `Logged in as ${user?.role}`
-                  : 'Vastu Floor Plans, 3D Elevations & AI Studio'}
+                  : 'Conceptual 2D Plans, 3D Elevations & AI Studio'}
               </p>
             </div>
           </div>
@@ -103,7 +153,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
         {/* Content */}
         <div className="py-3">
-          {isAuthenticated && user ? (
+          {successMsg && (
+            <div className="mb-3 rounded-lg border border-emerald-300 bg-emerald-50 p-2.5 text-xs font-bold text-emerald-800 flex items-center gap-1.5 animate-fadeIn">
+              <Icons.Check size={14} className="text-emerald-600" />
+              <span>{successMsg}</span>
+            </div>
+          )}
+
+          {isAuthenticated && user && !successMsg ? (
             /* Logged In State */
             <div className="space-y-4 py-2">
               <div className="rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] p-4 text-left">
@@ -114,7 +171,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   </span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
-                      isAdmin ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700'
+                      isAdmin ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
                     }`}
                   >
                     {user.role}
@@ -131,56 +188,74 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   )}
                 </div>
 
-                {/* Pass & Credits Badge */}
-                <div className="mt-3 rounded-lg border border-[#E76F2E]/30 bg-[#FFF6E8] p-2.5">
-                  <div className="flex items-center justify-between text-xs font-bold text-[#292826]">
-                    <span>₹299 30-Day Design Pass</span>
-                    <span className="text-[#E76F2E]">
-                      {user.totalCredits} AI Credits Left
-                    </span>
+                {/* Pass & Credits Badge (for regular users) or Admin stats */}
+                {!isAdmin && (
+                  <div className="mt-3 rounded-lg border border-[#E76F2E]/30 bg-[#FFF6E8] p-2.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#292826]">
+                      <span>₹299 30-Day Design Pass</span>
+                      <span className="text-[#E76F2E]">
+                        {user.totalCredits ?? 0} 3D Generation Credits
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-[#54504A]">
+                      {user.activePass
+                        ? `Valid until ${new Date(user.activePass.expiresAt).toLocaleDateString()}`
+                        : 'No active pass. Subscribe for 5 3D generation credits.'}
+                    </p>
                   </div>
-                  <p className="mt-1 text-[11px] text-[#54504A]">
-                    {user.activePass
-                      ? `Valid until ${new Date(user.activePass.expiresAt).toLocaleDateString()}`
-                      : 'No active pass. Subscribe for 5 AI credits & HD renders.'}
-                  </p>
-                </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">
-                <Link
-                  to="/dashboard"
-                  onClick={handleClose}
-                  className="w-full text-center rounded-xl bg-[#292826] py-2.5 text-xs font-bold text-white shadow-sm hover:bg-black transition flex items-center justify-center gap-1.5"
-                >
-                  <Icons.LayoutGrid size={14} />
-                  <span>Go to My Dashboard →</span>
-                </Link>
+                {isAdmin ? (
+                  <Link
+                    to="/admin"
+                    onClick={handleClose}
+                    className="w-full text-center rounded-xl bg-red-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-red-700 transition flex items-center justify-center gap-1.5"
+                  >
+                    <Icons.Shield size={14} />
+                    <span>Go to Admin Command Center →</span>
+                  </Link>
+                ) : (
+                  <Link
+                    to="/dashboard"
+                    onClick={handleClose}
+                    className="w-full text-center rounded-xl bg-[#292826] py-2.5 text-xs font-bold text-white shadow-sm hover:bg-black transition flex items-center justify-center gap-1.5"
+                  >
+                    <Icons.LayoutGrid size={14} />
+                    <span>Go to My Dashboard →</span>
+                  </Link>
+                )}
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={handleClose}
                     className="flex-1 rounded-xl bg-[#E76F2E] py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#C65320] transition"
                   >
-                    Continue Browsing
+                    Continue
                   </button>
                   <button
                     type="button"
-                    onClick={async () => {
-                      await logout()
-                    }}
-                    className="rounded-xl border border-[#E7E0D7] bg-white px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition"
+                    onClick={() => setLogoutModalOpen(true)}
+                    className="rounded-xl border border-[#E7E0D7] bg-white px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition cursor-pointer"
                   >
                     Logout
                   </button>
                 </div>
               </div>
+
+              <LogoutConfirmModal
+                isOpen={logoutModalOpen}
+                onClose={() => setLogoutModalOpen(false)}
+                onConfirm={handleConfirmLogout}
+                isLoggingOut={isLoggingOut}
+              />
             </div>
           ) : mode === 'LOGIN' ? (
             /* Login Form */
             <form onSubmit={handleLoginSubmit} className="space-y-3.5">
               {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 animate-fadeIn">
                   {error}
                 </div>
               )}
@@ -193,7 +268,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   type="text"
                   required
                   value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  onChange={handleIdentifierChange}
                   placeholder="name@email.com or 10-digit mobile"
                   className="w-full rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] px-3.5 py-2 text-xs font-semibold text-[#292826] outline-none focus:border-[#E76F2E] focus:bg-white"
                 />
@@ -207,7 +282,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   type="password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={handlePasswordChange}
                   placeholder="Enter password"
                   className="w-full rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] px-3.5 py-2 text-xs font-semibold text-[#292826] outline-none focus:border-[#E76F2E] focus:bg-white"
                 />
@@ -216,45 +291,17 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-[#E76F2E] py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#C65320] disabled:opacity-50"
+                className="w-full rounded-xl bg-[#E76F2E] py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#C65320] disabled:opacity-50 cursor-pointer"
               >
                 {loading ? 'Authenticating...' : 'Sign In →'}
               </button>
-
-              {/* Quick Demo Logins: ONLY available in development mode for automated tests / local debugging */}
-              {import.meta.env.DEV && (
-                <div className="rounded-xl border border-dashed border-[#E7E0D7] bg-[#FDFCF9] p-2.5 text-center">
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-[#54504A] mb-1.5">
-                    Verified Test Accounts (Dev Only)
-                  </span>
-                  <div className="flex gap-2 justify-center">
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('USER')}
-                      disabled={loading}
-                      className="flex items-center gap-1.5 rounded-lg border border-[#E7E0D7] bg-white px-3 py-1.5 text-[11px] font-bold text-[#292826] hover:border-[#E76F2E] hover:text-[#E76F2E] transition shadow-2xs"
-                    >
-                      <Icons.User size={13} className="text-[#E76F2E]" />
-                      <span>Demo User (₹299 Pass)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('ADMIN')}
-                      disabled={loading}
-                      className="flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50/70 px-3 py-1.5 text-[11px] font-bold text-purple-800 hover:border-purple-400 transition shadow-2xs"
-                    >
-                      <Icons.ShieldCheck size={13} className="text-purple-700" />
-                      <span>Admin Console</span>
-                    </button>
-                  </div>
-                </div>
-              )}
 
               <div className="pt-1 text-center">
                 <button
                   type="button"
                   onClick={() => {
                     setError(null)
+                    setSuccessMsg(null)
                     setMode('SIGNUP')
                   }}
                   className="text-xs font-semibold text-[#E76F2E] hover:underline"
@@ -267,7 +314,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             /* Signup Form */
             <form onSubmit={handleSignupSubmit} className="space-y-3">
               {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 animate-fadeIn">
                   {error}
                 </div>
               )}
@@ -280,7 +327,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   type="text"
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={handleNameChange}
                   placeholder="e.g. Rahul Verma"
                   className="w-full rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] px-3.5 py-2 text-xs font-semibold text-[#292826] outline-none focus:border-[#E76F2E] focus:bg-white"
                 />
@@ -294,7 +341,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
                   placeholder="rahul@example.com"
                   className="w-full rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] px-3.5 py-2 text-xs font-semibold text-[#292826] outline-none focus:border-[#E76F2E] focus:bg-white"
                 />
@@ -303,15 +350,15 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-[#54504A]">
-                    Mobile (Required)
+                    Mobile (10-Digit)
                   </label>
                   <input
                     type="tel"
                     required
-                    minLength={10}
+                    maxLength={10}
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="10-digit mobile"
+                    onChange={handlePhoneChange}
+                    placeholder="9876543210"
                     className="w-full rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] px-3 py-2 text-xs font-semibold text-[#292826] outline-none focus:border-[#E76F2E] focus:bg-white"
                   />
                 </div>
@@ -323,7 +370,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     type="password"
                     required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     placeholder="Min 6 chars"
                     className="w-full rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] px-3 py-2 text-xs font-semibold text-[#292826] outline-none focus:border-[#E76F2E] focus:bg-white"
                   />

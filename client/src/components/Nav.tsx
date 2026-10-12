@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { megaMenus, site } from '../lib/data'
 import { Icons } from './Icons'
 import { useAuth } from '../lib/authContext'
+import LogoutConfirmModal from './LogoutConfirmModal'
 
 const NivaasAiStudio = lazy(() => import('./NivaasAiStudio'))
 
@@ -13,6 +14,7 @@ interface NavProps {
 }
 
 export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavProps) {
+  const navigate = useNavigate()
   const { user, isAuthenticated, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
@@ -23,7 +25,32 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
   const [newsOpen, setNewsOpen] = useState(false)
   const [aiStudioOpen, setAiStudioOpen] = useState(false)
   const [aiStudioMode, setAiStudioMode] = useState<'generator' | 'chat'>('generator')
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const navRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  const handleConfirmLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await logout()
+      setLogoutModalOpen(false)
+      navigate('/')
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
+  const handleExecuteSearch = (query: string) => {
+    setSearchOpen(false)
+    setMobileMenuOpen(false)
+    const trimmed = query.trim()
+    if (!trimmed) {
+      navigate('/house-plans')
+    } else {
+      navigate(`/house-plans?q=${encodeURIComponent(trimmed)}`)
+    }
+  }
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -50,6 +77,8 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
       if (e.key === 'Escape') {
         setMobileMenuOpen(false)
         setSearchOpen(false)
+        setActiveDropdown(null)
+        setUserMenuOpen(false)
       }
     }
 
@@ -61,21 +90,27 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
     }
   }, [mobileMenuOpen])
 
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [searchOpen])
+
   const sampleSearchSuggestions = [
-    '30x50 East Facing House Plan',
-    '20x40 2 BHK Modern Duplex',
-    '40x60 Luxury Villa with Courtyard',
-    '25x40 Budget Home Vastu Plan',
-    '3 BHK Modular Kitchen Layout',
-    '1500 sq.ft G+1 Elevation Design',
-    'House Plans in Hyderabad (GHMC)',
-    'Modern Duplex in Bengaluru (BBMP)',
-    'Luxury Villas in Delhi NCR & Gurugram',
-    '2 BHK & 3 BHK Plans in Pune',
-    'Heritage Courtyard Plans in Jaipur',
-    'Modern Bungalow Plans in Indore',
-    'Coastal Duplex Plans in Mumbai',
-  ].filter((s) => s.toLowerCase().includes(searchQuery.toLowerCase()))
+    { title: '30x50 East Facing House Plan', category: 'Plot Dimension', badge: 'Popular' },
+    { title: '20x40 2 BHK Modern Duplex', category: 'Plot Dimension', badge: 'Compact' },
+    { title: '40x60 Luxury Villa with Courtyard', category: 'Luxury Villa', badge: 'Premium' },
+    { title: '25x40 Budget Home Vastu Plan', category: 'Vastu Layout', badge: 'Vastu' },
+    { title: '3 BHK Modular Kitchen Layout', category: 'Interiors', badge: 'Interior' },
+    { title: '1500 sq.ft G+1 Elevation Design', category: '3D Elevation', badge: '3D Facade' },
+    { title: 'House Plans in Indore', category: 'City Plan', badge: 'Indore' },
+    { title: 'House Plans in Hyderabad (GHMC)', category: 'City Plan', badge: 'GHMC' },
+    { title: 'Modern Duplex in Bengaluru (BBMP)', category: 'City Plan', badge: 'BBMP' },
+    { title: 'Luxury Villas in Delhi NCR & Gurugram', category: 'City Plan', badge: 'NCR' },
+    { title: '2 BHK & 3 BHK Plans in Pune', category: 'City Plan', badge: 'Pune' },
+    { title: 'Heritage Courtyard Plans in Jaipur', category: 'City Plan', badge: 'Jaipur' },
+    { title: 'Coastal Duplex Plans in Mumbai', category: 'City Plan', badge: 'Mumbai' },
+  ].filter((s) => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.category.toLowerCase().includes(searchQuery.toLowerCase()))
 
   return (
     <>
@@ -318,14 +353,88 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 <span>Cost Estimator</span>
               </Link>
 
-              {/* Guides / Blogs */}
-              <Link
-                to="/guides"
-                className="flex items-center gap-1.5 py-1.5 transition hover:text-[#E76F2E] font-semibold text-[#292826]"
+              {/* Guides / Blogs Dropdown */}
+              <div
+                className="relative group"
+                onMouseEnter={() => setActiveDropdown('guides')}
+                onMouseLeave={() => setActiveDropdown(null)}
               >
-                <Icons.FileText size={15} className="text-[#292826] group-hover:text-[#E76F2E]" />
-                <span>Guides</span>
-              </Link>
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 py-1.5 transition hover:text-[#E76F2E] font-semibold text-[#292826] cursor-pointer"
+                >
+                  <Icons.FileText size={15} className="text-[#292826] group-hover:text-[#E76F2E]" />
+                  <span>Guides</span>
+                  <Icons.ChevronDown size={13} className="text-[#54504A]" />
+                </button>
+
+                {activeDropdown === 'guides' && (
+                  <div className="absolute left-0 top-full pt-2 w-[310px] animate-fadeIn z-50">
+                    <div className="bg-white rounded-lg shadow-sm border border-[#EEE9E3] p-3 text-[#292826] space-y-1">
+                      <Link
+                        to="/guides"
+                        onClick={() => setActiveDropdown(null)}
+                        className="block p-2 rounded-lg hover:bg-[#FFF6E8] transition"
+                      >
+                        <div className="text-xs font-bold text-[#292826] flex items-center gap-1.5">
+                          <Icons.FileText size={13} className="text-[#C94F36]" /> All Blogs
+                        </div>
+                        <div className="text-[11px] text-[#54504A] mt-0.5">Explore all 10 architectural &amp; planning guides</div>
+                      </Link>
+                      <Link
+                        to="/guides?category=house-planning"
+                        onClick={() => setActiveDropdown(null)}
+                        className="block p-2 rounded-lg hover:bg-[#FFF6E8] transition"
+                      >
+                        <div className="text-xs font-semibold text-[#292826] flex items-center gap-1.5">
+                          <Icons.House size={13} className="text-[#C94F36]" /> House Planning
+                        </div>
+                        <div className="text-[11px] text-[#54504A] mt-0.5">30x50, 20x40 &amp; luxury villa layouts</div>
+                      </Link>
+                      <Link
+                        to="/guides?category=construction-cost"
+                        onClick={() => setActiveDropdown(null)}
+                        className="block p-2 rounded-lg hover:bg-[#FFF6E8] transition"
+                      >
+                        <div className="text-xs font-semibold text-[#292826] flex items-center gap-1.5">
+                          <Icons.Calculator size={13} className="text-[#C94F36]" /> Construction Cost
+                        </div>
+                        <div className="text-[11px] text-[#54504A] mt-0.5">2026 material rates &amp; turnkey budgeting</div>
+                      </Link>
+                      <Link
+                        to="/guides?category=vastu-and-design"
+                        onClick={() => setActiveDropdown(null)}
+                        className="block p-2 rounded-lg hover:bg-[#FFF6E8] transition"
+                      >
+                        <div className="text-xs font-semibold text-[#292826] flex items-center gap-1.5">
+                          <Icons.Compass size={13} className="text-[#C94F36]" /> Vastu &amp; Design
+                        </div>
+                        <div className="text-[11px] text-[#54504A] mt-0.5">Room directions &amp; 3D elevation trends</div>
+                      </Link>
+                      <Link
+                        to="/guides?category=interiors"
+                        onClick={() => setActiveDropdown(null)}
+                        className="block p-2 rounded-lg hover:bg-[#FFF6E8] transition"
+                      >
+                        <div className="text-xs font-semibold text-[#292826] flex items-center gap-1.5">
+                          <Icons.Layers size={13} className="text-[#C94F36]" /> Interiors
+                        </div>
+                        <div className="text-[11px] text-[#54504A] mt-0.5">Modular kitchen &amp; interior materials</div>
+                      </Link>
+                      <Link
+                        to="/guides?category=construction-tips"
+                        onClick={() => setActiveDropdown(null)}
+                        className="block p-2 rounded-lg hover:bg-[#FFF6E8] transition"
+                      >
+                        <div className="text-xs font-semibold text-[#292826] flex items-center gap-1.5">
+                          <Icons.CheckCircle size={13} className="text-[#C94F36]" /> Construction Tips
+                        </div>
+                        <div className="text-[11px] text-[#54504A] mt-0.5">Checklist &amp; common planning mistakes</div>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
             </nav>
 
             {/* Desktop Action Buttons */}
@@ -449,9 +558,9 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                           type="button"
                           onClick={() => {
                             setUserMenuOpen(false)
-                            logout()
+                            setLogoutModalOpen(true)
                           }}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition w-full text-left"
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition w-full text-left cursor-pointer"
                         >
                           <Icons.LogOut size={15} />
                           <span>Sign Out</span>
@@ -516,7 +625,13 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
           <div className="bg-[#FDFCF9] py-2 px-2.5 sm:px-4 border-b border-[#E7E0D7]">
             <div className="flex items-center justify-between gap-1.5 sm:gap-2.5">
               {/* Search Bar Input */}
-              <div className="flex-1 min-w-0 relative">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  handleExecuteSearch(searchQuery)
+                }}
+                className="flex-1 min-w-0 relative"
+              >
                 <input
                   type="text"
                   value={searchQuery}
@@ -531,7 +646,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 <div className="absolute left-2.5 top-2 text-[#E76F2E]">
                   <Icons.Search size={13} />
                 </div>
-              </div>
+              </form>
 
               {/* Action Buttons */}
               <div className="flex items-center gap-1 sm:gap-2 shrink-0">
@@ -589,61 +704,107 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
           </div>
         </div>
 
-        {/* Floating Search Bar Suggestions Overlay (Does NOT push page content down) */}
+        {/* Floating Search Bar & Anchored Suggestions Dropdown (Height limited to 320-350px, aligned container) */}
         {searchOpen && (
-          <div className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md text-[#292826] p-3 sm:p-4 shadow-2xl animate-fadeIn border-b border-[#E7E0D7] z-50">
-            <div className="container-content max-w-3xl relative">
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
+          <div className="absolute top-full left-0 right-0 z-50 bg-black/30 backdrop-blur-[2px] transition-all pt-2 sm:pt-3 pb-8 px-3 sm:px-4">
+            <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl border border-[#E7E0D7] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              {/* Aligned Search Input + Action Button + Close Icon Container */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  handleExecuteSearch(searchQuery)
+                }}
+                className="flex items-center gap-2 p-2.5 sm:p-3 bg-[#FAF8F5] border-b border-[#EEE9E3]"
+              >
+                <div className="relative flex-1 flex items-center">
+                  <Icons.Search size={15} className="absolute left-3 text-[#E76F2E]" />
                   <input
+                    ref={searchInputRef}
                     type="text"
                     autoFocus
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search plot dimensions (e.g. 30x50, 40x60), BHK, Direction or City..."
-                    className="w-full rounded-lg border border-[#E7E0D7] pl-9 sm:pl-10 pr-3 py-2 sm:py-2.5 text-xs sm:text-sm outline-none focus:border-[#E76F2E] focus:ring-1 focus:ring-[#E76F2E] bg-[#FDFCF9]"
+                    placeholder="Search plot dimensions (30x50, 40x60), BHK, Direction or City..."
+                    className="w-full bg-white border border-[#E7E0D7] rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm text-[#292826] placeholder:text-[#54504A]/60 outline-none focus:border-[#E76F2E] focus:ring-1 focus:ring-[#E76F2E]"
                   />
-                  <div className="absolute left-3 top-2.5 sm:top-3 text-[#E76F2E]">
-                    <Icons.Search size={15} />
-                  </div>
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 text-[#74706A] hover:text-[#292826] p-1 rounded-full hover:bg-stone-100 cursor-pointer"
+                      title="Clear search query"
+                    >
+                      <Icons.Close size={13} />
+                    </button>
+                  )}
                 </div>
-                <a
-                  href="#plans"
-                  onClick={() => setSearchOpen(false)}
-                  className="shrink-0 px-4 sm:px-6 py-2 sm:py-2.5 bg-[#E76F2E] text-white text-xs sm:text-sm font-bold rounded-lg hover:bg-[#C65320] transition shadow-xs"
+
+                {/* Search Button */}
+                <button
+                  type="submit"
+                  className="px-4 sm:px-5 py-2 bg-[#E76F2E] hover:bg-[#C94F36] text-white text-xs sm:text-sm font-bold rounded-xl transition shadow-xs flex items-center gap-1.5 shrink-0 active:scale-98 cursor-pointer"
                 >
-                  Search
-                </a>
+                  <span>Search</span>
+                  <Icons.ChevronRight size={13} className="hidden sm:inline" />
+                </button>
+
+                {/* Close Button */}
                 <button
                   type="button"
                   onClick={() => setSearchOpen(false)}
-                  className="shrink-0 flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-lg text-[#54504A] hover:text-[#292826] hover:bg-[#FFF6E8] border border-[#E7E0D7] transition"
+                  className="h-9 w-9 flex items-center justify-center rounded-xl text-[#54504A] hover:text-[#292826] hover:bg-[#FFF6E8] border border-[#E7E0D7] bg-white transition shrink-0 cursor-pointer"
                   aria-label="Close search dropdown"
-                  title="Close Search"
+                  title="Close (Esc)"
                 >
                   <Icons.Close size={16} />
                 </button>
-              </div>
+              </form>
 
-              {/* Suggestions */}
-              {sampleSearchSuggestions.length > 0 && (
-                <div className="mt-2.5 rounded-lg border border-[#EEE9E3] bg-white shadow-md p-2 text-xs max-h-[50vh] overflow-y-auto">
-                  <div className="px-2 py-1 text-[#54504A] font-bold uppercase text-[10px] flex items-center gap-1">
-                    <Icons.Sparkles size={11} className="text-[#E76F2E]" /> Quick Search Queries
-                  </div>
-                  {sampleSearchSuggestions.map((sug) => (
-                    <Link
-                      key={sug}
-                      to="/house-plans"
-                      onClick={() => setSearchOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#FFF6E8] text-[#292826] font-medium transition"
-                    >
-                      <Icons.Search size={13} className="text-[#E76F2E]" />
-                      <span>{sug}</span>
-                    </Link>
-                  ))}
+              {/* Anchored Suggestions Dropdown: Height limited to ~340px with internal scroll */}
+              <div className="max-h-[340px] overflow-y-auto p-2.5 sm:p-3 space-y-1 bg-white">
+                <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#74706A] flex items-center justify-between border-b border-[#EEE9E3]/70 pb-1.5 mb-1.5">
+                  <span className="flex items-center gap-1.5 text-[#292826]">
+                    <Icons.Sparkles size={12} className="text-[#E76F2E]" />
+                    Quick Search Queries
+                  </span>
+                  <span className="text-[9px] text-[#74706A]">Press Esc to close</span>
                 </div>
-              )}
+
+                {sampleSearchSuggestions.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                    {sampleSearchSuggestions.map((sug) => (
+                      <button
+                        key={sug.title}
+                        type="button"
+                        onClick={() => handleExecuteSearch(sug.title)}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-[#FFF6E8] text-[#292826] group transition cursor-pointer border border-transparent hover:border-[#E76F2E]/30"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="h-6 w-6 rounded-lg bg-[#FAF8F5] group-hover:bg-white border border-[#E7E0D7] flex items-center justify-center shrink-0">
+                            <Icons.Search size={11} className="text-[#E76F2E]" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-xs font-medium text-[#292826] group-hover:font-semibold truncate block">
+                              {sug.title}
+                            </span>
+                            <span className="text-[9px] text-[#74706A] block">
+                              {sug.category}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-[#FAF8F5] group-hover:bg-white border border-[#E7E0D7] text-[#54504A] font-semibold shrink-0 ml-2">
+                          {sug.badge}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-xs text-[#74706A]">
+                    <p className="font-semibold text-[#292826]">No direct suggestion for "{searchQuery}"</p>
+                    <p className="mt-1 text-[11px]">Click <strong>Search</strong> or press <strong>Enter</strong> to explore all matching blueprints.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -702,24 +863,24 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
 
           {/* Search Box */}
           <div className="px-4 pb-3">
-            <div className="relative">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleExecuteSearch(searchQuery)
+              }}
+              className="relative"
+            >
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    setMobileMenuOpen(false)
-                    setSearchOpen(true)
-                  }
-                }}
                 placeholder="Search house plans, 30x50, Vastu…"
                 className="w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] pl-9 pr-3 py-2 text-xs text-[#292826] placeholder:text-[#54504A]/70 outline-none focus:border-[#E76F2E] focus:ring-1 focus:ring-[#E76F2E]"
               />
               <div className="absolute left-3 top-2.5 text-[#E76F2E]">
                 <Icons.Search size={14} />
               </div>
-            </div>
+            </form>
           </div>
         </div>
 
@@ -935,18 +1096,71 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
             </Link>
           </div>
 
-          {/* 7. Flat Direct Link: Guides */}
+          {/* 7. Expandable Guides & Blogs Submenu */}
           <div className="py-1">
-            <Link
-              to="/guides"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition text-left"
+            <button
+              type="button"
+              onClick={() => setExpandedCategory(expandedCategory === 'guides' ? null : 'guides')}
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#C94F36] transition text-left cursor-pointer"
             >
               <span className="flex items-center gap-2.5">
-                <Icons.FileText size={16} className="text-[#E76F2E]" />
+                <Icons.FileText size={16} className="text-[#C94F36]" />
                 <span>Guides</span>
               </span>
-            </Link>
+              <Icons.ChevronDown
+                size={14}
+                className={`text-[#74706A] transition-transform duration-200 ${
+                  expandedCategory === 'guides' ? 'rotate-180 text-[#C94F36]' : ''
+                }`}
+              />
+            </button>
+
+            {expandedCategory === 'guides' && (
+              <div className="mt-1 pl-6 pr-2 space-y-1 py-1 bg-[#FDFCF9] rounded-lg">
+                <Link
+                  to="/guides"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-1.5 text-xs font-bold text-[#292826] hover:text-[#C94F36] transition"
+                >
+                  All Blogs
+                </Link>
+                <Link
+                  to="/guides?category=house-planning"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-1.5 text-xs text-[#54504A] hover:text-[#C94F36] transition"
+                >
+                  House Planning
+                </Link>
+                <Link
+                  to="/guides?category=construction-cost"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-1.5 text-xs text-[#54504A] hover:text-[#C94F36] transition"
+                >
+                  Construction Cost
+                </Link>
+                <Link
+                  to="/guides?category=vastu-and-design"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-1.5 text-xs text-[#54504A] hover:text-[#C94F36] transition"
+                >
+                  Vastu &amp; Design
+                </Link>
+                <Link
+                  to="/guides?category=interiors"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-1.5 text-xs text-[#54504A] hover:text-[#C94F36] transition"
+                >
+                  Interiors
+                </Link>
+                <Link
+                  to="/guides?category=construction-tips"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-1.5 text-xs text-[#54504A] hover:text-[#C94F36] transition"
+                >
+                  Construction Tips
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* 8. Flat Direct Link: FAQ */}
@@ -1076,10 +1290,19 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
               setAiStudioOpen(false)
               onOpenConsult(planDetails)
             }}
+            onOpenLogin={onOpenLogin}
             initialMode={aiStudioMode}
           />
         </Suspense>
       )}
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutConfirmModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+        isLoggingOut={isLoggingOut}
+      />
     </>
   )
 }

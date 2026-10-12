@@ -7,6 +7,10 @@ export const config = {
   port: Number(process.env.PORT ?? 7000),
   nodeEnv: process.env.NODE_ENV ?? 'development',
   isProduction,
+
+  // Storage backend: 'postgres' (single source of truth, default) or 'memory' (tests / offline only)
+  dataStore:
+    process.env.DATA_STORE || (process.env.NODE_ENV === 'test' ? 'memory' : 'postgres'),
   
   // Security & JWT
   jwt: {

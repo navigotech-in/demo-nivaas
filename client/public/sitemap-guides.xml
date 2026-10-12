@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Guides Hub -->
+  <url>
+    <loc>https://indorehousemakers.in/guides</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 1. 30x50 House Plan Guide -->
+  <url>
+    <loc>https://indorehousemakers.in/guides/30x50-house-plan-vastu-duplex-elevation-cost</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://images.pexels.com/photos/31737861/pexels-photo-31737861.jpeg</image:loc>
+      <image:title>30x50 House Plan as per Vastu with 3D Elevation</image:title>
+    </image:image>
+  </url>
+
+  <!-- 2. House Construction Cost 2026 -->
+  <url>
+    <loc>https://indorehousemakers.in/guides/house-construction-cost-in-indore-madhya-pradesh-2026</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://images.pexels.com/photos/1216589/pexels-photo-1216589.jpeg</image:loc>
+      <image:title>House Construction Cost in Indore 2026 Breakdown</image:title>
+    </image:image>
+  </url>
+
+  <!-- 3. House Construction Checklist -->
+  <url>
+    <loc>https://indorehousemakers.in/guides/house-construction-checklist-step-by-step-guide</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://images.pexels.com/photos/17948134/pexels-photo-17948134.jpeg</image:loc>
+      <image:title>House Construction Checklist Step by Step Guide</image:title>
+    </image:image>
+  </url>
+
+  <!-- 4. Vastu Shastra Rules -->
+  <url>
+    <loc>https://indorehousemakers.in/guides/vastu-shastra-rules-for-kitchen-pooja-bedroom-entrance</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg</image:loc>
+      <image:title>Vastu Shastra Rules for Kitchen Pooja and Master Bedroom</image:title>
+    </image:image>
+  </url>
+
+  <!-- 5. 20x40 House Plan -->
+  <url>
+    <loc>https://indorehousemakers.in/guides/20x40-house-plan-800-sqft-duplex-design</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+    <image:image>
+      <image:loc>https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg</image:loc>
+      <image:title>20x40 House Plan 800 sq ft Duplex Design</image:title>
+    </image:image>
+  </url>
+
+  <!-- 6. 40x60 Luxury Villa & Courtyard Plan -->
+  <url>
+    <loc>https://indorehousemakers.in/guides/40x60-luxury-villa-courtyard-house-plan</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+    <image:image>
+      <image:loc>https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg</image:loc>
+      <image:title>40x60 Luxury Villa and Courtyard House Plan</image:title>
+    </image:image>
+  </url>
+
+  <!-- 7. Modern 3D Front Elevation -->
+  <url>
+    <loc>https://indorehousemakers.in/guides/modern-3d-front-elevation-designs-for-indian-homes</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+    <image:image>
+      <image:loc>https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg</image:loc>
+      <image:title>Modern 3D Front Elevation Designs for Indian Homes</image:title>
+    </image:image>
+  </url>
+
+  <!-- 8. Modular Kitchen Guide 2026 -->
+  <url>
+    <loc>https://indorehousemakers.in/guides/modular-kitchen-designs-materials-cost-guide-2026</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+    <image:image>
+      <image:loc>https://images.pexels.com/photos/1080721/pexels-photo-1080721.jpeg</image:loc>
+      <image:title>Modular Kitchen Designs Materials and Cost Guide 2026</image:title>
+    </image:image>
+  </url>
+
+  <!-- 9. Turnkey vs Labour Contract -->
+  <url>
+    <loc>https://indorehousemakers.in/guides/turnkey-construction-vs-labour-contract-india</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+    <image:image>
+      <image:loc>https://images.pexels.com/photos/159306/construction-site-build-construction-work-159306.jpeg</image:loc>
+      <image:title>Turnkey Construction vs Labour Contract in India</image:title>
+    </image:image>
+  </url>
+
+  <!-- 10. Common House Planning Mistakes -->
+  <url>
+    <loc>https://indorehousemakers.in/guides/common-house-planning-mistakes-to-avoid</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+    <image:image>
+      <image:loc>https://images.pexels.com/photos/2219024/pexels-photo-2219024.jpeg</image:loc>
+      <image:title>10 Costly House Planning Mistakes to Avoid</image:title>
+    </image:image>
+  </url>
+</urlset>

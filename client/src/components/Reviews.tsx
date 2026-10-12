@@ -108,6 +108,10 @@ export default function Reviews() {
                     <img
                       src={rev.avatar}
                       alt={rev.name}
+                      width={80}
+                      height={80}
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full rounded-full object-cover shadow-sm"
                     />
                   </div>
@@ -156,7 +160,9 @@ export default function Reviews() {
                   controls={isPlaying}
                   className="w-full h-full object-cover"
                   onEnded={() => setIsPlaying(false)}
-                />
+                >
+                  <track kind="captions" src="data:text/vtt;charset=utf-8,WEBVTT%0A%0A00:00:00.000%20--%3E%2000:00:10.000%0AIndore%20House%20Makers%20Customer%20Story" label="English" default />
+                </video>
 
                 {/* Video Play Overlay */}
                 {!isPlaying && (
@@ -184,6 +190,10 @@ export default function Reviews() {
                   <img
                     src={current.avatar}
                     alt={current.name}
+                    width={36}
+                    height={36}
+                    loading="lazy"
+                    decoding="async"
                     className="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover ring-2 ring-[#E76F2E] shrink-0"
                   />
                   <div>

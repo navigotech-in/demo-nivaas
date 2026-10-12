@@ -133,6 +133,7 @@ export default function ServicesPage({ onOpenConsult }: ServicesPageProps) {
                     src={c.image}
                     alt={c.title}
                     loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover transition-transform duration-700 ease-out saturate-[1.1] group-hover:scale-108"
                   />
                   {/* Transparent Dark Gradient Overlay */}

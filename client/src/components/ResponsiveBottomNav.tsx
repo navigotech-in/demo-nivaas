@@ -297,18 +297,18 @@ export default function ResponsiveBottomNav({
                 aria-current={isActive && !isMenu ? 'page' : undefined}
                 aria-expanded={isMenu ? exploreSheetOpen : undefined}
                 aria-controls={isMenu ? 'explore-ihm-sheet' : undefined}
-                className="flex flex-col items-center justify-center h-full min-h-[44px] py-1 transition-colors relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C94F36]/50"
+                className="flex flex-col items-center justify-center h-full min-h-[48px] min-w-[48px] py-1 transition-colors relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B83E26]/50"
               >
                 {/* Active Indicator Line */}
                 {isActive && (
-                  <span className="absolute top-0 w-6 h-0.5 bg-[#C94F36] rounded-full" aria-hidden="true" />
+                  <span className="absolute top-0 w-6 h-0.5 bg-[#B83E26] rounded-full" aria-hidden="true" />
                 )}
-                <span className={`transition-transform duration-150 ${isActive ? 'scale-110 text-[#C94F36]' : 'text-[#74706A] group-hover:text-[#292826]'}`}>
+                <span className={`transition-transform duration-150 ${isActive ? 'scale-110 text-[#B83E26]' : 'text-[#54504A] group-hover:text-[#292826]'}`}>
                   <IconComponent size={20} />
                 </span>
                 <span
-                  className={`text-[10px] font-bold mt-1 tracking-tight leading-none ${
-                    isActive ? 'text-[#C94F36]' : 'text-[#74706A] group-hover:text-[#292826]'
+                  className={`text-[10.5px] font-bold mt-1 tracking-tight leading-none ${
+                    isActive ? 'text-[#B83E26]' : 'text-[#54504A] group-hover:text-[#292826]'
                   }`}
                 >
                   {item.label}
@@ -342,16 +342,16 @@ export default function ResponsiveBottomNav({
                 aria-current={isActive && !isMenu ? 'page' : undefined}
                 aria-expanded={isMenu ? exploreSheetOpen : undefined}
                 aria-controls={isMenu ? 'explore-ihm-sheet' : undefined}
-                className={`flex flex-col items-center justify-center flex-1 min-h-[44px] py-1 px-2.5 rounded-md transition-all relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C94F36]/50 ${
-                  isActive ? 'bg-[#FFF6E8]/60 text-[#C94F36]' : 'text-[#74706A] hover:text-[#292826] hover:bg-black/5'
+                className={`flex flex-col items-center justify-center flex-1 min-h-[48px] min-w-[48px] py-1 px-2.5 rounded-md transition-all relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B83E26]/50 ${
+                  isActive ? 'bg-[#FFF6E8]/80 text-[#B83E26]' : 'text-[#54504A] hover:text-[#292826] hover:bg-black/5'
                 }`}
               >
-                <span className={`transition-transform duration-150 ${isActive ? 'scale-110 text-[#C94F36]' : 'text-[#74706A] group-hover:text-[#292826]'}`}>
+                <span className={`transition-transform duration-150 ${isActive ? 'scale-110 text-[#B83E26]' : 'text-[#54504A] group-hover:text-[#292826]'}`}>
                   <IconComponent size={20} />
                 </span>
                 <span
                   className={`text-[11px] font-bold mt-1 tracking-tight leading-none ${
-                    isActive ? 'text-[#C94F36]' : 'text-[#74706A] group-hover:text-[#292826]'
+                    isActive ? 'text-[#B83E26]' : 'text-[#54504A] group-hover:text-[#292826]'
                   }`}
                 >
                   {item.label}

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import Hero from '../components/Hero'
 import { useSeoMeta } from '../components/useSeoMeta'
 
@@ -34,6 +34,8 @@ interface HomePageProps {
 }
 
 export default function HomePage({ onCalculateEstimate, onOpenConsult }: HomePageProps) {
+  const [loadBelowFold, setLoadBelowFold] = useState(false)
+
   useSeoMeta({
     title: 'House Plans, 3D Front Elevations & Interior Designs for Indian Homes | Indore House Makers',
     description: 'Discover 12,000+ 100% Vastu-compliant Indian house plans, photorealistic 3D front elevations, luxury modular interior designs, and construction cost estimates across 60+ Indian cities. GHMC, BBMP & DDA compliant.',
@@ -41,73 +43,89 @@ export default function HomePage({ onCalculateEstimate, onOpenConsult }: HomePag
     canonicalUrl: 'https://indorehousemakers.in/',
   })
 
+  // Defer heavy below-the-fold component streaming until browser main-thread is idle
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const handle = (window as any).requestIdleCallback(
+        () => setLoadBelowFold(true),
+        { timeout: 600 }
+      )
+      return () => (window as any).cancelIdleCallback(handle)
+    } else {
+      const timer = setTimeout(() => setLoadBelowFold(true), 150)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
   return (
     <main>
-      {/* 1. Hero Section with Quick Instant Calculator */}
+      {/* 1. Critical Above-the-Fold Hero Section (Instant FCP & LCP) */}
       <Hero onCalculate={onCalculateEstimate} />
 
-      {/* Below-The-Fold Lazy Loaded Stream with Automatic Layout Containment */}
-      <Suspense fallback={<div className="min-h-[160px] bg-transparent" />}>
-        <div className="content-auto">
-          {/* 2. Media Coverage & Credibility Spotlight */}
-          <MediaSpotlight />
+      {/* 2. Below-The-Fold Lazy Loaded Stream with Automatic Layout Containment */}
+      {loadBelowFold && (
+        <Suspense fallback={<div className="min-h-[200px] bg-transparent" />}>
+          <div className="content-auto">
+            {/* 2. Media Coverage & Credibility Spotlight */}
+            <MediaSpotlight />
 
-          {/* 3. Trusted Numbers & Scale */}
-          <StatsCounter />
+            {/* 3. Trusted Numbers & Scale */}
+            <StatsCounter />
 
-          {/* 4. Value Proposition & Comparison */}
-          <AboutNivaas />
+            {/* 4. Value Proposition & Comparison */}
+            <AboutNivaas />
 
-          {/* 5. Interactive Design Studio (House Plans | 3D Elevations | Interiors) */}
-          <DesignStudio onOpenConsult={onOpenConsult} />
-        </div>
+            {/* 5. Interactive Design Studio (House Plans | 3D Elevations | Interiors) */}
+            <DesignStudio onOpenConsult={onOpenConsult} />
+          </div>
 
-        <div className="content-auto">
-          {/* 6. Commercial & Mixed-Use Designs */}
-          <CommercialDesigns onOpenConsult={onOpenConsult} />
+          <div className="content-auto">
+            {/* 6. How NIVAAS Works (4-Step Journey) */}
+            <HowItWorks onOpenConsult={onOpenConsult} />
 
-          {/* 7. How NIVAAS Works (4-Step Journey) */}
-          <HowItWorks onOpenConsult={onOpenConsult} />
+            {/* 7. Commercial & Mixed-Use Designs */}
+            <CommercialDesigns onOpenConsult={onOpenConsult} />
 
-          {/* 8. Architectural, Structural, MEP & PMC Services */}
-          <Services onOpenConsult={onOpenConsult} />
+            {/* 8. Architectural, Structural, MEP & PMC Services */}
+            <Services onOpenConsult={onOpenConsult} />
 
-          {/* 9. One-Stop Turnkey Construction & Financial Ecosystem */}
-          <OneStop onOpenConsult={onOpenConsult} />
-        </div>
+            {/* 9. Interactive Detailed Cost Estimator */}
+            <CostCalculator onOpenConsult={onOpenConsult} />
+          </div>
 
-        <div className="content-auto">
-          {/* 10. Interactive Detailed Cost Estimator */}
-          <CostCalculator onOpenConsult={onOpenConsult} />
+          <div className="content-auto">
+            {/* 10. One-Stop Turnkey Construction & Financial Ecosystem */}
+            <OneStop onOpenConsult={onOpenConsult} />
 
-          {/* 11. Verified Contractors & Trades Grid */}
-          <ContractorGrid onOpenConsult={onOpenConsult} />
+            {/* 11. Verified Contractors & Trades Grid */}
+            <ContractorGrid onOpenConsult={onOpenConsult} />
 
-          {/* 12. Client Reviews & Testimonials */}
-          <Reviews />
+            {/* 12. Client Reviews & Testimonials */}
+            <Reviews />
 
-          {/* 13. Pan-India Completed Projects Proof */}
-          <ProjectCompleted />
-        </div>
+            {/* 13. Pan-India Completed Projects Proof */}
+            <ProjectCompleted />
+          </div>
 
-        <div className="content-auto">
-          {/* 14. Architecture & Vastu Guides */}
-          <Blogs onOpenConsult={onOpenConsult} />
+          <div className="content-auto">
+            {/* 14. Architecture & Vastu Guides */}
+            <Blogs onOpenConsult={onOpenConsult} />
 
-          {/* 15. Quick Answers & Frequently Asked Questions */}
-          <QuickAnswers onOpenConsult={onOpenConsult} />
-          <FAQ onOpenConsult={() => onOpenConsult('FAQ Architect Consultation')} />
+            {/* 15. Quick Answers & Frequently Asked Questions */}
+            <QuickAnswers onOpenConsult={onOpenConsult} />
+            <FAQ onOpenConsult={() => onOpenConsult('FAQ Architect Consultation')} />
 
-          {/* 16. Contact & Enquiry Form */}
-          <Contact />
+            {/* 16. Contact & Enquiry Form */}
+            <Contact />
 
-          {/* 17. Mobile App CTA */}
-          <AppCta />
+            {/* 17. Mobile App CTA */}
+            <AppCta />
 
-          {/* 18. Achievements & Ventures */}
-          <Achievements />
-        </div>
-      </Suspense>
+            {/* 18. Achievements & Ventures */}
+            <Achievements />
+          </div>
+        </Suspense>
+      )}
     </main>
   )
 }

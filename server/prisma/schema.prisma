@@ -1,6 +1,7 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -41,6 +42,7 @@ enum ReservationStatus {
 enum JobStatus {
   QUEUED
   PROCESSING
+  PARTIALLY_COMPLETE
   COMPLETED
   FAILED
   CANCELLED
@@ -68,6 +70,36 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum WizardStatus {
+  DRAFT
+  COMPLETED
+  CONFIRMED
+  GENERATING
+  GENERATED
+  ARCHIVED
+}
+
+enum FreePreviewStatus {
+  AVAILABLE
+  RESERVED
+  CONSUMED
+  RELEASED
+}
+
+enum AssetAccessLevel {
+  FREE_PREVIEW
+  DESIGN_PASS
+  ADMIN_ONLY
+}
+
+enum ChatMessageStatus {
+  PENDING
+  STREAMING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
 model User {
   id               String              @id @default(uuid())
   email            String              @unique
@@ -88,6 +120,9 @@ model User {
   purchases        Purchase[]
   payments         Payment[]
   leads            Lead[]
+  wizardSessions   WizardSession[]
+  freePreview      FreePreviewEntitlement?
+  chatSessions     ChatSession[]
 
   @@index([email])
   @@index([phone])
@@ -119,8 +154,12 @@ model Product {
   code           String     @unique // e.g. 'DESIGN_PASS_299'
   description    String
   priceInr       Int        // ₹299
+  priceInPaise   Int        @default(29900) // 29900 paise
+  currency       String     @default("INR")
+  creditType     String     @default("THREE_D_GENERATION")
   creditsGranted Int        // 5 credits
   durationDays   Int        // 30 days
+  autoRenewal    Boolean    @default(false)
   isActive       Boolean    @default(true)
   createdAt      DateTime   @default(now())
   
@@ -128,21 +167,27 @@ model Product {
 }
 
 model Purchase {
-  id         String         @id @default(uuid())
-  userId     String
-  productId  String
-  amountInr  Int
-  status     PurchaseStatus @default(PENDING)
-  paymentId  String?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id             String         @id @default(uuid())
+  userId         String
+  productId      String
+  amountInr      Int
+  amountInPaise  Int            @default(29900)
+  currency       String         @default("INR")
+  productName    String?
+  durationDays   Int            @default(30)
+  creditsGranted Int            @default(5)
+  status         PurchaseStatus @default(PENDING)
+  paymentId      String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product    Product        @relation(fields: [productId], references: [id])
-  payments   Payment[]
-  passes     AccessPass[]
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product        Product        @relation(fields: [productId], references: [id])
+  payments       Payment[]
+  passes         AccessPass[]
 
   @@index([userId])
+  @@index([status])
 }
 
 model Payment {
@@ -153,6 +198,8 @@ model Payment {
   gatewayPaymentId String?       @unique
   signature        String?
   amountInr        Int
+  amountInPaise    Int           @default(29900)
+  currency         String        @default("INR")
   status           PaymentStatus @default(CREATED)
   gateway          String        @default("RAZORPAY")
   rawResponse      Json?
@@ -164,6 +211,7 @@ model Payment {
 
   @@index([userId])
   @@index([orderId])
+  @@index([status])
 }
 
 model AccessPass {
@@ -193,10 +241,12 @@ model CreditTransaction {
   userId        String
   passId        String?
   amount        Int             // +5 for GRANT, -1 for RESERVE, +1 for RELEASE, 0 for CONSUME
+  balanceAfter  Int             @default(0)
   type          CreditEventType
   description   String
   referenceType String?         // e.g. 'PURCHASE', 'GENERATION_JOB', 'MANUAL'
   referenceId   String?         // e.g. reservationId or jobId
+  idempotencyKey String?
   createdAt     DateTime        @default(now())
 
   user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -208,24 +258,228 @@ model CreditTransaction {
   @@index([createdAt])
 }
 
-model GenerationJob {
-  id             String    @id @default(uuid())
-  userId         String
-  projectId      String?
-  jobType        String    // '2D_FLOOR_PLAN', '3D_ELEVATION', 'INTERIOR_RENDER'
-  status         JobStatus @default(QUEUED)
-  inputPayload   Json
-  resultPayload  Json?
-  errorMessage   String?
-  creditCost     Int       @default(1)
-  idempotencyKey String?   @unique
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+model WizardSession {
+  id                String          @id @default(uuid())
+  userId            String?
+  schemaVersion     Int             @default(1)
+  currentStage      Int             @default(1)
+  status            WizardStatus    @default(DRAFT)
+  wizardData        Json
+  confirmedSnapshot Json?
+  inputHash         String?
+  completedAt       DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  generationJobs    GenerationJob[]
+  chatSessions      ChatSession[]
 
   @@index([userId])
   @@index([status])
+  @@index([inputHash])
+}
+
+model FreePreviewEntitlement {
+  id              String            @id @default(uuid())
+  userId          String            @unique
+  status          FreePreviewStatus @default(AVAILABLE)
+  generationJobId String?           @unique
+  reservedAt      DateTime?
+  consumedAt      DateTime?
+  releasedAt      DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generationJob   GenerationJob?    @relation(fields: [generationJobId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model GenerationJob {
+  id                       String                  @id @default(uuid())
+  userId                   String
+  projectId                String?
+  wizardSessionId          String?
+  accessPassId             String?
+  creditReservationId      String?
+  freePreviewEntitlementId String?
+  jobType                  String                  // 'FREE_2D_PREVIEW', 'COMPLETE_3D_EXPERIENCE'
+  generationType           String                  @default("FREE_2D_PREVIEW") // 'FREE_2D_PREVIEW', 'COMPLETE_3D_EXPERIENCE'
+  status                   JobStatus               @default(QUEUED)
+  attemptCount             Int                     @default(0)
+  maxAttempts              Int                     @default(3)
+  lockedBy                 String?
+  leaseExpiresAt           DateTime?
+  heartbeatAt              DateTime?
+  nextRetryAt              DateTime?
+  failureCode              String?
+  progressStage            String?                 // 'CORE_2D', 'MODEL_3D', 'EXTERIOR_RENDERS', 'COMPLETED'
+  inputPayload             Json
+  resultPayload            Json?
+  errorMessage             String?
+  creditCost               Int                     @default(1)
+  idempotencyKey           String?                 @unique
+  inputHash                String?
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+
+  user                     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wizardSession            WizardSession?          @relation(fields: [wizardSessionId], references: [id], onDelete: SetNull)
+  assets                   GenerationAsset[]
+  freePreviewEntitlement   FreePreviewEntitlement?
+
+  @@index([userId])
+  @@index([status])
+  @@index([leaseExpiresAt])
+}
+
+model GenerationAsset {
+  id              String           @id @default(uuid())
+  generationJobId String
+  assetType       String           // 'FREE_2D_PREVIEW', 'LOCKED_3D_TEASER', 'PAID_3D_EXPERIENCE', 'FLOOR_RENDER', 'EXTERIOR_RENDER', 'PDF_EXPORT', 'DOLLHOUSE_PREVIEW'
+  storageKey      String
+  mimeType        String
+  fileSize        Int              @default(0)
+  accessLevel     AssetAccessLevel @default(DESIGN_PASS)
+  status          String           @default("READY")
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  generationJob   GenerationJob    @relation(fields: [generationJobId], references: [id], onDelete: Cascade)
+
+  @@index([generationJobId])
+  @@index([assetType])
+  @@index([accessLevel])
+}
+
+model ConstructionRate {
+  id            String    @id @default(uuid())
+  city          String    @default("Indore")
+  packageType   String    // 'STANDARD', 'PREMIUM', 'LUXURY'
+  ratePerSqFt   Int       // e.g. 1650, 2150, 2850
+  effectiveFrom DateTime  @default(now())
+  effectiveTo   DateTime?
+  sourceNote    String?   // 'Indicative Benchmark Rate'
+  verifiedAt    DateTime?
+  updatedBy     String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([city, packageType, isActive])
+}
+
+model WebhookEvent {
+  id               String    @id @default(uuid())
+  providerEventId  String    @unique
+  eventType        String
+  processingStatus String    // 'PENDING', 'PROCESSED', 'FAILED', 'IGNORED'
+  payload          Json
+  failureReason    String?
+  receivedAt       DateTime  @default(now())
+  processedAt      DateTime?
+
+  @@index([providerEventId])
+  @@index([processingStatus])
+}
+
+model ChatSession {
+  id               String        @id @default(uuid())
+  userId           String?
+  guestSessionHash String?
+  projectId        String?
+  wizardSessionId  String?
+  title            String        @default("New Planning Session")
+  status           String        @default("ACTIVE")
+  summary          String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  archivedAt       DateTime?
+
+  user             User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  wizardSession    WizardSession? @relation(fields: [wizardSessionId], references: [id], onDelete: SetNull)
+  messages         ChatMessage[]
+  usages           ChatUsage[]
+
+  @@index([userId])
+  @@index([guestSessionHash])
+  @@index([wizardSessionId])
+}
+
+model ChatMessage {
+  id                 String            @id @default(uuid())
+  sessionId          String
+  role               String            // 'user' | 'assistant' | 'system' | 'tool'
+  content            String
+  clientMessageId    String?
+  status             ChatMessageStatus @default(COMPLETED)
+  toolName           String?
+  toolResult         Json?
+  providerResponseId String?
+  failureCode        String?
+  createdAt          DateTime          @default(now())
+  completedAt        DateTime?
+
+  session            ChatSession       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  usages             ChatUsage[]
+  feedbacks          ChatFeedback[]
+
+  @@index([sessionId])
+  @@index([clientMessageId])
+  @@index([createdAt])
+}
+
+model ChatUsage {
+  id            String       @id @default(uuid())
+  sessionId     String
+  messageId     String?
+  userId        String?
+  provider      String       @default("OPENAI")
+  model         String       @default("gpt-4o-mini")
+  inputTokens   Int          @default(0)
+  outputTokens  Int          @default(0)
+  estimatedCost Float        @default(0.0)
+  latencyMs     Int          @default(0)
+  requestId     String?
+  createdAt     DateTime     @default(now())
+
+  session       ChatSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  message       ChatMessage? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId])
+  @@index([userId])
+}
+
+model ChatFeedback {
+  id        String      @id @default(uuid())
+  messageId String
+  userId    String?
+  rating    Int         // 1 for helpful, -1 for unhelpful
+  reason    String?
+  createdAt DateTime    @default(now())
+
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([userId])
+}
+
+model ChatQuotaUsage {
+  id           String   @id @default(uuid())
+  subjectId    String   // userId or guestSessionHash
+  subjectType  String   // 'USER' | 'GUEST'
+  usageDate    String   // YYYY-MM-DD in Asia/Kolkata
+  messageCount Int      @default(0)
+  tokenCount   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([subjectId, usageDate])
+  @@index([usageDate])
 }
 
 model Lead {
@@ -293,10 +547,10 @@ model CreditReservation {
 
 // Atomic Admin Setup Lock (Guarantees single initial admin setup with DB-level unique lock)
 model AdminSetupLock {
-  id        String   @id @default("SETUP_LOCK")
-  isLocked  Boolean  @default(false)
-  adminId   String?  @unique
+  id        String    @id @default("SETUP_LOCK")
+  isLocked  Boolean   @default(false)
+  adminId   String?   @unique
   lockedAt  DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }

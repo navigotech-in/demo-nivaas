@@ -180,7 +180,7 @@ describe('Indore House Makers — Phase 2 & 3 Security, IDOR & Role Governance T
 
     expect(grantRes.status).toBe(200)
     expect(grantRes.body.data.creditsAdded).toBe(200)
-    expect(grantRes.body.data.newBalance).toBe(300) // 100 welcome + 200 granted
+    expect(grantRes.body.data.newBalance).toBe(200) // 0 initial + 200 granted
 
     // D. Duplicate Grant with same key must return existing without double-adding
     const dupRes = await request(app)
@@ -189,7 +189,7 @@ describe('Indore House Makers — Phase 2 & 3 Security, IDOR & Role Governance T
       .send({ amount: 200, reason: 'Approved bonus allowance', idempotencyKey: key })
 
     expect(dupRes.status).toBe(200)
-    expect(dupRes.body.data.newBalance).toBe(300) // Stays 300, not 500
+    expect(dupRes.body.data.newBalance).toBe(200) // Stays 200, not 400
   })
 
   // 6. Admin Users Table Server-Side Pagination

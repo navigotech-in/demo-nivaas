@@ -313,11 +313,15 @@ export class PrismaDatabaseService {
 
   // --- Credit Ledger Operations ---
   public async calculateCreditBalance(userId: string): Promise<number> {
-    const agg = await prisma.creditTransaction.aggregate({
-      where: { userId },
-      _sum: { amount: true },
-    })
-    return Math.max(0, agg._sum.amount ?? 0)
+    try {
+      const agg = await prisma.creditTransaction.aggregate({
+        where: { userId },
+        _sum: { amount: true },
+      })
+      return Math.max(0, agg._sum.amount ?? 0)
+    } catch {
+      return db.calculateUserBalance(userId)
+    }
   }
 
   public async grantCredits(params: {
@@ -557,6 +561,52 @@ export class PrismaDatabaseService {
     })
   }
 
+  public async getFree2DGenerationsCount(userId: string): Promise<number> {
+    try {
+      return await prisma.generationJob.count({
+        where: {
+          userId,
+          generationType: 'FREE_2D_PREVIEW',
+          status: 'COMPLETED',
+        },
+      })
+    } catch {
+      return 0
+    }
+  }
+
+  public async getDaily2DGenerationsCount(userId: string): Promise<number> {
+    try {
+      const startOfDay = new Date()
+      startOfDay.setUTCHours(0, 0, 0, 0)
+      return await prisma.generationJob.count({
+        where: {
+          userId,
+          generationType: 'FREE_2D_PREVIEW',
+          status: 'COMPLETED',
+          createdAt: { gte: startOfDay },
+        },
+      })
+    } catch {
+      return 0
+    }
+  }
+
+  public async getActivePass(userId: string) {
+    try {
+      return await prisma.accessPass.findFirst({
+        where: {
+          userId,
+          status: 'ACTIVE',
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+    } catch {
+      return db.getActivePass(userId)
+    }
+  }
+
   // --- User Panel Methods (Phase 2) ---
   public async getUserDashboardData(userId: string) {
     const user = await this.findUserById(userId)
@@ -612,16 +662,105 @@ export class PrismaDatabaseService {
   }
 
   public async getUserProjects(userId: string) {
-    return await prisma.generationJob.findMany({
+    const rawJobs = await prisma.generationJob.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     })
+
+    // Group jobs by Project Title so that 2D floor plan and 3D elevation belong to the SAME project
+    const projectMap = new Map<string, typeof rawJobs[0]>()
+
+    for (const job of rawJobs) {
+      const payload: any = job.inputPayload || {}
+      const resPayload: any = job.resultPayload || {}
+      const title = payload.title || resPayload.title || `Custom Project ${job.id}`
+
+      if (!projectMap.has(title)) {
+        projectMap.set(title, { ...job })
+      } else {
+        const existing = projectMap.get(title)!
+        const existingPayload: any = existing.inputPayload || {}
+
+        // Merge payloads so 2D layout + 3D elevation reside in 1 single project
+        const mergedPayload = {
+          ...existingPayload,
+          ...payload,
+          is3DUnlocked: Boolean(existingPayload.is3DUnlocked || payload.is3DUnlocked || job.jobType === 'THREE_D_GENERATION'),
+          has3D: Boolean(existingPayload.has3D || payload.has3D || existingPayload.image || payload.image || job.jobType === 'THREE_D_GENERATION'),
+          image: payload.image || existingPayload.image,
+        }
+
+        const isFullPackage =
+          existing.jobType === 'THREE_D_GENERATION' ||
+          job.jobType === 'THREE_D_GENERATION' ||
+          existing.jobType === 'FULL_2D_3D_PLAN' ||
+          mergedPayload.has3D
+
+        projectMap.set(title, {
+          ...existing,
+          jobType: isFullPackage ? 'FULL_2D_3D_PLAN' : existing.jobType,
+          inputPayload: mergedPayload,
+          resultPayload: {
+            ...((existing.resultPayload as any) || {}),
+            ...(resPayload || {}),
+          },
+        })
+      }
+    }
+
+    return Array.from(projectMap.values())
   }
 
   public async createUserProject(userId: string, data: {
     jobType?: string
     inputPayload: Record<string, unknown>
   }) {
+    const title = (data.inputPayload.title as string) || 'Custom Floor Plan'
+
+    // Look for existing project with same title to merge 2D & 3D into 1 single project
+    const allUserJobs = await prisma.generationJob.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    const existing = allUserJobs.find((j) => {
+      const p: any = j.inputPayload || {}
+      const r: any = j.resultPayload || {}
+      return p.title === title || r.title === title
+    })
+
+    if (existing) {
+      const existingPayload: any = existing.inputPayload || {}
+      const is3D =
+        data.jobType === 'THREE_D_GENERATION' ||
+        Boolean(data.inputPayload.is3DUnlocked) ||
+        Boolean(data.inputPayload.image)
+
+      const mergedPayload = {
+        ...existingPayload,
+        ...data.inputPayload,
+        is3DUnlocked: Boolean(existingPayload.is3DUnlocked || is3D),
+        has3D: Boolean(existingPayload.has3D || is3D),
+        image: data.inputPayload.image || existingPayload.image,
+      }
+
+      return await prisma.generationJob.update({
+        where: { id: existing.id },
+        data: {
+          jobType: is3D || existing.jobType === 'THREE_D_GENERATION' ? 'FULL_2D_3D_PLAN' : existing.jobType,
+          status: 'COMPLETED',
+          inputPayload: JSON.parse(JSON.stringify(mergedPayload)),
+          resultPayload: {
+            ...((existing.resultPayload as any) || {}),
+            title,
+            plotSize: (data.inputPayload.plotSize as string) || existingPayload.plotSize || '30x50 ft',
+            facing: (data.inputPayload.facing as string) || existingPayload.facing || 'East',
+            bhk: (data.inputPayload.bhk as string) || existingPayload.bhk || '3 BHK',
+          },
+        },
+      })
+    }
+
     return await prisma.generationJob.create({
       data: {
         id: 'job_' + crypto.randomBytes(8).toString('hex'),
@@ -630,7 +769,7 @@ export class PrismaDatabaseService {
         status: 'COMPLETED',
         inputPayload: JSON.parse(JSON.stringify(data.inputPayload)),
         resultPayload: {
-          title: (data.inputPayload.title as string) || 'Custom Floor Plan',
+          title,
           plotSize: (data.inputPayload.plotSize as string) || '30x50 ft',
           facing: (data.inputPayload.facing as string) || 'East',
           bhk: (data.inputPayload.bhk as string) || '3 BHK',

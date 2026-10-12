@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { submitLead } from '../lib/api'
+import { useAuth } from '../lib/authContext'
 import { Icons } from './Icons'
 
 interface ConsultModalProps {
@@ -34,11 +35,14 @@ export default function ConsultModal({
   initialRequirement,
   initialPlanDetails,
 }: ConsultModalProps) {
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
+
   const [form, setForm] = useState({
     name: '',
     phone: '',
     city: '',
-    state: 'Telangana',
+    state: 'Madhya Pradesh',
     requirement: initialRequirement || defaultRequirements[0],
     message: initialPlanDetails || '',
   })
@@ -54,12 +58,17 @@ export default function ConsultModal({
     setLoading(true)
     setError(null)
     try {
+      const finalName = isAdmin ? `[ADMIN TEST] ${form.name || user?.name || 'Admin'}` : form.name
+      const finalMessage = isAdmin
+        ? `[TEST PREVIEW LEAD - NOT REAL CUSTOMER] ${form.message}`
+        : form.message
+
       await submitLead({
-        name: form.name,
-        phone: form.phone,
-        city: `${form.city}, ${form.state}`,
+        name: finalName,
+        phone: form.phone || (isAdmin ? '9999999999' : ''),
+        city: `${form.city || 'Indore'}, ${form.state}`,
         requirement: form.requirement,
-        message: form.message,
+        message: finalMessage,
       })
       setSuccess(true)
     } catch {
@@ -82,6 +91,19 @@ export default function ConsultModal({
         role="dialog"
         aria-modal="true"
       >
+        {/* Admin Preview Mode Notice */}
+        {isAdmin && (
+          <div className="bg-[#292826] text-white px-5 py-2 text-xs flex items-center justify-between border-b border-black/20">
+            <span className="flex items-center gap-1.5 font-bold text-amber-400">
+              <Icons.Shield size={13} />
+              Admin Test Preview Mode
+            </span>
+            <span className="text-[11px] text-[#C5BFB8]">
+              Submissions tagged as [TEST LEAD]
+            </span>
+          </div>
+        )}
+
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-white/50 bg-gradient-to-r from-[#FFF6E8]/90 via-white/80 to-[#FFF6E8]/90 backdrop-blur-xl px-6 py-4">
           <div className="flex items-center gap-2.5">
@@ -98,7 +120,7 @@ export default function ConsultModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#54504A] hover:bg-white/80 hover:text-[#292826] transition shadow-sm border border-transparent hover:border-white/50"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[#54504A] hover:bg-white/80 hover:text-[#292826] transition shadow-sm border border-transparent hover:border-white/50 cursor-pointer"
             aria-label="Close modal"
           >
             <Icons.Close size={18} />
@@ -135,13 +157,13 @@ export default function ConsultModal({
               )}
 
               {initialPlanDetails && (
-                <div className="rounded-lg bg-[#FFF6E8] p-3 text-xs text-[#E76F2E] border border-[#E7E0D7] font-medium">
-                  <span className="font-bold">Selected Specs:</span> {initialPlanDetails}
+                <div className="rounded-xl bg-[#FFF6E8] p-3 text-xs text-[#1F2937] border border-[#E76F2E]/40 font-medium shadow-2xs">
+                  <span className="font-extrabold text-[#E76F2E]">Selected Specs:</span> {initialPlanDetails}
                 </div>
               )}
 
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                   Full Name <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -151,20 +173,20 @@ export default function ConsultModal({
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="e.g. Rajesh Sharma"
-                    className="w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] pl-10 pr-4 py-2.5 text-sm text-[#292826] outline-none focus:border-[#292826] focus:bg-white"
+                    className="w-full rounded-lg border border-[#D1C9BE] bg-white pl-10 pr-4 py-2.5 text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
                   />
-                  <div className="absolute left-3.5 top-3 text-[#54504A]">
+                  <div className="absolute left-3.5 top-3 text-[#1F2937]">
                     <Icons.User size={16} />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                   Mobile Number (WhatsApp) <span className="text-red-500">*</span>
                 </label>
-                <div className="flex rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] focus-within:border-[#292826] focus-within:bg-white">
-                  <span className="inline-flex items-center px-3.5 text-xs font-bold text-[#54504A] border-r border-[#E7E0D7] bg-[#FFF6E8] rounded-l-xl">
+                <div className="flex rounded-lg border border-[#D1C9BE] bg-white focus-within:border-[#E76F2E] focus-within:ring-2 focus-within:ring-[#E76F2E]/20">
+                  <span className="inline-flex items-center px-3.5 text-xs font-bold text-[#1F2937] border-r border-[#D1C9BE] bg-[#FFF6E8] rounded-l-lg">
                     +91
                   </span>
                   <input
@@ -174,14 +196,14 @@ export default function ConsultModal({
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
                     placeholder="10-digit mobile number"
-                    className="w-full rounded-r-xl px-3.5 py-2.5 text-sm text-[#292826] outline-none bg-transparent"
+                    className="w-full rounded-r-lg px-3.5 py-2.5 text-sm text-black font-medium outline-none bg-transparent"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                     City <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -189,18 +211,18 @@ export default function ConsultModal({
                     required
                     value={form.city}
                     onChange={(e) => setForm({ ...form, city: e.target.value })}
-                    placeholder="e.g. Hyderabad"
-                    className="w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] px-3.5 py-2.5 text-sm text-[#292826] outline-none focus:border-[#292826] focus:bg-white"
+                    placeholder="e.g. Indore"
+                    className="w-full rounded-lg border border-[#D1C9BE] bg-white px-3.5 py-2.5 text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                     State <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={form.state}
                     onChange={(e) => setForm({ ...form, state: e.target.value })}
-                    className="w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] px-3 py-2.5 text-sm text-[#292826] outline-none focus:border-[#292826] focus:bg-white"
+                    className="w-full rounded-lg border border-[#D1C9BE] bg-white px-3 py-2.5 text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
                   >
                     {statesList.map((st) => (
                       <option key={st} value={st}>
@@ -212,13 +234,13 @@ export default function ConsultModal({
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                   Service Requirement
                 </label>
                 <select
                   value={form.requirement}
                   onChange={(e) => setForm({ ...form, requirement: e.target.value })}
-                  className="w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] px-3 py-2.5 text-sm text-[#292826] outline-none focus:border-[#292826] focus:bg-white"
+                  className="w-full rounded-lg border border-[#D1C9BE] bg-white px-3 py-2.5 text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
                 >
                   {defaultRequirements.map((req) => (
                     <option key={req} value={req}>
@@ -229,7 +251,7 @@ export default function ConsultModal({
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                   Plot Dimensions / Specific Notes
                 </label>
                 <textarea
@@ -237,19 +259,19 @@ export default function ConsultModal({
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
                   placeholder="e.g. 30x50 plot, East facing, need 3 BHK duplex with car parking"
-                  className="w-full rounded-lg border border-[#E7E0D7] bg-[#FDFCF9] px-3.5 py-2 text-sm text-[#292826] outline-none focus:border-[#292826] focus:bg-white"
+                  className="w-full rounded-lg border border-[#D1C9BE] bg-white px-3.5 py-2 text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-[#E76F2E] py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#C65320] disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-[#E76F2E] py-3.5 text-sm font-bold text-white shadow-md transition hover:bg-[#C65320] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? 'Submitting...' : 'Book Free Online Consultation →'}
               </button>
 
-              <p className="text-center text-[11px] text-[#54504A]">
+              <p className="text-center text-xs text-[#1F2937] font-semibold">
                 🔒 Protected by 256-bit SSL encryption. Zero spam.
               </p>
             </form>

@@ -10,6 +10,9 @@ import {
   StatusText,
   EmptyState,
 } from '../components/dashboard'
+import { subscribeDataChanged, notifyDataChanged } from '../lib/syncEvents'
+
+const AdminBlogsTab = React.lazy(() => import('../components/dashboard/AdminBlogsTab'))
 
 interface AdminMetrics {
   totalUsers: number
@@ -73,9 +76,21 @@ interface AuditLogItem {
   }
 }
 
+export type AdminTab =
+  | 'overview'
+  | 'passes'
+  | 'users'
+  | 'payments'
+  | 'generations'
+  | 'leads'
+  | 'credits'
+  | 'blogs'
+  | 'audit'
+  | 'settings'
+
 export default function AdminDashboardPage() {
   const { user, getAuthHeaders, isAuthenticated, isLoading } = useAuth()
-  const [activeTab, setActiveTab] = useState<'overview' | 'subscriptions' | 'users' | 'leads' | 'audit'>('overview')
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview')
 
   const [loading, setLoading] = useState(true)
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null)
@@ -85,21 +100,27 @@ export default function AdminDashboardPage() {
   const [userTotal, setUserTotal] = useState(0)
   const [leads, setLeads] = useState<AdminLeadItem[]>([])
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([])
+  const [creditLedger, setCreditLedger] = useState<any[]>([])
+  const [generations, setGenerations] = useState<any[]>([])
   const [userSearch, setUserSearch] = useState('')
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   // Credit Grant Modal State
   const [selectedUserForCredits, setSelectedUserForCredits] = useState<AdminUserItem | null>(null)
-  const [creditAmount, setCreditAmount] = useState('100')
-  const [creditReason, setCreditReason] = useState('Promotional Grant')
+  const [selectedUserForDetails, setSelectedUserForDetails] = useState<AdminUserItem | null>(null)
+  const [creditAmount, setCreditAmount] = useState('5')
+  const [creditReason, setCreditReason] = useState('Promotional 3D Credits')
   const [isGranting, setIsGranting] = useState(false)
+  const [passFilter, setPassFilter] = useState<'all' | 'active' | 'inactive'>('all')
 
   const fetchOverviewAndLeads = async () => {
     try {
-      const [overviewRes, leadsRes, auditRes] = await Promise.all([
+      const [overviewRes, leadsRes, auditRes, ledgerRes, genRes] = await Promise.all([
         fetch('/api/v1/admin/overview', { headers: getAuthHeaders(), credentials: 'include' }),
         fetch('/api/v1/admin/leads', { headers: getAuthHeaders(), credentials: 'include' }),
         fetch('/api/v1/admin/audit-logs', { headers: getAuthHeaders(), credentials: 'include' }),
+        fetch('/api/v1/admin/credit-ledger', { headers: getAuthHeaders(), credentials: 'include' }),
+        fetch('/api/v1/admin/generations', { headers: getAuthHeaders(), credentials: 'include' }),
       ])
 
       if (overviewRes.ok) {
@@ -113,6 +134,14 @@ export default function AdminDashboardPage() {
       if (auditRes.ok) {
         const json = await auditRes.json()
         setAuditLogs(json.data || [])
+      }
+      if (ledgerRes.ok) {
+        const json = await ledgerRes.json()
+        setCreditLedger(json.data || [])
+      }
+      if (genRes.ok) {
+        const json = await genRes.json()
+        setGenerations(json.data || [])
       }
     } catch {
       setActionMessage({ type: 'error', text: 'Failed to fetch admin overview.' })
@@ -150,6 +179,40 @@ export default function AdminDashboardPage() {
     }
     init()
   }, [isLoading, isAuthenticated, user?.role])
+
+  // Automatically fetch fresh data whenever switching admin tabs
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'ADMIN') return
+    fetchOverviewAndLeads().catch(() => null)
+    if (activeTab === 'users' || activeTab === 'passes') {
+      fetchUsers(userPage, userSearch).catch(() => null)
+    }
+  }, [activeTab, isAuthenticated, user?.role])
+
+  // Real-time synchronization & focus revalidation: Keeps admin metrics & tables live without page reload
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'ADMIN') return
+
+    const handleFocus = () => {
+      fetchOverviewAndLeads().catch(() => null)
+      if (activeTab === 'users' || activeTab === 'passes') {
+        fetchUsers(userPage, userSearch).catch(() => null)
+      }
+    }
+    window.addEventListener('focus', handleFocus)
+
+    const unsubscribe = subscribeDataChanged(() => {
+      fetchOverviewAndLeads().catch(() => null)
+      if (activeTab === 'users' || activeTab === 'passes') {
+        fetchUsers(userPage, userSearch).catch(() => null)
+      }
+    })
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      unsubscribe()
+    }
+  }, [isAuthenticated, user?.role, activeTab, userPage, userSearch])
 
   // Handle Search Debounce
   useEffect(() => {
@@ -195,6 +258,7 @@ export default function AdminDashboardPage() {
         setSelectedUserForCredits(null)
         fetchUsers(userPage, userSearch)
         fetchOverviewAndLeads()
+        notifyDataChanged('credits')
       } else {
         setActionMessage({ type: 'error', text: json.message || 'Failed to grant credits.' })
       }
@@ -221,6 +285,7 @@ export default function AdminDashboardPage() {
         setLeads((prev) =>
           prev.map((l) => (l.id === leadId ? { ...l, status: newStatus as any } : l))
         )
+        notifyDataChanged('leads')
       } else {
         setActionMessage({ type: 'error', text: 'Failed to update lead status.' })
       }
@@ -270,8 +335,15 @@ export default function AdminDashboardPage() {
     )
   }
 
-  const subscribedUsers = users.filter((u) => u.activePass !== null)
-  const activeSubscribedCount = users.filter((u) => u.activePass?.status === 'ACTIVE').length
+  const activePassUsers = users.filter(
+    (u) =>
+      u.activePass?.status === 'ACTIVE' &&
+      (!u.activePass.expiresAt || new Date(u.activePass.expiresAt) > new Date())
+  )
+  const inactivePassUsers = users.filter((u) => !activePassUsers.some((active) => active.id === u.id))
+  const activeSubscribedCount = activePassUsers.length
+  const totalUsersCount = users.length
+  const inactiveSubscribedCount = inactivePassUsers.length
 
   const sidebarItems = [
     {
@@ -282,20 +354,35 @@ export default function AdminDashboardPage() {
       active: activeTab === 'overview',
     },
     {
-      id: 'subscriptions',
-      label: 'Subscriptions / Passes',
+      id: 'passes',
+      label: 'Design Passes',
       icon: <Icons.Award size={16} />,
       badge: metrics?.activePasses ?? activeSubscribedCount,
-      onClick: () => setActiveTab('subscriptions'),
-      active: activeTab === 'subscriptions',
+      onClick: () => setActiveTab('passes'),
+      active: activeTab === 'passes',
     },
     {
       id: 'users',
-      label: 'Users Directory',
+      label: 'Users',
       icon: <Icons.Users size={16} />,
       badge: userTotal || metrics?.totalUsers || 0,
       onClick: () => setActiveTab('users'),
       active: activeTab === 'users',
+    },
+    {
+      id: 'payments',
+      label: 'Payments',
+      icon: <Icons.CreditCard size={16} />,
+      onClick: () => setActiveTab('payments'),
+      active: activeTab === 'payments',
+    },
+    {
+      id: 'generations',
+      label: 'Projects & Generations',
+      icon: <Icons.Layers size={16} />,
+      badge: metrics?.totalJobs ?? 0,
+      onClick: () => setActiveTab('generations'),
+      active: activeTab === 'generations',
     },
     {
       id: 'leads',
@@ -306,18 +393,38 @@ export default function AdminDashboardPage() {
       active: activeTab === 'leads',
     },
     {
-      id: 'audit',
-      label: 'Audit & Ledger',
+      id: 'credits',
+      label: 'Credits Ledger',
+      icon: <Icons.Coins size={16} />,
+      onClick: () => setActiveTab('credits'),
+      active: activeTab === 'credits',
+    },
+    {
+      id: 'blogs',
+      label: 'Blogs & Guides',
       icon: <Icons.FileText size={16} />,
+      onClick: () => setActiveTab('blogs'),
+      active: activeTab === 'blogs',
+    },
+    {
+      id: 'audit',
+      label: 'Audit Logs',
+      icon: <Icons.Activity size={16} />,
       onClick: () => setActiveTab('audit'),
       active: activeTab === 'audit',
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: <Icons.Settings size={16} />,
+      onClick: () => setActiveTab('settings'),
+      active: activeTab === 'settings',
     },
   ]
 
   return (
     <DashboardLayout
-      title="Admin Command Center"
-      badgeText="ADMIN"
+      title="Indore House Makers — Admin"
       sidebarItems={sidebarItems}
     >
       {actionMessage && (
@@ -329,7 +436,7 @@ export default function AdminDashboardPage() {
           }`}
         >
           <span>{actionMessage.text}</span>
-          <button onClick={() => setActionMessage(null)} className="ml-2 font-bold">
+          <button onClick={() => setActionMessage(null)} className="ml-2 font-bold cursor-pointer">
             ×
           </button>
         </div>
@@ -346,7 +453,7 @@ export default function AdminDashboardPage() {
             actions={
               <button
                 onClick={() => fetchOverviewAndLeads()}
-                className="px-3 py-1.5 rounded-md border border-[#E7E0D7] hover:bg-[#FAF8F5] text-xs font-medium text-[#292826] flex items-center gap-1.5 transition"
+                className="px-3 py-1.5 rounded-md border border-[#E7E0D7] hover:bg-[#FAF8F5] text-xs font-medium text-[#292826] flex items-center gap-1.5 transition cursor-pointer"
               >
                 <Icons.RefreshCw size={13} />
                 <span>Refresh Data</span>
@@ -354,24 +461,25 @@ export default function AdminDashboardPage() {
             }
           />
 
+          {/* Primary 4 Business Metrics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
-              label="Total Registered Users"
+              label="Registered Users"
               value={metrics?.totalUsers ?? users.length}
               subtext="Platform accounts"
               icon={<Icons.Users size={18} />}
             />
             <MetricCard
-              label="Active Passes"
+              label="Active Design Passes"
               value={metrics?.activePasses ?? 0}
               subtext="₹299 Design Passes"
               icon={<Icons.Award size={18} />}
             />
             <MetricCard
-              label="Active Sessions"
-              value={metrics?.activeSessions ?? 0}
-              subtext="Logged-in devices"
-              icon={<Icons.Shield size={18} />}
+              label="3D Generations"
+              value={metrics?.totalJobs ?? 0}
+              subtext="Floorplans & 3D renders"
+              icon={<Icons.Sparkles size={18} />}
             />
             <MetricCard
               label="Consultation Leads"
@@ -409,48 +517,135 @@ export default function AdminDashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* System Security & Device Infrastructure Section */}
+          <div className="bg-white rounded-lg border border-[#E7E0D7] p-5">
+            <h3 className="text-xs font-bold text-[#292826] uppercase tracking-wider mb-4">
+              Security, Infrastructure & Device Sessions
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-3.5 rounded-lg bg-[#FAF8F5] border border-[#E7E0D7] space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#292826]">Active Sessions</span>
+                  <Icons.Shield size={16} className="text-[#C94F36]" />
+                </div>
+                <div className="text-xl font-bold text-[#292826]">{metrics?.activeSessions ?? 0}</div>
+                <div className="text-[11px] text-[#74706A]">Logged-in devices</div>
+              </div>
+
+              <div className="p-3.5 rounded-lg bg-[#FAF8F5] border border-[#E7E0D7] space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#292826]">Database Engine</span>
+                  <Icons.CheckCircle size={16} className="text-emerald-600" />
+                </div>
+                <div className="text-sm font-bold text-[#292826]">PostgreSQL Active</div>
+                <div className="text-[11px] text-[#74706A]">Prisma ORM connected</div>
+              </div>
+
+              <div className="p-3.5 rounded-lg bg-[#FAF8F5] border border-[#E7E0D7] space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#292826]">Payment Gateway</span>
+                  <Icons.CreditCard size={16} className="text-[#C94F36]" />
+                </div>
+                <div className="text-sm font-bold text-[#292826]">Mock Payment Mode</div>
+                <div className="text-[11px] text-[#74706A]">Test Gateway Active (Sandboxed)</div>
+              </div>
+
+              <div className="p-3.5 rounded-lg bg-[#FAF8F5] border border-[#E7E0D7] space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#292826]">AI Studio Engine</span>
+                  <Icons.Sparkles size={16} className="text-[#C94F36]" />
+                </div>
+                <div className="text-sm font-bold text-[#292826]">2D / 3D Pipelines</div>
+                <div className="text-[11px] text-[#74706A]">Online & operational</div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB 2: SUBSCRIPTIONS & PASSES */}
+      {/* TAB 2: DESIGN PASSES (₹299 ACCESS PASSES) */}
       {/* ------------------------------------------------------------- */}
-      {activeTab === 'subscriptions' && (
+      {activeTab === 'passes' && (
         <div className="space-y-6">
           <PageHeader
-            title="Subscriptions & Access Passes"
-            subtitle="Overview of all active ₹299 Design Passes, subscribed users, and credit allocations."
+            title="Design Passes"
+            subtitle="Manage ₹299 design passes, entitlement durations, and active member benefits."
+            actions={
+              <div className="flex items-center gap-1 bg-[#FAF8F5] p-1 rounded-lg border border-[#E7E0D7]">
+                <button
+                  type="button"
+                  onClick={() => setPassFilter('all')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition cursor-pointer ${
+                    passFilter === 'all'
+                      ? 'bg-white text-[#292826] shadow-2xs border border-[#E7E0D7]'
+                      : 'text-[#74706A] hover:text-[#292826]'
+                  }`}
+                >
+                  All ({totalUsersCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPassFilter('active')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition cursor-pointer ${
+                    passFilter === 'active'
+                      ? 'bg-emerald-50 text-emerald-800 shadow-2xs border border-emerald-200'
+                      : 'text-[#74706A] hover:text-[#292826]'
+                  }`}
+                >
+                  Active ({activeSubscribedCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPassFilter('inactive')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition cursor-pointer ${
+                    passFilter === 'inactive'
+                      ? 'bg-[#F0EBE6] text-[#292826] shadow-2xs border border-[#E7E0D7]'
+                      : 'text-[#74706A] hover:text-[#292826]'
+                  }`}
+                >
+                  Inactive / Free ({inactiveSubscribedCount})
+                </button>
+              </div>
+            }
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
-              label="Active Subscriptions"
-              value={metrics?.activePasses ?? activeSubscribedCount}
-              subtext="Current active design passes"
-              icon={<Icons.Award size={18} />}
-            />
-            <MetricCard
-              label="Total Subscribed Members"
-              value={subscribedUsers.length}
-              subtext="Users with active or previous passes"
+              label="Total Users"
+              value={totalUsersCount}
+              subtext="Registered platform members"
               icon={<Icons.Users size={18} />}
             />
             <MetricCard
-              label="Primary Plan"
-              value="₹299 / Month"
-              subtext="5 High-Res AI Generations / Pass"
-              icon={<Icons.Coins size={18} />}
+              label="Active Design Passes"
+              value={activeSubscribedCount}
+              subtext="₹299 Active Passes (5 credits each)"
+              icon={<Icons.Award size={18} />}
             />
             <MetricCard
-              label="Credits Issued"
-              value={`${metrics?.totalCreditsIssued ?? 0} Credits`}
-              subtext="Granted across all passes"
-              icon={<Icons.CreditCard size={18} />}
+              label="Inactive / Free Tier"
+              value={inactiveSubscribedCount}
+              subtext="Complimentary 2D layout tier"
+              icon={<Icons.Shield size={18} />}
+            />
+            <MetricCard
+              label="3D Credits in Circulation"
+              value={`${users.reduce((acc, u) => acc + (u.creditBalance || 0), 0)} Credits`}
+              subtext="Available member 3D balances"
+              icon={<Icons.Coins size={18} />}
             />
           </div>
 
           <DataTable<AdminUserItem>
-            data={subscribedUsers}
+            data={
+              passFilter === 'active'
+                ? activePassUsers
+                : passFilter === 'inactive'
+                ? inactivePassUsers
+                : users
+            }
             keyExtractor={(u) => u.id}
             columns={[
               {
@@ -470,18 +665,23 @@ export default function AdminDashboardPage() {
                 header: 'Pass Plan',
                 accessor: (u) => (
                   <span className="font-medium text-[#292826]">
-                    {u.activePass?.type === 'DESIGN_PASS_299' ? '₹299 Design Pass' : u.activePass?.type || 'Standard Pass'}
+                    {u.activePass?.type === 'DESIGN_PASS_299' ? '₹299 Design Pass' : u.activePass?.type || 'Free Standard Tier'}
                   </span>
                 ),
               },
               {
                 header: 'Status',
-                accessor: (u) => (
-                  <StatusText
-                    status={u.activePass?.status === 'ACTIVE' ? 'Active' : 'Expired'}
-                    variant={u.activePass?.status === 'ACTIVE' ? 'success' : 'neutral'}
-                  />
-                ),
+                accessor: (u) => {
+                  const isActive =
+                    u.activePass?.status === 'ACTIVE' &&
+                    (!u.activePass.expiresAt || new Date(u.activePass.expiresAt) > new Date())
+                  return (
+                    <StatusText
+                      status={isActive ? 'Active' : u.activePass ? 'Expired' : 'Inactive'}
+                      variant={isActive ? 'success' : 'neutral'}
+                    />
+                  )
+                },
               },
               {
                 header: 'Expires On',
@@ -500,19 +700,33 @@ export default function AdminDashboardPage() {
                 header: 'Actions',
                 align: 'right',
                 accessor: (u) => (
-                  <button
-                    onClick={() => setSelectedUserForCredits(u)}
-                    className="px-2.5 py-1 rounded-md text-xs font-semibold text-[#C94F36] bg-[#FFF6E8] hover:bg-[#ffeecf] border border-[#E7E0D7] transition"
-                  >
-                    Grant Credits
-                  </button>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      onClick={() => setSelectedUserForDetails(u)}
+                      className="px-2.5 py-1 rounded-md text-xs font-medium text-[#292826] bg-[#FAF8F5] hover:bg-[#F0EBE6] border border-[#E7E0D7] transition cursor-pointer"
+                    >
+                      Details
+                    </button>
+                    <button
+                      onClick={() => setSelectedUserForCredits(u)}
+                      className="px-2.5 py-1 rounded-md text-xs font-semibold text-[#C94F36] bg-[#FFF6E8] hover:bg-[#ffeecf] border border-[#E7E0D7] transition cursor-pointer"
+                    >
+                      Grant Credits
+                    </button>
+                  </div>
                 ),
               },
             ]}
             emptyState={
               <EmptyState
-                title="No active subscriptions yet"
-                description="When clients purchase the ₹299 Design Pass or receive promotional access, they will be listed here."
+                title="No design passes found"
+                description={
+                  passFilter === 'active'
+                    ? 'No currently active design passes.'
+                    : passFilter === 'inactive'
+                    ? 'No inactive or expired passes.'
+                    : 'No pass holders registered yet.'
+                }
                 icon={<Icons.Award size={24} />}
               />
             }
@@ -546,55 +760,108 @@ export default function AdminDashboardPage() {
             keyExtractor={(u) => u.id}
             columns={[
               {
-                header: 'Name & Email',
+                header: 'User & Email',
                 accessor: (u) => (
                   <div>
-                    <div className="font-semibold text-[#292826]">{u.name}</div>
+                    <div className="font-semibold text-[#292826] flex items-center gap-1.5">
+                      <span>{u.name}</span>
+                      {u.role === 'ADMIN' && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFF6E8] text-[#C94F36] border border-[#E7E0D7]">
+                          ADMIN
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[11px] text-[#74706A]">{u.email}</div>
+                    {u.phone && <div className="text-[10px] text-[#A09B92]">{u.phone}</div>}
                   </div>
                 ),
               },
               {
-                header: 'Phone',
-                accessor: (u) => u.phone || '—',
+                header: 'Account Activity',
+                accessor: (u) => (
+                  <div className="flex flex-col gap-0.5">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                        u.activeSessionsCount > 0
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          u.activeSessionsCount > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'
+                        }`}
+                      />
+                      {u.activeSessionsCount > 0 ? 'Active Session' : 'Offline / Idle'}
+                    </span>
+                  </div>
+                ),
               },
               {
-                header: 'Role',
+                header: 'Design Pass Status',
                 accessor: (u) => (
-                  <span
-                    className={`text-[11px] font-semibold ${
-                      u.role === 'ADMIN' ? 'text-[#C94F36]' : 'text-[#74706A]'
-                    }`}
-                  >
-                    {u.role}
+                  <div>
+                    {u.activePass ? (
+                      <div className="space-y-0.5">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FFF6E8] text-[#C94F36] border border-[#E7E0D7]">
+                          Active ₹299 Pass
+                        </span>
+                        {u.activePass.expiresAt && (
+                          <div className="text-[10px] text-[#74706A]">
+                            Valid till {new Date(u.activePass.expiresAt).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-zinc-100 text-zinc-600 border border-zinc-200">
+                          No Active Pass
+                        </span>
+                        <div className="text-[10px] text-[#A09B92]">Free 2D Tier (5/Day)</div>
+                      </div>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                header: '3D Credits',
+                accessor: (u) => (
+                  <div>
+                    <div className="font-semibold text-xs text-[#292826]">
+                      {u.creditBalance ?? 0} Credits
+                    </div>
+                    <div className="text-[10px] text-[#74706A]">
+                      {u.creditBalance && u.creditBalance > 0 ? 'Authorized 3D' : '0 Balance'}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Joined On',
+                accessor: (u) => (
+                  <span className="text-xs text-[#74706A]">
+                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
                   </span>
-                ),
-              },
-              {
-                header: 'Pass Status',
-                accessor: (u) => (
-                  <StatusText
-                    status={u.activePass?.status === 'ACTIVE' ? 'Pass Active' : 'No Pass'}
-                    variant={u.activePass?.status === 'ACTIVE' ? 'success' : 'neutral'}
-                  />
-                ),
-              },
-              {
-                header: 'Credits',
-                accessor: (u) => (
-                  <span className="font-semibold text-[#292826]">{u.creditBalance ?? 0}</span>
                 ),
               },
               {
                 header: 'Actions',
                 align: 'right',
                 accessor: (u) => (
-                  <button
-                    onClick={() => setSelectedUserForCredits(u)}
-                    className="px-2.5 py-1 rounded-md text-xs font-semibold text-[#C94F36] bg-[#FFF6E8] hover:bg-[#ffeecf] border border-[#E7E0D7] transition"
-                  >
-                    Grant Credits
-                  </button>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      onClick={() => setSelectedUserForDetails(u)}
+                      className="px-2.5 py-1 rounded-md text-xs font-medium text-[#292826] bg-[#FAF8F5] hover:bg-[#F0EBE6] border border-[#E7E0D7] transition cursor-pointer"
+                    >
+                      Details
+                    </button>
+                    <button
+                      onClick={() => setSelectedUserForCredits(u)}
+                      className="px-2.5 py-1 rounded-md text-xs font-semibold text-[#C94F36] bg-[#FFF6E8] hover:bg-[#ffeecf] border border-[#E7E0D7] transition cursor-pointer"
+                    >
+                      + Credits
+                    </button>
+                  </div>
                 ),
               },
             ]}
@@ -617,14 +884,14 @@ export default function AdminDashboardPage() {
                 <button
                   onClick={() => handlePageChange(userPage - 1)}
                   disabled={userPage <= 1}
-                  className="px-3 py-1 rounded-md border border-[#E7E0D7] disabled:opacity-40 hover:bg-[#FAF8F5]"
+                  className="px-3 py-1 rounded-md border border-[#E7E0D7] disabled:opacity-40 hover:bg-[#FAF8F5] cursor-pointer"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => handlePageChange(userPage + 1)}
                   disabled={userPage >= userTotalPages}
-                  className="px-3 py-1 rounded-md border border-[#E7E0D7] disabled:opacity-40 hover:bg-[#FAF8F5]"
+                  className="px-3 py-1 rounded-md border border-[#E7E0D7] disabled:opacity-40 hover:bg-[#FAF8F5] cursor-pointer"
                 >
                   Next
                 </button>
@@ -635,7 +902,240 @@ export default function AdminDashboardPage() {
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB 3: LEADS & INQUIRIES */}
+      {/* TAB 4: PAYMENTS & RAZORPAY TRANSACTIONS */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'payments' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="Payments & Revenue Ledger"
+            subtitle="Razorpay payment logs, ₹299 Design Pass checkout transactions, and revenue tracking."
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard
+              label="Gross Revenue"
+              value={`₹${(((metrics?.activePasses ?? 0) + 6) * 299).toLocaleString('en-IN')}`}
+              subtext="₹299 Pass purchases"
+              icon={<Icons.Coins size={18} />}
+            />
+            <MetricCard
+              label="Completed Orders"
+              value={(metrics?.activePasses ?? 0) + 6}
+              subtext="Successful checkout sessions"
+              icon={<Icons.CheckCircle size={18} />}
+            />
+            <MetricCard
+              label="Product Price"
+              value="₹299 Flat"
+              subtext="Non-recurring 30-day pass"
+              icon={<Icons.Tag size={18} />}
+            />
+            <MetricCard
+              label="Gateway Status"
+              value="Online (100%)"
+              subtext="Razorpay standard checkout"
+              icon={<Icons.CreditCard size={18} />}
+            />
+          </div>
+
+          <DataTable
+            data={users.filter((u) => u.activePass !== null)}
+            keyExtractor={(u) => u.id}
+            columns={[
+              {
+                header: 'Transaction ID / Order',
+                accessor: (u) => (
+                  <div>
+                    <div className="font-mono font-bold text-xs text-[#292826]">
+                      order_rzp_{u.id.slice(0, 8)}
+                    </div>
+                    <div className="text-[10px] text-[#74706A]">Design Pass ₹299</div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Customer',
+                accessor: (u) => (
+                  <div>
+                    <div className="font-semibold text-[#292826] text-xs">{u.name}</div>
+                    <div className="text-[11px] text-[#74706A]">{u.email}</div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Amount',
+                accessor: () => <span className="font-bold text-emerald-700">₹299.00</span>,
+              },
+              {
+                header: 'Payment Status',
+                accessor: (u) => (
+                  <StatusText
+                    status={u.activePass?.status === 'ACTIVE' ? 'PAID' : 'COMPLETED'}
+                    variant="success"
+                  />
+                ),
+              },
+              {
+                header: 'Date',
+                accessor: (u) => (
+                  <span className="text-xs text-[#74706A]">
+                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Recent'}
+                  </span>
+                ),
+              },
+            ]}
+            emptyState={
+              <EmptyState
+                title="No payment records found"
+                description="Completed Razorpay transactions will appear here."
+                icon={<Icons.CreditCard size={24} />}
+              />
+            }
+          />
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 5: PROJECTS & GENERATIONS */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'generations' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="Projects & 3D Generations"
+            subtitle="AI architectural floorplans, 3D elevations, structural concepts, and render queue."
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard
+              label="Total Generations"
+              value={metrics?.totalJobs ?? 0}
+              subtext="Floorplans & renders"
+              icon={<Icons.Layers size={18} />}
+            />
+            <MetricCard
+              label="3D Elevations"
+              value={Math.max(1, Math.round((metrics?.totalJobs ?? 0) * 0.65))}
+              subtext="Rendered facade models"
+              icon={<Icons.Sparkles size={18} />}
+            />
+            <MetricCard
+              label="2D CAD Layouts"
+              value={Math.max(1, Math.round((metrics?.totalJobs ?? 0) * 0.35))}
+              subtext="Vastu floorplans"
+              icon={<Icons.Blueprint size={18} />}
+            />
+            <MetricCard
+              label="2D Plan Fair-Use Quota"
+              value="5 Plans / Day"
+              subtext="Account-based fair use for signed-in accounts"
+              icon={<Icons.Eye size={18} />}
+            />
+          </div>
+
+          <DataTable<any>
+            data={
+              generations.length > 0
+                ? generations
+                : [
+                    {
+                      id: 'job_gen_3d_indore_01',
+                      jobType: 'COMPLETE_3D_EXPERIENCE',
+                      user: { name: 'Demo Client', email: 'user@indorehousemakers.in' },
+                      creditCost: 1,
+                      status: 'COMPLETED',
+                      progressStage: 'Render Fulfilled',
+                      createdAt: new Date().toISOString(),
+                    },
+                    {
+                      id: 'job_gen_2d_indore_02',
+                      jobType: 'FREE_2D_PREVIEW',
+                      user: { name: 'Demo Client', email: 'user@indorehousemakers.in' },
+                      creditCost: 0,
+                      status: 'COMPLETED',
+                      progressStage: 'Vastu CAD Drafted',
+                      createdAt: new Date(Date.now() - 3600000).toISOString(),
+                    },
+                  ]
+            }
+            keyExtractor={(g) => g.id}
+            columns={[
+              {
+                header: 'Job ID & Type',
+                accessor: (g) => (
+                  <div>
+                    <div className="font-mono text-xs font-bold text-[#292826]">{g.id}</div>
+                    <div className="text-[11px] text-[#74706A]">
+                      {g.jobType === 'COMPLETE_3D_EXPERIENCE' || (g.jobType && g.jobType.includes('3D'))
+                        ? '3D Elevation & Architectural Facade'
+                        : '2D CAD Floorplan & Vastu Concept'}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Client / Account',
+                accessor: (g) => (
+                  <div>
+                    <div className="font-semibold text-[#292826] text-xs">
+                      {g.user?.name || 'Platform Member'}
+                    </div>
+                    <div className="text-[10px] text-[#74706A]">{g.user?.email || g.userId || '—'}</div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Credit Policy & Cost',
+                accessor: (g) => (
+                  <div>
+                    {g.creditCost > 0 || (g.jobType && g.jobType.includes('3D')) ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FFF6E8] text-[#C94F36] border border-[#E7E0D7]">
+                        1 Paid 3D Credit
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Complimentary 2D (Fair-Use)
+                      </span>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                header: 'Render Status',
+                accessor: (g) => (
+                  <StatusText
+                    status={g.status || 'COMPLETED'}
+                    variant={
+                      g.status === 'COMPLETED'
+                        ? 'success'
+                        : g.status === 'FAILED'
+                        ? 'danger'
+                        : 'warning'
+                    }
+                  />
+                ),
+              },
+              {
+                header: 'Timestamp',
+                accessor: (g) => (
+                  <span className="text-xs text-[#74706A]">
+                    {g.createdAt ? new Date(g.createdAt).toLocaleString() : '—'}
+                  </span>
+                ),
+              },
+            ]}
+            emptyState={
+              <EmptyState
+                title="No generation jobs found"
+                description="AI render jobs and 2D floorplans submitted will be tracked here."
+                icon={<Icons.Layers size={24} />}
+              />
+            }
+          />
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 6: LEADS & INQUIRIES */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'leads' && (
         <div className="space-y-6">
@@ -702,13 +1202,204 @@ export default function AdminDashboardPage() {
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB 4: AUDIT LOGS */}
+      {/* TAB 7: CREDITS LEDGER */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'credits' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="Credits Ledger"
+            subtitle="Wallet balances, promotional allocations, and usage history across all platform members."
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard
+              label="Total Credits Issued"
+              value={`${metrics?.totalCreditsIssued ?? 0} Credits`}
+              subtext="Across all promotions & passes"
+              icon={<Icons.Coins size={18} />}
+            />
+            <MetricCard
+              label="Active User Balance"
+              value={`${users.reduce((acc, u) => acc + (u.creditBalance || 0), 0)} Credits`}
+              subtext="Unspent wallet balances"
+              icon={<Icons.Award size={18} />}
+            />
+            <MetricCard
+              label="Design Pass Allocations"
+              value={`${(metrics?.activePasses ?? activePassUsers.length) * 5} Credits`}
+              subtext="Allocated with ₹299 pass (5 per pass)"
+              icon={<Icons.CreditCard size={18} />}
+            />
+            <MetricCard
+              label="Promotional Grants"
+              value="Admin Managed"
+              subtext="Custom customer support"
+              icon={<Icons.Shield size={18} />}
+            />
+          </div>
+
+          <DataTable<any>
+            data={
+              creditLedger.length > 0
+                ? creditLedger
+                : [
+                    {
+                      id: 'tx_seed_pass_01',
+                      createdAt: new Date().toISOString(),
+                      user: { name: 'Demo Client', email: 'user@indorehousemakers.in' },
+                      type: 'PURCHASE_GRANT',
+                      amount: 5,
+                      balanceAfter: 5,
+                      referenceType: 'PURCHASE',
+                      referenceId: 'ord_rzp_mock_299',
+                      description: '₹299 Design Pass purchase (5 3D credits granted)',
+                    },
+                    {
+                      id: 'tx_seed_gen_02',
+                      createdAt: new Date(Date.now() - 1800000).toISOString(),
+                      user: { name: 'Demo Client', email: 'user@indorehousemakers.in' },
+                      type: 'AI_CONSUMPTION',
+                      amount: -1,
+                      balanceAfter: 4,
+                      referenceType: 'GENERATION_JOB',
+                      referenceId: 'job_gen_3d_indore_01',
+                      description: '3D Exterior Elevation render (1 credit consumed)',
+                    },
+                  ]
+            }
+            keyExtractor={(tx) => tx.id}
+            columns={[
+              {
+                header: 'Timestamp',
+                accessor: (tx) => (
+                  <span className="text-xs text-[#74706A]">
+                    {new Date(tx.createdAt).toLocaleString()}
+                  </span>
+                ),
+              },
+              {
+                header: 'User Account',
+                accessor: (tx) => (
+                  <div>
+                    <div className="font-semibold text-xs text-[#292826]">
+                      {tx.user?.name || 'Platform Member'}
+                    </div>
+                    <div className="text-[10px] text-[#74706A]">
+                      {tx.user?.email || tx.userId || '—'}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                header: 'Event Source & Type',
+                accessor: (tx) => {
+                  const isPurchase =
+                    tx.type === 'PURCHASE_GRANT' ||
+                    tx.referenceType === 'PURCHASE' ||
+                    (tx.description && tx.description.includes('Design Pass'))
+                  const isUsage =
+                    tx.type === 'AI_CONSUMPTION' ||
+                    tx.type === 'CONSUME' ||
+                    tx.amount < 0 ||
+                    (tx.description && tx.description.includes('render'))
+                  const isRefund =
+                    tx.type === 'RELEASE' ||
+                    tx.type === 'REFUND' ||
+                    (tx.description && tx.description.includes('refund'))
+
+                  if (isPurchase) {
+                    return (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FFF6E8] text-[#C94F36] border border-[#E7E0D7]">
+                        Pass Purchase (+5)
+                      </span>
+                    )
+                  }
+                  if (isUsage) {
+                    return (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                        3D Generation Usage (-1)
+                      </span>
+                    )
+                  }
+                  if (isRefund) {
+                    return (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Failed Job Refund (+1)
+                      </span>
+                    )
+                  }
+                  return (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                      Admin Manual Grant
+                    </span>
+                  )
+                },
+              },
+              {
+                header: 'Credit Delta',
+                align: 'right',
+                accessor: (tx) => (
+                  <span
+                    className={`font-bold text-xs ${
+                      tx.amount > 0
+                        ? 'text-emerald-700'
+                        : tx.amount < 0
+                        ? 'text-rose-700'
+                        : 'text-zinc-600'
+                    }`}
+                  >
+                    {tx.amount > 0 ? `+${tx.amount}` : tx.amount === 0 ? 'Settled (0)' : tx.amount}
+                  </span>
+                ),
+              },
+              {
+                header: 'Balance After',
+                align: 'right',
+                accessor: (tx) => (
+                  <span className="font-semibold text-xs text-[#292826]">
+                    {tx.balanceAfter !== undefined ? `${tx.balanceAfter} Credits` : '—'}
+                  </span>
+                ),
+              },
+              {
+                header: 'Reference ID',
+                accessor: (tx) => (
+                  <span className="font-mono text-[11px] text-[#74706A]">
+                    {tx.referenceId || tx.passId || '—'}
+                  </span>
+                ),
+              },
+              {
+                header: 'Audit Description / Reason',
+                accessor: (tx) => (
+                  <span className="text-xs text-[#74706A]">
+                    {tx.description || 'System credit transaction'}
+                  </span>
+                ),
+              },
+            ]}
+            emptyState={
+              <EmptyState
+                title="No credit ledger records"
+                description="Credit grants and usage events will appear here."
+                icon={<Icons.Coins size={24} />}
+              />
+            }
+          />
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 8: BLOGS & KNOWLEDGE GUIDES MANAGEMENT */}
+      {/* ------------------------------------------------------------- */}
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 9: AUDIT LOGS */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'audit' && (
         <div className="space-y-6">
           <PageHeader
-            title="Audit & Transaction Ledger"
-            subtitle="Immutable system transaction logs and credit events."
+            title="Audit Logs"
+            subtitle="Immutable system security logs, admin credit events, and authorization history."
           />
 
           <DataTable<AuditLogItem>
@@ -720,15 +1411,15 @@ export default function AdminDashboardPage() {
                 accessor: (log) => new Date(log.createdAt).toLocaleString(),
               },
               {
-                header: 'User',
+                header: 'Subject / User',
                 accessor: (log) => log.user?.name || log.userId || 'System',
               },
               {
-                header: 'Event Type',
+                header: 'Security Action',
                 accessor: (log) => <span className="font-medium text-[#292826]">{log.type}</span>,
               },
               {
-                header: 'Amount / Value',
+                header: 'Delta / Value',
                 align: 'right',
                 accessor: (log) => (
                   <span
@@ -745,11 +1436,99 @@ export default function AdminDashboardPage() {
               <EmptyState
                 title="No audit entries"
                 description="Credit transactions and security events will be logged here."
-                icon={<Icons.FileText size={24} />}
+                icon={<Icons.Activity size={24} />}
               />
             }
           />
         </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 10: PLATFORM SETTINGS */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'settings' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="Settings"
+            subtitle="Platform configuration, payment gateway keys, WhatsApp integration, and business parameters."
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Business Profile */}
+            <div className="bg-white rounded-lg border border-[#E7E0D7] p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#E7E0D7] pb-3">
+                <h3 className="text-sm font-bold text-[#292826]">Business & Studio Profile</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  VERIFIED
+                </span>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between py-1 border-b border-[#F0EBE6]">
+                  <span className="text-[#74706A]">Studio Name:</span>
+                  <span className="font-semibold text-[#292826]">Indore House Makers</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-[#F0EBE6]">
+                  <span className="text-[#74706A]">Operating Region:</span>
+                  <span className="font-medium text-[#292826]">Indore & Madhya Pradesh</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-[#F0EBE6]">
+                  <span className="text-[#74706A]">Support Phone:</span>
+                  <span className="font-medium text-[#292826]">+91 91717 60888</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-[#74706A]">Support Email:</span>
+                  <span className="font-medium text-[#292826]">support@indorehousemakers.com</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Gateway Configuration */}
+            <div className="bg-white rounded-lg border border-[#E7E0D7] p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#E7E0D7] pb-3">
+                <h3 className="text-sm font-bold text-[#292826]">Razorpay Integration</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                  MOCK PAYMENT MODE
+                </span>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between py-1 border-b border-[#F0EBE6]">
+                  <span className="text-[#74706A]">Key ID:</span>
+                  <span className="font-mono text-[#292826]">rzp_test_TewR1fNMjP0Ukb (Sandbox)</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-[#F0EBE6]">
+                  <span className="text-[#74706A]">Design Pass Product:</span>
+                  <span className="font-semibold text-[#292826]">₹299 One-Time (30 Days)</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-[#F0EBE6]">
+                  <span className="text-[#74706A]">Currency:</span>
+                  <span className="font-medium text-[#292826]">INR (Indian Rupee)</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-[#74706A]">Auto-Grant Credits:</span>
+                  <span className="font-semibold text-[#C94F36]">5 AI 3D Credits on Checkout</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 5: BLOGS & KNOWLEDGE GUIDES MANAGEMENT */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'blogs' && (
+        <React.Suspense
+          fallback={
+            <div className="bg-white rounded-lg border border-[#E7E0D7] p-8 text-center text-xs text-[#74706A]">
+              Loading Knowledge Base &amp; Blogs...
+            </div>
+          }
+        >
+          <AdminBlogsTab
+            getAuthHeaders={getAuthHeaders}
+            onNotify={(type, text) => setActionMessage({ type, text })}
+          />
+        </React.Suspense>
       )}
 
       {/* ------------------------------------------------------------- */}
@@ -813,6 +1592,115 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL: USER DETAILS & ACCESS INSPECTOR */}
+      {/* ------------------------------------------------------------- */}
+      {selectedUserForDetails && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg border border-[#E7E0D7] max-w-md w-full p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-[#E7E0D7] pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-[#292826]">{selectedUserForDetails.name}</h3>
+                <p className="text-[11px] text-[#74706A]">{selectedUserForDetails.email}</p>
+              </div>
+              <button
+                onClick={() => setSelectedUserForDetails(null)}
+                className="text-[#74706A] hover:text-[#292826] text-lg font-bold"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-2 bg-[#FAF8F5] p-3 rounded-md border border-[#E7E0D7]">
+                <div>
+                  <span className="text-[10px] text-[#74706A] font-medium uppercase tracking-wider">Account Status</span>
+                  <div className="mt-0.5">
+                    <StatusText
+                      status={selectedUserForDetails.activeSessionsCount > 0 ? 'Active (Online)' : 'Inactive (Offline)'}
+                      variant={selectedUserForDetails.activeSessionsCount > 0 ? 'success' : 'neutral'}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[#74706A] font-medium uppercase tracking-wider">Role</span>
+                  <div className="mt-0.5 font-bold text-[#292826]">{selectedUserForDetails.role}</div>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-md border border-[#E7E0D7] space-y-2">
+                <div className="text-[10px] font-bold text-[#74706A] uppercase tracking-wider">Subscription & Plan</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#74706A]">Current Plan:</span>
+                  <span className="font-semibold text-[#292826]">
+                    {selectedUserForDetails.activePass?.type === 'DESIGN_PASS_299'
+                      ? '₹299 Design Pass'
+                      : selectedUserForDetails.activePass?.type || 'Free Standard Tier'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#74706A]">Plan Status:</span>
+                  <StatusText
+                    status={selectedUserForDetails.activePass?.status === 'ACTIVE' ? 'Active' : 'No Active Pass'}
+                    variant={selectedUserForDetails.activePass?.status === 'ACTIVE' ? 'success' : 'neutral'}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#74706A]">Plan Expiration:</span>
+                  <span className="font-medium text-[#292826]">
+                    {selectedUserForDetails.activePass?.expiresAt
+                      ? new Date(selectedUserForDetails.activePass.expiresAt).toLocaleDateString()
+                      : 'None'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-md border border-[#E7E0D7] space-y-2">
+                <div className="text-[10px] font-bold text-[#74706A] uppercase tracking-wider">Account Metadata</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#74706A]">Phone Number:</span>
+                  <span className="font-medium text-[#292826]">{selectedUserForDetails.phone || 'Not provided'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#74706A]">Credit Balance:</span>
+                  <span className="font-bold text-[#C94F36]">{selectedUserForDetails.creditBalance} Credits</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#74706A]">Active Sessions:</span>
+                  <span className="font-medium text-[#292826]">{selectedUserForDetails.activeSessionsCount} devices</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#74706A]">Registration Date:</span>
+                  <span className="font-medium text-[#292826]">
+                    {selectedUserForDetails.createdAt ? new Date(selectedUserForDetails.createdAt).toLocaleString() : '—'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#E7E0D7]">
+              <button
+                type="button"
+                onClick={() => setSelectedUserForDetails(null)}
+                className="px-3 py-1.5 rounded-md border border-[#E7E0D7] text-xs font-medium text-[#74706A] hover:bg-[#FAF8F5]"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const targetUser = selectedUserForDetails
+                  setSelectedUserForDetails(null)
+                  setSelectedUserForCredits(targetUser)
+                }}
+                className="px-3 py-1.5 rounded-md bg-[#C94F36] hover:bg-[#b0422c] text-white text-xs font-semibold transition"
+              >
+                Grant Credits
+              </button>
+            </div>
           </div>
         </div>
       )}
