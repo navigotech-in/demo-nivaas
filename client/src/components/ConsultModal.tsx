@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { submitLead } from '../lib/api'
-import { useAuth } from '../lib/authContext'
+import { usePublicAuth } from '../lib/publicAuth'
 import { Icons } from './Icons'
+import CustomSelect from './CustomSelect'
 
 interface ConsultModalProps {
   isOpen: boolean
@@ -35,7 +36,7 @@ export default function ConsultModal({
   initialRequirement,
   initialPlanDetails,
 }: ConsultModalProps) {
-  const { user } = useAuth()
+  const { user } = usePublicAuth()
   const isAdmin = user?.role === 'ADMIN'
 
   const [form, setForm] = useState({
@@ -85,56 +86,56 @@ export default function ConsultModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 backdrop-blur-md p-4 animate-fadeIn">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-2.5 sm:p-4 animate-fadeIn">
       <div
-        className="relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white/90 backdrop-blur-3xl shadow-[0_30px_70px_rgba(0,0,0,0.45),inset_0_1.5px_2px_rgba(255,255,255,0.9),0_0_0_1px_rgba(255,255,255,0.4)] border border-white/60 animate-scaleUp"
+        className="relative max-h-[92dvh] sm:max-h-[90vh] w-full max-w-xl mx-auto flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl bg-white/95 backdrop-blur-3xl shadow-[0_30px_70px_rgba(0,0,0,0.45),inset_0_1.5px_2px_rgba(255,255,255,0.9),0_0_0_1px_rgba(255,255,255,0.4)] border border-white/60 animate-scaleUp my-auto"
         role="dialog"
         aria-modal="true"
       >
         {/* Admin Preview Mode Notice */}
         {isAdmin && (
-          <div className="bg-[#292826] text-white px-5 py-2 text-xs flex items-center justify-between border-b border-black/20">
-            <span className="flex items-center gap-1.5 font-bold text-amber-400">
-              <Icons.Shield size={13} />
+          <div className="bg-[#292826] text-white px-3 sm:px-5 py-2 text-xs flex items-center justify-between border-b border-black/20 min-w-0 gap-2 shrink-0">
+            <span className="flex items-center gap-1.5 font-bold text-amber-400 truncate">
+              <Icons.Shield size={13} className="shrink-0" />
               Admin Test Preview Mode
             </span>
-            <span className="text-[11px] text-[#C5BFB8]">
-              Submissions tagged as [TEST LEAD]
+            <span className="text-[11px] text-[#C5BFB8] truncate shrink-0">
+              [TEST LEAD]
             </span>
           </div>
         )}
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-white/50 bg-gradient-to-r from-[#FFF6E8]/90 via-white/80 to-[#FFF6E8]/90 backdrop-blur-xl px-6 py-4">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#E76F2E] to-[#C65320] text-white font-bold text-sm shadow-[0_4px_12px_rgba(231,111,46,0.4)] border border-white/40">
-              <Icons.Blueprint size={18} />
-            </span>
-            <div>
-              <h3 className="font-display text-lg font-bold text-[#292826]">
-                Consult With Home Design Experts
-              </h3>
-              <p className="text-xs text-[#54504A] font-medium">Free consultation · 1-on-1 architect guidance</p>
+          <div className="flex items-center justify-between gap-2.5 border-b border-[#E7E0D7]/60 bg-gradient-to-r from-[#FFF6E8]/90 via-white/80 to-[#FFF6E8]/90 backdrop-blur-xl px-3.5 sm:px-6 py-3 sm:py-4 shrink-0 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+              <span className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#E76F2E] to-[#C65320] text-white font-bold text-sm shadow-[0_4px_12px_rgba(231,111,46,0.4)] border border-white/40 shrink-0">
+                <Icons.Blueprint size={16} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-display text-xs sm:text-base md:text-lg font-bold text-[#292826] leading-tight truncate">
+                  Consult With Home Design Experts
+                </h3>
+                <p className="text-[9px] sm:text-xs text-[#54504A] font-medium leading-tight truncate">Free consultation · 1-on-1 architect guidance</p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-[#54504A] hover:bg-white hover:text-[#292826] transition shadow-xs border border-[#E7E0D7] sm:border-transparent hover:border-[#E7E0D7] cursor-pointer shrink-0 bg-white/70 sm:bg-transparent"
+              aria-label="Close modal"
+            >
+              <Icons.Close size={16} />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#54504A] hover:bg-white/80 hover:text-[#292826] transition shadow-sm border border-transparent hover:border-white/50 cursor-pointer"
-            aria-label="Close modal"
-          >
-            <Icons.Close size={18} />
-          </button>
-        </div>
 
         {/* Modal Body */}
-        <div className="p-6 bg-white/40 backdrop-blur-md">
+        <div className="p-3.5 sm:p-6 pb-6 bg-white/40 backdrop-blur-md overflow-y-auto overscroll-contain min-w-0 flex-1">
           {success ? (
             <div className="py-8 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F1ECE5] text-[#E76F2E] text-2xl font-bold shadow-sm">
                 <Icons.Check size={28} />
               </div>
-<h4 className="mt-4 font-display text-2xl font-bold text-[#292826]">
+              <h4 className="mt-4 font-display text-2xl font-bold text-[#292826]">
                 Consultation Booked!
               </h4>
               <p className="mt-2 text-xs sm:text-sm text-[#54504A] max-w-sm mx-auto">
@@ -143,13 +144,13 @@ export default function ConsultModal({
               <button
                 type="button"
                 onClick={handleReset}
-                className="mt-6 inline-flex rounded-lg bg-[#E76F2E] px-7 py-2.5 text-xs font-bold text-white shadow hover:bg-[#C65320]"
+                className="mt-6 inline-flex rounded-lg bg-[#E76F2E] px-7 py-2.5 text-xs font-bold text-white shadow hover:bg-[#C65320] cursor-pointer"
               >
-                Close & Browse Plans
+                Close &amp; Browse Plans
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4 text-[#292826]">
+            <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4 text-[#292826] min-w-0 w-full">
               {error && (
                 <div className="rounded-lg bg-red-50 p-3 text-xs text-red-600 border border-red-200">
                   {error}
@@ -157,36 +158,36 @@ export default function ConsultModal({
               )}
 
               {initialPlanDetails && (
-                <div className="rounded-xl bg-[#FFF6E8] p-3 text-xs text-[#1F2937] border border-[#E76F2E]/40 font-medium shadow-2xs">
+                <div className="rounded-xl bg-[#FFF6E8] p-3 text-xs text-[#1F2937] border border-[#E76F2E]/40 font-medium shadow-2xs break-words">
                   <span className="font-extrabold text-[#E76F2E]">Selected Specs:</span> {initialPlanDetails}
                 </div>
               )}
 
-              <div>
+              <div className="min-w-0">
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                   Full Name <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
+                <div className="relative w-full">
                   <input
                     type="text"
                     required
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="e.g. Rajesh Sharma"
-                    className="w-full rounded-lg border border-[#D1C9BE] bg-white pl-10 pr-4 py-2.5 text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
+                    className="w-full box-border rounded-lg border border-[#D1C9BE] bg-white pl-10 pr-3 py-2.5 text-xs sm:text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
                   />
-                  <div className="absolute left-3.5 top-3 text-[#1F2937]">
-                    <Icons.User size={16} />
+                  <div className="absolute left-3.5 top-3 text-[#1F2937] pointer-events-none">
+                    <Icons.User size={15} />
                   </div>
                 </div>
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                   Mobile Number (WhatsApp) <span className="text-red-500">*</span>
                 </label>
-                <div className="flex rounded-lg border border-[#D1C9BE] bg-white focus-within:border-[#E76F2E] focus-within:ring-2 focus-within:ring-[#E76F2E]/20">
-                  <span className="inline-flex items-center px-3.5 text-xs font-bold text-[#1F2937] border-r border-[#D1C9BE] bg-[#FFF6E8] rounded-l-lg">
+                <div className="flex w-full min-w-0 rounded-lg border border-[#D1C9BE] bg-white focus-within:border-[#E76F2E] focus-within:ring-2 focus-within:ring-[#E76F2E]/20 box-border overflow-hidden">
+                  <span className="inline-flex items-center px-3 text-xs font-bold text-[#1F2937] border-r border-[#D1C9BE] bg-[#FFF6E8] shrink-0">
                     +91
                   </span>
                   <input
@@ -196,13 +197,13 @@ export default function ConsultModal({
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
                     placeholder="10-digit mobile number"
-                    className="w-full rounded-r-lg px-3.5 py-2.5 text-sm text-black font-medium outline-none bg-transparent"
+                    className="w-full min-w-0 flex-1 px-3 py-2.5 text-xs sm:text-sm text-black font-medium outline-none bg-transparent box-border"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
+                <div className="min-w-0 w-full">
                   <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                     City <span className="text-red-500">*</span>
                   </label>
@@ -212,45 +213,37 @@ export default function ConsultModal({
                     value={form.city}
                     onChange={(e) => setForm({ ...form, city: e.target.value })}
                     placeholder="e.g. Indore"
-                    className="w-full rounded-lg border border-[#D1C9BE] bg-white px-3.5 py-2.5 text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
+                    className="w-full max-w-full box-border rounded-lg border border-[#D1C9BE] bg-white px-3 py-2.5 text-xs sm:text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
                   />
                 </div>
-                <div>
+                <div className="min-w-0 w-full">
                   <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                     State <span className="text-red-500">*</span>
                   </label>
-                  <select
+                  <CustomSelect
                     value={form.state}
-                    onChange={(e) => setForm({ ...form, state: e.target.value })}
-                    className="w-full rounded-lg border border-[#D1C9BE] bg-white px-3 py-2.5 text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
-                  >
-                    {statesList.map((st) => (
-                      <option key={st} value={st}>
-                        {st}
-                      </option>
-                    ))}
-                  </select>
+                    options={statesList}
+                    onChange={(st) => setForm({ ...form, state: st })}
+                    placeholder="Select State"
+                    className="border-[#D1C9BE] text-black font-medium"
+                  />
                 </div>
               </div>
 
-              <div>
+              <div className="min-w-0 w-full">
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                   Service Requirement
                 </label>
-                <select
+                <CustomSelect
                   value={form.requirement}
-                  onChange={(e) => setForm({ ...form, requirement: e.target.value })}
-                  className="w-full rounded-lg border border-[#D1C9BE] bg-white px-3 py-2.5 text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
-                >
-                  {defaultRequirements.map((req) => (
-                    <option key={req} value={req}>
-                      {req}
-                    </option>
-                  ))}
-                </select>
+                  options={defaultRequirements}
+                  onChange={(req) => setForm({ ...form, requirement: req })}
+                  placeholder="Select Service Requirement"
+                  className="border-[#D1C9BE] text-black font-medium"
+                />
               </div>
 
-              <div>
+              <div className="min-w-0 w-full">
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                   Plot Dimensions / Specific Notes
                 </label>
@@ -259,14 +252,14 @@ export default function ConsultModal({
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
                   placeholder="e.g. 30x50 plot, East facing, need 3 BHK duplex with car parking"
-                  className="w-full rounded-lg border border-[#D1C9BE] bg-white px-3.5 py-2 text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
+                  className="w-full max-w-full box-border rounded-lg border border-[#D1C9BE] bg-white px-3 py-2 text-xs sm:text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20 resize-y"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-[#E76F2E] py-3.5 text-sm font-bold text-white shadow-md transition hover:bg-[#C65320] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full rounded-xl bg-gradient-to-r from-[#E76F2E] via-[#F27E3D] to-[#E76F2E] py-3 sm:py-3.5 text-xs sm:text-sm font-bold text-white shadow-md transition hover:brightness-105 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? 'Submitting...' : 'Book Free Online Consultation →'}
               </button>

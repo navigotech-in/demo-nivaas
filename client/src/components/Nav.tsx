@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { megaMenus, site } from '../lib/data'
 import { Icons } from './Icons'
-import { useAuth } from '../lib/authContext'
+import { usePublicAuth } from '../lib/publicAuth'
 import LogoutConfirmModal from './LogoutConfirmModal'
 
 const NivaasAiStudio = lazy(() => import('./NivaasAiStudio'))
@@ -15,7 +15,7 @@ interface NavProps {
 
 export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavProps) {
   const navigate = useNavigate()
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, logout } = usePublicAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
@@ -33,9 +33,9 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
   const handleConfirmLogout = async () => {
     setIsLoggingOut(true)
     try {
-      await logout()
       setLogoutModalOpen(false)
-      navigate('/')
+      navigate('/', { replace: true })
+      await logout()
     } finally {
       setIsLoggingOut(false)
     }
@@ -157,8 +157,8 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
           <div className="container-content flex items-center justify-between gap-6" style={{ paddingLeft: 'clamp(0.25rem, 1.25vw, 1.25rem)', paddingRight: 'clamp(0.25rem, 1.25vw, 1.25rem)' }}>
             {/* Brand Logo & Tagline */}
             <Link to="/" className="inline-flex shrink-0 flex-col items-start">
-              <div className="flex h-6.5 items-center gap-2 sm:gap-2.5">
-                <Icons.NivaasMark className="h-5 w-5 sm:h-5.5 sm:w-5.5 shrink-0 text-[#C94F36]" />
+              <div className="flex h-6 items-center gap-2 sm:gap-2.5">
+                <Icons.NivaasMark className="h-5 w-5 sm:h-5 sm:w-5 shrink-0 text-[#C94F36]" />
                 <span className="whitespace-nowrap text-[16px] xl:text-[17px] font-black leading-6 text-[#292725] tracking-tight">
                   {site.name}
                 </span>
@@ -204,7 +204,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                                 >
                                   <span>{item.label}</span>
                                   {item.badge && (
-                                    <span className="text-[9px] bg-[#FFF6E8] text-[#54504A] border border-[#E7E0D7] px-1.5 py-0.2 rounded font-bold">
+                                    <span className="text-[9px] bg-[#FFF6E8] text-[#54504A] border border-[#E7E0D7] px-1.5 py-0.5 rounded font-bold">
                                       {item.badge}
                                     </span>
                                   )}
@@ -493,12 +493,12 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                       {user?.name.split(' ')[0]}
                     </span>
                     {user?.role === 'ADMIN' ? (
-                      <span className="rounded-full bg-red-600 text-white px-1.5 py-0.2 text-[9px] font-black uppercase">
+                      <span className="rounded-full bg-red-600 text-white px-1.5 py-0.5 text-[9px] font-black uppercase">
                         ADMIN
                       </span>
                     ) : (
                       user?.totalCredits !== undefined && user.totalCredits > 0 && (
-                        <span className="rounded-full bg-[#E76F2E] text-white px-1.5 py-0.2 text-[9px] font-black">
+                        <span className="rounded-full bg-[#E76F2E] text-white px-1.5 py-0.5 text-[9px] font-black">
                           {user.totalCredits}★
                         </span>
                       )
@@ -519,7 +519,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                         <div className="flex items-center gap-2">
                           <p className="text-xs font-black text-[#292826] truncate">{user?.name}</p>
                           <span
-                            className={`px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase ${
+                            className={`px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase ${
                               user?.role === 'ADMIN' ? 'bg-red-100 text-red-800' : 'bg-stone-100 text-stone-700'
                             }`}
                           >
@@ -594,29 +594,47 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
             <div className="flex items-center justify-between w-full gap-2">
               {/* Brand Logo + Title + Subtitle */}
               <Link to="/" className="inline-flex shrink-0 flex-col items-start min-w-0">
-                <div className="flex h-6.5 items-center gap-2">
-                  <Icons.NivaasMark className="h-5.5 w-5.5 sm:h-6 sm:w-6 shrink-0 text-[#C94F36]" />
+                <div className="flex h-6 items-center gap-2">
+                  <Icons.NivaasMark className="h-5 w-5 sm:h-5.5 sm:w-5.5 shrink-0 text-[#C94F36]" />
                   <span className="whitespace-nowrap text-[15px] sm:text-[17px] font-black leading-tight text-[#292725] tracking-tight truncate">
                     {site.name}
                   </span>
                 </div>
-                <span className="mt-0.5 w-full whitespace-nowrap text-left text-[7.5px] sm:text-[8px] font-bold leading-none tracking-[0.08em] text-[#54504A]">
+                <span className="mt-0.5 w-full whitespace-nowrap text-left text-[9px] sm:text-[10px] font-bold leading-none tracking-[0.06em] text-[#54504A]">
                   AI-POWERED ARCHITECTURE &amp; DESIGNS
                 </span>
               </Link>
 
-              {/* Right Side: Hamburger Icon + Menu Button */}
+              {/* Right Side: Profile Icon (Replaced Menu button as requested) */}
               <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] text-xs font-bold text-[#292826] hover:text-[#E76F2E] hover:border-[#E76F2E] transition shadow-xs whitespace-nowrap cursor-pointer active:scale-95"
-                  aria-label="Open Navigation Menu"
-                  title="Open Menu"
-                >
-                  <Icons.Menu size={16} className="text-[#E76F2E]" />
-                  <span>Menu</span>
-                </button>
+                {isAuthenticated ? (
+                  <Link
+                    to={user?.role === 'ADMIN' ? '/admin' : '/dashboard'}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#FFF6E8] border border-[#E76F2E]/30 text-xs font-bold text-[#292826] shadow-xs active:scale-95 transition"
+                    aria-label="Open Profile"
+                    title={`${user?.name} (${user?.role})`}
+                  >
+                    <div className="w-5 h-5 sm:w-5 sm:h-5 rounded-lg bg-gradient-to-br from-[#E76F2E] to-[#C94F36] text-white flex items-center justify-center text-[10.5px] font-black shrink-0 shadow-2xs">
+                      {user?.name?.charAt(0).toUpperCase() || (user?.role === 'ADMIN' ? 'A' : 'U')}
+                    </div>
+                    <span className="max-w-[75px] truncate text-[11px] font-extrabold text-[#292826]">
+                      {user?.name?.split(' ')[0] || 'Profile'}
+                    </span>
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onOpenLogin}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF8F5] hover:bg-[#FFF6E8] border border-[#E7E0D7] hover:border-[#E76F2E]/40 text-xs font-bold text-[#292826] transition shadow-xs active:scale-95 cursor-pointer"
+                    aria-label="Login / Sign In"
+                    title="Sign In / Register"
+                  >
+                    <div className="w-5 h-5 rounded-full bg-[#FFF6E8] text-[#E76F2E] flex items-center justify-center shrink-0">
+                      <Icons.User size={13} />
+                    </div>
+                    <span className="text-[11.5px] font-bold">Sign In</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -677,28 +695,6 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                   <Icons.Phone size={12} className="shrink-0" />
                   <span>Consult</span>
                 </button>
-
-                {/* User Account Login / Dashboard */}
-                {isAuthenticated ? (
-                  <Link
-                    to={user?.role === 'ADMIN' ? '/admin' : '/dashboard'}
-                    className="flex items-center justify-center h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-lg border border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E] shrink-0"
-                    aria-label="User Account Dashboard"
-                    title={`${user?.name} (${user?.role})`}
-                  >
-                    <Icons.User size={15} className="text-[#E76F2E] shrink-0" />
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={onOpenLogin}
-                    className="flex items-center justify-center h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-lg border border-[#E7E0D7] bg-white text-[#E76F2E] hover:bg-[#FFF6E8] shrink-0"
-                    aria-label="User Account Login or Signup"
-                    title="Login / Signup"
-                  >
-                    <Icons.User size={15} className="text-[#E76F2E] shrink-0" />
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -1222,16 +1218,33 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
             <span>Book Free Consultation</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setMobileMenuOpen(false)
-              onOpenLogin()
-            }}
-            className="w-full py-2 rounded-lg border border-[#E7E0D7] bg-white text-[#54504A] hover:text-[#292826] font-semibold text-xs text-center hover:bg-[#FFF6E8] transition cursor-pointer"
-          >
-            User Login / Register
-          </button>
+          {isAuthenticated ? (
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                onOpenLogin()
+              }}
+              className="w-full py-2.5 rounded-lg border border-[#E7E0D7] bg-white text-[#292826] hover:text-[#E76F2E] font-bold text-xs text-center hover:bg-[#FFF6E8] hover:border-[#E76F2E] transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+            >
+              <div className="h-5 w-5 rounded-full bg-[#E76F2E] text-white flex items-center justify-center text-[10px] font-bold">
+                {user?.name?.[0]?.toUpperCase() || 'U'}
+              </div>
+              <span>User Profile ({user?.name?.split(' ')[0] || 'Account'})</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                onOpenLogin()
+              }}
+              className="w-full py-2.5 rounded-lg border border-[#E7E0D7] bg-white text-[#54504A] hover:text-[#292826] font-bold text-xs text-center hover:bg-[#FFF6E8] hover:border-[#E76F2E] transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+            >
+              <Icons.User size={14} className="text-[#E76F2E]" />
+              <span>User Profile (Login / Sign Up)</span>
+            </button>
+          )}
         </div>
       </aside>
 

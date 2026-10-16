@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { Link, Navigate } from 'react-router-dom'
-import { useAuth } from '../lib/authContext'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { Navigate, useSearchParams } from 'react-router-dom'
+import { useAuth, getTokenExpiryMs } from '../lib/authContext'
 import { Icons } from '../components/Icons'
+import CustomSelect from '../components/CustomSelect'
 import { useSeoMeta } from '../components/useSeoMeta'
 import {
   DashboardLayout,
@@ -28,8 +29,16 @@ import {
   type UserConsultationItem,
 } from '../lib/api'
 import { subscribeDataChanged } from '../lib/syncEvents'
+import DesignPassModal from '../components/DesignPassModal'
 
-type DashboardTab = 'overview' | 'projects' | 'credits' | 'consultations' | 'security'
+const PROJECT_PREVIEW_ASSETS = {
+  modernDuplexDay: 'https://images.pexels.com/photos/37129015/pexels-photo-37129015.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  modernDuplexNight: 'https://images.pexels.com/photos/35289099/pexels-photo-35289099.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  contemporaryJaaliDay: 'https://images.pexels.com/photos/35114454/pexels-photo-35114454.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  spanishVillaDay: 'https://images.pexels.com/photos/32261831/pexels-photo-32261831.jpeg?auto=compress&cs=tinysrgb&w=1200',
+}
+
+type DashboardTab = 'overview' | 'projects' | 'credits' | 'consultations' | 'profile' | 'security'
 
 interface DashboardPageProps {
   onOpenConsult?: (details?: string) => void
@@ -48,8 +57,36 @@ export default function DashboardPage({
       'Manage your architectural blueprints, active passes, credits ledger, and account security.',
   })
 
-  const { user, isAuthenticated, isLoading: authLoading, getAuthHeaders } = useAuth()
-  const [activeTab, setActiveTab] = useState<DashboardTab>('overview')
+  const { user, accessToken, isAuthenticated, isLoading: authLoading, getAuthHeaders, refreshAuth } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab') as DashboardTab | null
+  const [activeTab, setActiveTabState] = useState<DashboardTab>(
+    tabParam && ['overview', 'projects', 'credits', 'consultations', 'profile', 'security'].includes(tabParam)
+      ? tabParam
+      : 'overview'
+  )
+
+  const setActiveTab = useCallback((tab: DashboardTab) => {
+    setActiveTabState(tab)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', tab)
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as DashboardTab | null
+    if (tabParam && ['overview', 'projects', 'credits', 'consultations', 'profile', 'security'].includes(tabParam)) {
+      setActiveTabState(tabParam)
+    }
+  }, [searchParams])
+  const [passModalOpen, setPassModalOpen] = useState(false)
+  const [passModalMode, setPassModalMode] = useState<'pass' | 'credits'>('pass')
+  const [selectedProjectForView, setSelectedProjectForView] = useState<UserProject | null>(null)
+  const [viewFloorTab, setViewFloorTab] = useState<'ground' | 'first'>('ground')
+  const [isViewNightLighting, setIsViewNightLighting] = useState<boolean>(false)
+  const [rawEntitlements, setRawEntitlements] = useState<any>(null)
 
   // Data states
   const [loading, setLoading] = useState<boolean>(true)
@@ -94,23 +131,50 @@ export default function DashboardPage({
   const [newBhk, setNewBhk] = useState('3 BHK')
   const [newFacing, setNewFacing] = useState('East Facing')
 
+  const isFetchingDashboardRef = useRef(false)
+  const lastFetchTimeRef = useRef(0)
+
   // Critical Path Loader: Only fetch what is needed for initial dashboard paint
   const loadDashboardData = useCallback(async () => {
-    if (!isAuthenticated || user?.role === 'ADMIN') {
+    if (authLoading || !isAuthenticated || !accessToken || user?.role === 'ADMIN') {
       setLoading(false)
       return
     }
+    if (isFetchingDashboardRef.current) return
+    isFetchingDashboardRef.current = true
     setLoading(true)
     setError(null)
-    const headers = getAuthHeaders()
+    let headers = getAuthHeaders()
+
+    try {
+      const exp = getTokenExpiryMs(accessToken)
+      if (exp && Date.now() >= exp - 10000) {
+        const refreshed = await refreshAuth()
+        if (refreshed) {
+          headers = getAuthHeaders()
+        } else {
+          setLoading(false)
+          isFetchingDashboardRef.current = false
+          return
+        }
+      }
+    } catch {
+      setLoading(false)
+      isFetchingDashboardRef.current = false
+      return
+    }
 
     try {
       const [proj, ent] = await Promise.all([
         fetchUserProjects(headers).catch(() => []),
-        fetchUserEntitlements(headers).catch(() => null),
+        fetchUserEntitlements(headers).catch((e) => {
+          if (e?.status === 401) return null
+          return null
+        }),
       ])
 
       setProjects(Array.isArray(proj) ? proj : [])
+      setRawEntitlements(ent)
 
       // Single Source of Truth: Entitlements
       const isPassActive = Boolean(ent?.designPass && ent.designPass.active)
@@ -132,29 +196,34 @@ export default function DashboardPage({
         availableBalance: liveCredits,
         transactions: prev?.transactions || [],
       }))
+      lastFetchTimeRef.current = Date.now()
     } catch (err: any) {
       setError(err?.message || 'Failed to load dashboard data.')
     } finally {
+      isFetchingDashboardRef.current = false
       setLoading(false)
     }
-  }, [isAuthenticated, user?.role, user?.totalCredits, getAuthHeaders])
+  }, [isAuthenticated, accessToken, user?.role, user?.totalCredits, getAuthHeaders, refreshAuth])
 
   // Secondary data loaders with automatic fresh fetch on tab switch
   const loadConsultations = useCallback(async () => {
+    if (!accessToken) return
     try {
       const cons = await fetchUserConsultations(getAuthHeaders())
       setConsultations(Array.isArray(cons) ? cons : [])
     } catch {}
-  }, [getAuthHeaders])
+  }, [getAuthHeaders, accessToken])
 
   const loadSessions = useCallback(async () => {
+    if (!accessToken) return
     try {
       const sess = await fetchUserSessions(getAuthHeaders())
       setSessions(Array.isArray(sess) ? sess : [])
     } catch {}
-  }, [getAuthHeaders])
+  }, [getAuthHeaders, accessToken])
 
   const loadLedger = useCallback(async () => {
+    if (!accessToken) return
     try {
       const cred = await fetchUserCredits(getAuthHeaders())
       if (cred) {
@@ -164,11 +233,12 @@ export default function DashboardPage({
         }))
       }
     } catch {}
-  }, [getAuthHeaders])
+  }, [getAuthHeaders, accessToken])
 
   // Automatically fetch fresh data whenever user switches tabs
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'USER') return
+    if (authLoading) return
+    if (!isAuthenticated || !accessToken || user?.role !== 'USER') return
     if (activeTab === 'overview' || activeTab === 'projects') {
       loadDashboardData()
     } else if (activeTab === 'consultations') {
@@ -178,13 +248,15 @@ export default function DashboardPage({
     } else if (activeTab === 'security') {
       loadSessions()
     }
-  }, [activeTab, isAuthenticated, user?.role, loadDashboardData, loadConsultations, loadLedger, loadSessions])
+  }, [activeTab, authLoading, isAuthenticated, accessToken, user?.role, loadDashboardData, loadConsultations, loadLedger, loadSessions])
 
   // Real-time synchronization & focus revalidation: Keeps dashboard data up to date without page reload
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'USER') return
+    if (authLoading || !isAuthenticated || !accessToken || user?.role !== 'USER') return
 
     const handleFocus = () => {
+      // Debounce window focus refetch: don't re-query if fetched within last 15 seconds!
+      if (Date.now() - lastFetchTimeRef.current < 15000) return
       loadDashboardData()
       if (activeTab === 'credits') loadLedger()
       if (activeTab === 'consultations') loadConsultations()
@@ -346,35 +418,12 @@ export default function DashboardPage({
     )
   }
 
-  if (isAuthenticated && user?.role === 'ADMIN') {
-    return <Navigate to="/admin" replace />
-  }
-
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#FDFCF9] flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-lg border border-[#E7E0D7] p-6 text-center space-y-4">
-          <div className="w-12 h-12 rounded-md bg-[#FFF6E8] text-[#C94F36] flex items-center justify-center mx-auto border border-[#E7E0D7]">
-            <Icons.User size={24} />
-          </div>
-          <h2 className="text-lg font-bold text-[#292826]">Sign In Required</h2>
-          <p className="text-xs text-[#74706A] leading-relaxed">
-            Please sign in to access your architectural projects, credits ledger, and account settings.
-          </p>
-          <div className="pt-2 flex flex-col gap-2">
-            <button
-              onClick={onOpenLogin}
-              className="w-full py-2.5 px-4 rounded-md bg-[#C94F36] hover:bg-[#b0422c] text-white text-xs font-semibold transition"
-            >
-              Sign In to Account
-            </button>
-            <Link
-              to="/"
-              className="w-full py-2.5 px-4 rounded-md border border-[#E7E0D7] text-[#74706A] hover:text-[#292826] text-xs font-medium transition"
-            >
-              Return to Homepage
-            </Link>
-          </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-6 h-6 border-2 border-[#C94F36] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-[#74706A]">Loading workspace...</span>
         </div>
       </div>
     )
@@ -413,6 +462,13 @@ export default function DashboardPage({
       active: activeTab === 'consultations',
     },
     {
+      id: 'profile',
+      label: 'My Profile',
+      icon: <Icons.User size={16} />,
+      onClick: () => setActiveTab('profile'),
+      active: activeTab === 'profile',
+    },
+    {
       id: 'security',
       label: 'Security & Devices',
       icon: <Icons.Shield size={16} />,
@@ -441,12 +497,17 @@ export default function DashboardPage({
     </div>
   )
 
+  if (isAuthenticated && user?.role === 'ADMIN') {
+    return <Navigate to="/admin" replace />
+  }
+
   return (
     <DashboardLayout
       title="Indore House Makers"
-      badgeText={user?.role === 'ADMIN' ? 'ADMIN' : 'CLIENT'}
+      withBottomNav
       sidebarItems={sidebarItems}
       sidebarFooter={sidebarFooter}
+      onProfileClick={() => setActiveTab('profile')}
     >
       {error && (
         <div className="p-3 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-800 flex items-center justify-between">
@@ -537,7 +598,7 @@ export default function DashboardPage({
                   <StatusText status="Active" variant="success" />
                 ) : (
                   <button
-                    onClick={onOpenAiStudio}
+                    onClick={() => setPassModalOpen(true)}
                     className="text-xs font-bold text-[#E76F2E] hover:underline"
                   >
                     Buy ₹299 Pass →
@@ -629,7 +690,10 @@ export default function DashboardPage({
                       <span>Launch 3D Studio</span>
                     </button>
                     <button
-                      onClick={onOpenAiStudio}
+                      onClick={() => {
+                        setPassModalMode('credits')
+                        setPassModalOpen(true)
+                      }}
                       className="py-2.5 px-3.5 rounded-xl bg-white border border-[#D1C9BE] text-[#292826] hover:bg-gray-50 text-xs font-bold transition cursor-pointer"
                     >
                       Add Credits (₹299)
@@ -637,7 +701,10 @@ export default function DashboardPage({
                   </>
                 ) : (
                   <button
-                    onClick={onOpenAiStudio}
+                    onClick={() => {
+                      setPassModalMode('pass')
+                      setPassModalOpen(true)
+                    }}
                     className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white text-xs font-bold shadow-md transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <Icons.Sparkles size={14} />
@@ -765,6 +832,22 @@ export default function DashboardPage({
                   header: 'Created',
                   accessor: (p) => new Date(p.createdAt).toLocaleDateString(),
                 },
+                {
+                  header: 'Actions',
+                  align: 'right',
+                  accessor: (p) => (
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedProjectForView(p)}
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#E76F2E] bg-[#FFF6E8] hover:bg-[#FFE8CC] border border-[#E76F2E]/30 transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                      >
+                        <Icons.Sparkles size={12} />
+                        <span>View Design</span>
+                      </button>
+                    </div>
+                  ),
+                },
               ]}
               emptyState={
                 <EmptyState
@@ -810,57 +893,50 @@ export default function DashboardPage({
             <h3 className="text-xs font-bold text-[#292826] uppercase tracking-wider mb-3">
               Quick Concept Layout Generator
             </h3>
-            <form onSubmit={handleCreateDraftProject} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-              <div>
+            <form onSubmit={handleCreateDraftProject} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 min-w-0">
+              <div className="min-w-0">
                 <label className="block text-[11px] font-medium text-[#74706A] mb-1">Plot Width (ft)</label>
                 <input
                   type="number"
                   value={newPlotWidth}
                   onChange={(e) => setNewPlotWidth(e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] focus:outline-none focus:border-[#C94F36]"
+                  className="w-full box-border px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] focus:outline-none focus:border-[#C94F36]"
                   placeholder="30"
                   required
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="block text-[11px] font-medium text-[#74706A] mb-1">Plot Depth (ft)</label>
                 <input
                   type="number"
                   value={newPlotDepth}
                   onChange={(e) => setNewPlotDepth(e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] focus:outline-none focus:border-[#C94F36]"
+                  className="w-full box-border px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] focus:outline-none focus:border-[#C94F36]"
                   placeholder="50"
                   required
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="block text-[11px] font-medium text-[#74706A] mb-1">Configuration</label>
-                <select
+                <CustomSelect
                   value={newBhk}
-                  onChange={(e) => setNewBhk(e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] focus:outline-none focus:border-[#C94F36] bg-white"
-                >
-                  <option>1 BHK</option>
-                  <option>2 BHK</option>
-                  <option>3 BHK</option>
-                  <option>4 BHK</option>
-                  <option>5 BHK</option>
-                </select>
+                  options={['1 BHK', '2 BHK', '3 BHK', '4 BHK', '5 BHK']}
+                  onChange={setNewBhk}
+                  placeholder="Select BHK"
+                  className="py-1.5 px-3 text-xs rounded-md border-[#E7E0D7]"
+                />
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="block text-[11px] font-medium text-[#74706A] mb-1">Orientation</label>
-                <select
+                <CustomSelect
                   value={newFacing}
-                  onChange={(e) => setNewFacing(e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] focus:outline-none focus:border-[#C94F36] bg-white"
-                >
-                  <option>East Facing</option>
-                  <option>North Facing</option>
-                  <option>West Facing</option>
-                  <option>South Facing</option>
-                </select>
+                  options={['East Facing', 'North Facing', 'West Facing', 'South Facing']}
+                  onChange={setNewFacing}
+                  placeholder="Select Facing"
+                  className="py-1.5 px-3 text-xs rounded-md border-[#E7E0D7]"
+                />
               </div>
-              <div className="flex items-end">
+              <div className="flex items-end min-w-0">
                 <button
                   type="submit"
                   disabled={creatingProject}
@@ -947,6 +1023,22 @@ export default function DashboardPage({
                 header: 'Created On',
                 accessor: (p) => new Date(p.createdAt).toLocaleDateString(),
               },
+              {
+                header: 'Actions',
+                align: 'right',
+                accessor: (p) => (
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProjectForView(p)}
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#E76F2E] bg-[#FFF6E8] hover:bg-[#FFE8CC] border border-[#E76F2E]/30 transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                    >
+                      <Icons.Sparkles size={12} />
+                      <span>View Design</span>
+                    </button>
+                  </div>
+                ),
+              },
             ]}
             emptyState={
               <EmptyState
@@ -970,7 +1062,10 @@ export default function DashboardPage({
             actions={
               <div className="flex items-center gap-2">
                 <button
-                  onClick={onOpenAiStudio}
+                  onClick={() => {
+                    setPassModalMode(passData?.hasActivePass ? 'credits' : 'pass')
+                    setPassModalOpen(true)
+                  }}
                   className="px-3.5 py-2 rounded-md bg-[#FFF6E8] text-[#C94F36] hover:bg-[#ffeecf] text-xs font-semibold border border-[#E7E0D7] transition"
                 >
                   {passData?.hasActivePass ? 'Add 3D Credits (₹299)' : 'Unlock ₹299 Pass'}
@@ -1115,7 +1210,150 @@ export default function DashboardPage({
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB 5: SECURITY & DEVICES */}
+      {/* TAB 5: MY PROFILE */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'profile' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="My Profile"
+            subtitle="Manage your personal information, contact numbers, and update account password."
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Profile Card */}
+            <div className="bg-white rounded-2xl border border-[#E7E0D7] p-6 shadow-xs">
+              <div className="flex items-center gap-3.5 pb-4 mb-4 border-b border-[#EEE9E3]">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E76F2E] to-[#C94F36] text-white flex items-center justify-center text-lg font-black shrink-0 shadow-sm">
+                  {user?.name?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-black text-[#292826] truncate">{user?.name || 'User'}</h3>
+                  <p className="text-xs text-[#74706A] truncate">{user?.email}</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">
+                    {user?.role || 'CLIENT'}
+                  </span>
+                </div>
+              </div>
+
+              {profileFeedback && (
+                <div
+                  className={`p-2.5 rounded-xl text-xs mb-4 ${
+                    profileFeedback.type === 'success'
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : 'bg-rose-50 text-rose-800 border border-rose-200'
+                  }`}
+                >
+                  {profileFeedback.text}
+                </div>
+              )}
+
+              <form onSubmit={handleProfileSubmit} className="space-y-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#292826] mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] focus:outline-none focus:border-[#C94F36] focus:ring-1 focus:ring-[#C94F36]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#292826] mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={user?.email || ''}
+                    disabled
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] text-[#74706A] cursor-not-allowed"
+                  />
+                  <p className="text-[10px] text-[#74706A] mt-1">Email is verified and cannot be changed.</p>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#292826] mb-1">Mobile Phone Number</label>
+                  <input
+                    type="tel"
+                    value={profilePhone}
+                    onChange={(e) => setProfilePhone(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] focus:outline-none focus:border-[#C94F36] focus:ring-1 focus:ring-[#C94F36]"
+                    placeholder="10-digit mobile number"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={profileSaving}
+                  className="py-2.5 px-5 rounded-xl bg-[#292826] hover:bg-black text-white text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+                >
+                  {profileSaving ? 'Saving Changes...' : 'Update Profile'}
+                </button>
+              </form>
+            </div>
+
+            {/* Password Card */}
+            <div className="bg-white rounded-2xl border border-[#E7E0D7] p-6 shadow-xs">
+              <h3 className="text-sm font-black text-[#292826] mb-4 pb-3 border-b border-[#EEE9E3]">
+                Change Password
+              </h3>
+
+              {passwordFeedback && (
+                <div
+                  className={`p-2.5 rounded-xl text-xs mb-4 ${
+                    passwordFeedback.type === 'success'
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : 'bg-rose-50 text-rose-800 border border-rose-200'
+                  }`}
+                >
+                  {passwordFeedback.text}
+                </div>
+              )}
+
+              <form onSubmit={handlePasswordSubmit} className="space-y-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#292826] mb-1">Current Password</label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] focus:outline-none focus:border-[#C94F36] focus:ring-1 focus:ring-[#C94F36]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#292826] mb-1">New Password</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] focus:outline-none focus:border-[#C94F36] focus:ring-1 focus:ring-[#C94F36]"
+                    placeholder="Min 8 characters"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#292826] mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] focus:outline-none focus:border-[#C94F36] focus:ring-1 focus:ring-[#C94F36]"
+                    placeholder="Re-enter new password"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={passwordSaving}
+                  className="py-2.5 px-5 rounded-xl bg-[#E76F2E] hover:bg-[#C94F36] text-white text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+                >
+                  {passwordSaving ? 'Updating Password...' : 'Save New Password'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 6: SECURITY & DEVICES */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'security' && (
         <div className="space-y-6">
@@ -1366,6 +1604,312 @@ export default function DashboardPage({
                   <span>{sessionConfirmModal.confirmText}</span>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ₹299 Design Pass — Payment & Renewal Modal (standalone top-up path) */}
+      <DesignPassModal
+        open={passModalOpen}
+        onClose={() => setPassModalOpen(false)}
+        token={accessToken}
+        user={user}
+        mode={passModalMode}
+        activePassInfo={
+          rawEntitlements?.designPass
+            ? {
+                active: !!rawEntitlements.designPass.active,
+                remainingCredits: rawEntitlements.designPass.creditsRemaining || 0,
+                expiresAt: rawEntitlements.designPass.expiresAt,
+              }
+            : null
+        }
+        onSuccess={async () => {
+          await refreshAuth().catch(() => null)
+          await loadDashboardData()
+        }}
+        onRequireAuth={() => onOpenLogin?.()}
+      />
+
+      {/* Interactive Design Inspection Modal (3D Top + 2D Horizontally Below) */}
+      {selectedProjectForView && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto animate-fadeIn">
+          <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-3xl bg-white shadow-2xl border border-[#E7E0D7] text-[#292826] overflow-hidden">
+            {/* Modal Header */}
+            <div className="sticky top-0 z-20 bg-gradient-to-r from-[#FFF6E8] via-[#FDFCF9] to-[#FFF0E2] p-4 sm:p-5 border-b border-[#EEE9E3] shrink-0 flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#E76F2E] text-white text-[10.5px] font-extrabold uppercase shadow-2xs">
+                    Synthesized Design
+                  </span>
+                  <span className="text-xs font-bold text-[#111827]">
+                    {selectedProjectForView.inputPayload?.title || 'Architectural House Design'}
+                  </span>
+                  <span className="text-[11px] text-[#6B7280]">
+                    · {selectedProjectForView.inputPayload?.plotWidth && selectedProjectForView.inputPayload?.plotDepth
+                        ? `${selectedProjectForView.inputPayload.plotWidth}×${selectedProjectForView.inputPayload.plotDepth} ft`
+                        : selectedProjectForView.inputPayload?.plotSize || 'Custom Plot'}
+                  </span>
+                </div>
+                <h3 className="font-display font-black text-lg sm:text-xl text-[#111827]">
+                  {selectedProjectForView.inputPayload?.facing || 'East Facing'} Vastu-Compliant Residence
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedProjectForView(null)}
+                className="h-8 w-8 rounded-full bg-white/90 hover:bg-white flex items-center justify-center text-[#54504A] hover:text-black border border-[#E7E0D7] transition cursor-pointer shadow-2xs shrink-0"
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+              {/* 1. 3D Photorealistic Facade (RENDERED FIRST ON TOP) */}
+              <div className="bg-white rounded-2xl border border-[#E7E0D7] overflow-hidden shadow-xs flex flex-col">
+                <div className="p-3.5 border-b border-[#EEE9E3] flex items-center justify-between bg-[#FDFCF9]">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="font-bold text-xs sm:text-sm text-[#111827]">
+                      3D Photorealistic Elevation Facade
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-[#EEE9E3] p-0.5 rounded-lg text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setIsViewNightLighting(false)}
+                      className={`px-2.5 py-0.5 rounded transition cursor-pointer ${
+                        !isViewNightLighting ? 'bg-white text-black shadow-2xs' : 'text-[#4B5563]'
+                      }`}
+                    >
+                      Daylight
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsViewNightLighting(true)}
+                      className={`px-2.5 py-0.5 rounded transition cursor-pointer ${
+                        isViewNightLighting ? 'bg-[#292826] text-white shadow-2xs' : 'text-[#4B5563]'
+                      }`}
+                    >
+                      Twilight
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative min-h-[260px] sm:min-h-[360px] max-h-[460px] bg-slate-900 overflow-hidden flex items-center justify-center group">
+                  <img
+                    src={
+                      isViewNightLighting
+                        ? selectedProjectForView.outputPayload?.renderNightUrl || PROJECT_PREVIEW_ASSETS.modernDuplexNight
+                        : selectedProjectForView.outputPayload?.render3DUrl || PROJECT_PREVIEW_ASSETS.modernDuplexDay
+                    }
+                    alt="3D Front Elevation"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-white text-[11px] font-bold border border-white/20">
+                    {isViewNightLighting ? '🌙 Twilight Facade View' : '☀️ Natural Daylight Facade View'}
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. 2D Architectural CAD Floor Plan (RENDERED HORIZONTALLY BELOW 3D) */}
+              <div className="bg-white rounded-2xl border border-[#E7E0D7] overflow-hidden shadow-xs flex flex-col">
+                <div className="p-3.5 border-b border-[#EEE9E3] flex items-center justify-between bg-[#FDFCF9]">
+                  <div className="flex items-center gap-2">
+                    <Icons.Blueprint size={16} className="text-[#E76F2E]" />
+                    <span className="font-bold text-xs sm:text-sm text-[#111827]">
+                      Conceptual 2D CAD Floor-Plan Blueprint
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-[#EEE9E3] p-0.5 rounded-lg text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setViewFloorTab('ground')}
+                      className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                        viewFloorTab === 'ground' ? 'bg-white text-black shadow-2xs' : 'text-[#4B5563]'
+                      }`}
+                    >
+                      Ground Floor Plan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewFloorTab('first')}
+                      className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                        viewFloorTab === 'first' ? 'bg-white text-black shadow-2xs' : 'text-[#4B5563]'
+                      }`}
+                    >
+                      First Floor Plan
+                    </button>
+                  </div>
+                </div>
+
+                {/* Vector CAD Canvas */}
+                <div className="p-4 sm:p-6 bg-[#0A1628] flex-1 flex flex-col justify-between text-white font-mono text-xs select-none relative overflow-hidden min-h-[360px]">
+                  <div className="flex justify-between items-center text-[11px] font-bold border-b border-sky-500/30 pb-2 mb-3">
+                    <span className="text-sky-300">
+                      {viewFloorTab === 'ground' ? 'GROUND FLOOR ARCHITECTURAL BLUEPRINT (SCALE 1:100)' : 'FIRST FLOOR ARCHITECTURAL BLUEPRINT (SCALE 1:100)'}
+                    </span>
+                    <span className="text-amber-300">
+                      VASTU: {(selectedProjectForView.inputPayload?.facing || 'East').toUpperCase()} ENTRY
+                    </span>
+                  </div>
+
+                  <div className="my-2 flex-1 flex items-center justify-center">
+                    <svg viewBox="0 0 400 280" className="w-full h-full max-w-2xl max-h-[320px] drop-shadow-md">
+                      <defs>
+                        <pattern id="dashBlueprintGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1E293B" strokeWidth="0.75" />
+                        </pattern>
+                      </defs>
+                      <rect width="400" height="280" fill="url(#dashBlueprintGrid)" />
+                      <rect x="20" y="20" width="360" height="240" fill="#0F172A" stroke="#38BDF8" strokeWidth="3" rx="2" />
+                      <rect x="25" y="25" width="350" height="230" fill="none" stroke="#0284C7" strokeWidth="1" strokeDasharray="4 2" />
+
+                      {viewFloorTab === 'ground' ? (
+                        <g>
+                          <rect x="25" y="25" width="200" height="135" fill="#1E293B" stroke="#38BDF8" strokeWidth="2" />
+                          <text x="125" y="75" fill="#38BDF8" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                            LIVING &amp; FOYER
+                          </text>
+                          <text x="125" y="93" fill="#94A3B8" fontSize="9.5" textAnchor="middle" fontFamily="monospace">
+                            14'-6" × 18'-0"
+                          </text>
+                          <text x="125" y="110" fill="#34D399" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                            ✓ North-East Light
+                          </text>
+
+                          <rect x="225" y="25" width="75" height="70" fill="#1A2E35" stroke="#38BDF8" strokeWidth="2" />
+                          <text x="262" y="55" fill="#FBBF24" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                            POOJA
+                          </text>
+                          <text x="262" y="70" fill="#CBD5E1" fontSize="8" textAnchor="middle" fontFamily="monospace">
+                            6'×6'
+                          </text>
+
+                          <rect x="300" y="25" width="75" height="135" fill="#2E201B" stroke="#38BDF8" strokeWidth="2" />
+                          <text x="337" y="80" fill="#FB923C" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                            KITCHEN
+                          </text>
+                          <text x="337" y="98" fill="#CBD5E1" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                            10'×12' (Agni)
+                          </text>
+
+                          <rect x="25" y="160" width="170" height="95" fill="#1A2536" stroke="#38BDF8" strokeWidth="2" />
+                          <text x="110" y="205" fill="#E2E8F0" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                            PARKING &amp; DRIVEWAY
+                          </text>
+                          <text x="110" y="222" fill="#94A3B8" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                            12'-0" × 15'-0"
+                          </text>
+
+                          <rect x="195" y="160" width="180" height="95" fill="#1E293B" stroke="#38BDF8" strokeWidth="2" />
+                          <text x="285" y="205" fill="#E2E8F0" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                            GROUND BEDROOM
+                          </text>
+                          <text x="285" y="222" fill="#94A3B8" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                            13'-0" × 12'-0"
+                          </text>
+                        </g>
+                      ) : (
+                        <g>
+                          <rect x="25" y="25" width="220" height="135" fill="#1E293B" stroke="#38BDF8" strokeWidth="2" />
+                          <text x="135" y="75" fill="#38BDF8" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                            MASTER SUITE (NAIRUTYA)
+                          </text>
+                          <text x="135" y="93" fill="#94A3B8" fontSize="9.5" textAnchor="middle" fontFamily="monospace">
+                            15'-0" × 14'-0"
+                          </text>
+
+                          <rect x="245" y="25" width="130" height="135" fill="#1A2E35" stroke="#38BDF8" strokeWidth="2" />
+                          <text x="310" y="75" fill="#34D399" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                            BEDROOM 2
+                          </text>
+                          <text x="310" y="93" fill="#CBD5E1" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                            12'-0" × 13'-0"
+                          </text>
+
+                          <rect x="25" y="160" width="220" height="95" fill="#132337" stroke="#38BDF8" strokeWidth="2" />
+                          <text x="135" y="205" fill="#60A5FA" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                            FAMILY LOUNGE
+                          </text>
+
+                          <rect x="245" y="160" width="130" height="95" fill="#203328" stroke="#34D399" strokeWidth="2" />
+                          <text x="310" y="205" fill="#34D399" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+                            OPEN TERRACE
+                          </text>
+                        </g>
+                      )}
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Specs Summary */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div className="bg-[#FAF7F2] p-3 rounded-xl border border-[#E7E0D7]">
+                  <span className="text-[10px] font-bold text-[#6B7280] uppercase block">Plot Dimensions</span>
+                  <span className="font-display font-black text-sm text-[#111827] mt-0.5 block">
+                    {selectedProjectForView.inputPayload?.plotWidth && selectedProjectForView.inputPayload?.plotDepth
+                      ? `${selectedProjectForView.inputPayload.plotWidth}×${selectedProjectForView.inputPayload.plotDepth} ft`
+                      : selectedProjectForView.inputPayload?.plotSize || '30×50 ft'}
+                  </span>
+                </div>
+                <div className="bg-[#FAF7F2] p-3 rounded-xl border border-[#E7E0D7]">
+                  <span className="text-[10px] font-bold text-[#6B7280] uppercase block">Facing / Orientation</span>
+                  <span className="font-display font-black text-sm text-[#111827] mt-0.5 block">
+                    {selectedProjectForView.inputPayload?.facing || 'East Facing'}
+                  </span>
+                </div>
+                <div className="bg-[#FAF7F2] p-3 rounded-xl border border-[#E7E0D7]">
+                  <span className="text-[10px] font-bold text-[#6B7280] uppercase block">Vastu Score</span>
+                  <span className="font-display font-black text-sm text-emerald-700 mt-0.5 block">
+                    98 / 100
+                  </span>
+                </div>
+                <div className="bg-[#FAF7F2] p-3 rounded-xl border border-[#E7E0D7]">
+                  <span className="text-[10px] font-bold text-[#6B7280] uppercase block">Design Status</span>
+                  <span className="font-display font-black text-sm text-[#E76F2E] mt-0.5 block">
+                    Verified Blueprint
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-sm p-4 border-t border-[#EEE9E3] shrink-0 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedProjectForView(null)}
+                className="py-2.5 px-4 rounded-xl border border-[#D1C9BE] text-xs font-bold text-[#4B5563] hover:bg-gray-50 transition cursor-pointer"
+              >
+                Close Preview
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedProjectForView(null)
+                    onOpenConsult?.(`Review generated design: ${selectedProjectForView.inputPayload?.title || 'House Plan'}`)
+                  }}
+                  className="py-2.5 px-3.5 rounded-xl border border-[#E7E0D7] bg-white hover:bg-[#FFF6E8] text-xs font-bold text-[#292826] transition cursor-pointer"
+                >
+                  Consult Architect
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedProjectForView(null)
+                    onOpenAiStudio?.()
+                  }}
+                  className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white text-xs font-bold shadow transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Icons.Sparkles size={14} />
+                  <span>Launch 3D Studio</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

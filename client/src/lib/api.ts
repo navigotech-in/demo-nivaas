@@ -4,6 +4,23 @@ import type { Project } from './data'
 // Express server on port 7000 serves this build on the same origin.
 const BASE = '/api/v1'
 
+// Session recovery hook: AuthProvider registers a callback so any user-scoped
+// request returning 401 can trigger one silent token refresh. The refreshed
+// accessToken propagates through context, so callers re-fetch automatically.
+let onUnauthorized: (() => void) | null = null
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  onUnauthorized = handler
+}
+
+function apiError(res: Response, json: any, fallback: string): Error {
+  if (res.status === 401) onUnauthorized?.()
+  const error: any = new Error(json?.error?.message || fallback)
+  error.status = res.status
+  error.code = json?.error?.code
+  return error
+}
+
 export interface LeadPayload {
   name: string
   phone: string
@@ -106,21 +123,36 @@ export async function fetchUserDashboard(headers: Record<string, string>): Promi
   })
   const json = await res.json()
   if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'Failed to fetch dashboard data')
+    throw apiError(res, json, 'Failed to fetch dashboard data')
   }
   return json.data
 }
 
 export async function fetchUserProjects(headers: Record<string, string>): Promise<UserProject[]> {
-  const res = await fetch(`${BASE}/users/me/projects`, {
-    headers: { 'Content-Type': 'application/json', ...headers },
-    credentials: 'include',
-  })
-  const json = await res.json()
-  if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'Failed to fetch projects')
+  if (!hasValidAuthHeader(headers)) {
+    return []
   }
-  return json.data.projects
+  try {
+    const res = await fetch(`${BASE}/users/me/projects`, {
+      headers: { 'Content-Type': 'application/json', ...headers },
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (!res.ok || !json.success) {
+      if (res.status === 401) {
+        onUnauthorized?.()
+        return []
+      }
+      throw apiError(res, json, 'Failed to fetch projects')
+    }
+    return json.data.projects
+  } catch (err: any) {
+    if (err?.status === 401) {
+      onUnauthorized?.()
+      return []
+    }
+    throw err
+  }
 }
 
 export async function createUserProject(
@@ -135,7 +167,7 @@ export async function createUserProject(
   })
   const json = await res.json()
   if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'Failed to create project')
+    throw apiError(res, json, 'Failed to create project')
   }
   return json.data?.project || json.data
 }
@@ -143,16 +175,31 @@ export async function createUserProject(
 export async function fetchUserCredits(headers: Record<string, string>): Promise<{
   availableBalance: number
   transactions: CreditTransactionItem[]
-}> {
-  const res = await fetch(`${BASE}/users/me/credits`, {
-    headers: { 'Content-Type': 'application/json', ...headers },
-    credentials: 'include',
-  })
-  const json = await res.json()
-  if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'Failed to fetch credit ledger')
+} | null> {
+  if (!hasValidAuthHeader(headers)) {
+    return null
   }
-  return json.data
+  try {
+    const res = await fetch(`${BASE}/users/me/credits`, {
+      headers: { 'Content-Type': 'application/json', ...headers },
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (!res.ok || !json.success) {
+      if (res.status === 401) {
+        onUnauthorized?.()
+        return null
+      }
+      throw apiError(res, json, 'Failed to fetch credit ledger')
+    }
+    return json.data
+  } catch (err: any) {
+    if (err?.status === 401) {
+      onUnauthorized?.()
+      return null
+    }
+    throw err
+  }
 }
 
 export async function fetchUserPass(headers: Record<string, string>): Promise<{
@@ -167,7 +214,7 @@ export async function fetchUserPass(headers: Record<string, string>): Promise<{
   })
   const json = await res.json()
   if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'Failed to fetch pass status')
+    throw apiError(res, json, 'Failed to fetch pass status')
   }
   const d = json.data || {}
   const passObj = d.pass || d.activePass || null
@@ -187,7 +234,7 @@ export async function fetchUserConsultations(headers: Record<string, string>): P
   })
   const json = await res.json()
   if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'Failed to fetch consultations')
+    throw apiError(res, json, 'Failed to fetch consultations')
   }
   return json.data.consultations
 }
@@ -199,7 +246,7 @@ export async function fetchUserSessions(headers: Record<string, string>): Promis
   })
   const json = await res.json()
   if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'Failed to fetch active sessions')
+    throw apiError(res, json, 'Failed to fetch active sessions')
   }
   return json.data.sessions
 }
@@ -212,7 +259,7 @@ export async function revokeUserSession(sessionId: string, headers: Record<strin
   })
   const json = await res.json()
   if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'Failed to revoke device session')
+    throw apiError(res, json, 'Failed to revoke device session')
   }
 }
 
@@ -224,7 +271,7 @@ export async function revokeAllOtherSessions(headers: Record<string, string>): P
   })
   const json = await res.json()
   if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'Failed to revoke other sessions')
+    throw apiError(res, json, 'Failed to revoke other sessions')
   }
 }
 
@@ -240,7 +287,7 @@ export async function updateUserProfile(
   })
   const json = await res.json()
   if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'Failed to update profile')
+    throw apiError(res, json, 'Failed to update profile')
   }
   return json.data.user
 }
@@ -257,7 +304,7 @@ export async function changeUserPassword(
   })
   const json = await res.json()
   if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || 'Failed to change password')
+    throw apiError(res, json, 'Failed to change password')
   }
 }
 
@@ -266,7 +313,7 @@ export async function changeUserPassword(
 export async function fetchDesignPassProduct(): Promise<any> {
   const res = await fetch(`${BASE}/products/design-pass`)
   const json = await res.json()
-  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to fetch product')
+  if (!res.ok || !json.success) throw apiError(res, json, 'Failed to fetch product')
   return json.data
 }
 
@@ -296,6 +343,7 @@ export interface UserEntitlements {
     creditsTotal: number
     creditsUsed?: number
     creditsRemaining: number
+    creditsExhausted?: boolean
   }
   canGenerate2D?: boolean
   canGenerate3D?: boolean
@@ -303,19 +351,48 @@ export interface UserEntitlements {
   generationMode: 'DESIGN_PASS' | 'FREE_2D' | 'UPGRADE_REQUIRED'
 }
 
-export async function fetchUserEntitlements(headers: Record<string, string>): Promise<UserEntitlements> {
-  const res = await fetch(`${BASE}/users/me/entitlements`, {
-    headers: { 'Content-Type': 'application/json', ...headers },
-    credentials: 'include',
-  })
-  const json = await res.json()
-  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to fetch entitlements')
-  return json.data
+export function hasValidAuthHeader(headers?: Record<string, string>): boolean {
+  const auth = headers?.Authorization || headers?.authorization
+  if (!auth) return false
+  const trimmed = auth.trim()
+  return (
+    trimmed.startsWith('Bearer ') &&
+    trimmed.length > 15 &&
+    !trimmed.includes('null') &&
+    !trimmed.includes('undefined')
+  )
+}
+
+export async function fetchUserEntitlements(headers: Record<string, string>): Promise<UserEntitlements | null> {
+  if (!hasValidAuthHeader(headers)) {
+    return null
+  }
+  try {
+    const res = await fetch(`${BASE}/users/me/entitlements`, {
+      headers: { 'Content-Type': 'application/json', ...headers },
+      credentials: 'include',
+    })
+    const json = await res.json()
+    if (!res.ok || !json.success) {
+      if (res.status === 401) {
+        onUnauthorized?.()
+        return null
+      }
+      throw apiError(res, json, 'Failed to fetch entitlements')
+    }
+    return json.data
+  } catch (err: any) {
+    if (err?.status === 401) {
+      onUnauthorized?.()
+      return null
+    }
+    throw err
+  }
 }
 
 export async function createRazorpayOrder(
   headers: Record<string, string>,
-  options?: { forceRenewal?: boolean }
+  options?: { forceRenewal?: boolean; isCreditTopup?: boolean }
 ): Promise<{
   orderId: string
   purchaseId: string
@@ -333,11 +410,15 @@ export async function createRazorpayOrder(
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
     credentials: 'include',
-    body: JSON.stringify({ forceRenewal: !!options?.forceRenewal }),
+    body: JSON.stringify({
+      forceRenewal: !!options?.forceRenewal,
+      isCreditTopup: !!options?.isCreditTopup,
+    }),
   })
   const json = await res.json()
   if (!res.ok || !json.success) {
     const error: any = new Error(json.error?.message || 'Failed to create order')
+    error.status = res.status
     error.code = json.error?.code
     error.activePass = json.error?.activePass
     throw error
@@ -356,7 +437,7 @@ export async function verifyRazorpayPayment(
     body: JSON.stringify(payload),
   })
   const json = await res.json()
-  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Payment verification failed')
+  if (!res.ok || !json.success) throw apiError(res, json, 'Payment verification failed')
   return json.data
 }
 
@@ -371,7 +452,7 @@ export async function saveWizardDraft(
     body: JSON.stringify(payload),
   })
   const json = await res.json()
-  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to save wizard draft')
+  if (!res.ok || !json.success) throw apiError(res, json, 'Failed to save wizard draft')
   return json.data
 }
 
@@ -385,7 +466,7 @@ export async function confirmWizardRequirements(
     credentials: 'include',
   })
   const json = await res.json()
-  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to confirm requirements')
+  if (!res.ok || !json.success) throw apiError(res, json, 'Failed to confirm requirements')
   return json.data
 }
 
@@ -400,7 +481,7 @@ export async function fetchFreePreviewEligibility(headers: Record<string, string
     credentials: 'include',
   })
   const json = await res.json()
-  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to check eligibility')
+  if (!res.ok || !json.success) throw apiError(res, json, 'Failed to check eligibility')
   return json.data
 }
 
@@ -416,22 +497,23 @@ export async function generateFree2DPreview(
     body: JSON.stringify(bodyData),
   })
   const json = await res.json()
-  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Free generation failed')
+  if (!res.ok || !json.success) throw apiError(res, json, 'Free generation failed')
   return json.data
 }
 
 export async function startPaid3DGeneration(
   wizardSessionId: string,
-  headers: Record<string, string>
+  headers: Record<string, string>,
+  options?: { idempotencyKey?: string; wizardData?: Record<string, unknown> }
 ): Promise<any> {
   const res = await fetch(`${BASE}/generations/3d`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
     credentials: 'include',
-    body: JSON.stringify({ wizardSessionId }),
+    body: JSON.stringify({ wizardSessionId, ...(options || {}) }),
   })
   const json = await res.json()
-  if (!res.ok || !json.success) throw new Error(json.error?.message || '3D generation request failed')
+  if (!res.ok || !json.success) throw apiError(res, json, '3D generation request failed')
   return json.data
 }
 
@@ -447,6 +529,41 @@ export async function fetchChatQuota(headers?: Record<string, string>): Promise<
     credentials: 'include',
   })
   const json = await res.json()
-  if (!res.ok || !json.success) throw new Error(json.error?.message || 'Failed to check chat quota')
+  if (!res.ok || !json.success) throw apiError(res, json, 'Failed to check chat quota')
+  return json.data
+}
+
+export interface SendOtpResponse {
+  channel: 'sms' | 'email'
+  destination: string
+  message: string
+  cooldownSeconds: number
+}
+
+export async function sendOtp(identifier: string, purpose?: 'LOGIN' | 'SIGNUP'): Promise<SendOtpResponse> {
+  const res = await fetch(`${BASE}/auth/otp/send`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ identifier, purpose }),
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) throw apiError(res, json, 'Failed to send verification code')
+  return json.data
+}
+
+export async function verifyOtp(identifier: string, code: string, name?: string): Promise<{
+  user: any
+  accessToken: string
+  isNewUser: boolean
+}> {
+  const res = await fetch(`${BASE}/auth/otp/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ identifier, code, name }),
+  })
+  const json = await res.json()
+  if (!res.ok || !json.success) throw apiError(res, json, 'Invalid or expired OTP')
   return json.data
 }

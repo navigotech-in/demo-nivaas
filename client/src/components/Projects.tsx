@@ -82,7 +82,9 @@ function FilterDropdown({ placeholder, icon: Icon, value, options, isOpen, onTog
   const handleToggle = (e: MouseEvent<HTMLButtonElement>) => {
     if (!isOpen) {
       const rect = e.currentTarget.getBoundingClientRect()
-      const left = Math.min(Math.max(8, rect.left), window.innerWidth - 228)
+      const dropdownWidth = 220
+      const maxLeft = Math.max(12, window.innerWidth - dropdownWidth - 16)
+      const left = Math.min(Math.max(12, rect.left), maxLeft)
       setPos({ left, top: rect.bottom + 6 })
     }
     onToggle(e)
@@ -106,9 +108,10 @@ function FilterDropdown({ placeholder, icon: Icon, value, options, isOpen, onTog
         <Icons.ChevronDown size={12} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
+      {/* Desktop Popover */}
       {isOpen && (
         <div
-          className="fixed z-50 w-[220px] rounded-xl border border-[#E7E0D7] bg-white p-1.5 shadow-xl animate-fadeIn"
+          className="hidden sm:block fixed z-50 w-[220px] max-w-[calc(100vw-24px)] rounded-xl border border-[#E7E0D7] bg-white p-1.5 shadow-xl animate-fadeIn"
           style={{ left: pos.left, top: pos.top }}
         >
           {value && (
@@ -137,6 +140,54 @@ function FilterDropdown({ placeholder, icon: Icon, value, options, isOpen, onTog
               </button>
             )
           })}
+        </div>
+      )}
+
+      {/* Mobile Bottom Sheet (Zero horizontal overflow on mobile) */}
+      {isOpen && (
+        <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-white p-4 pb-6 shadow-2xl animate-fadeIn border-t border-[#E7E0D7]">
+          <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[#E7E0D7]" />
+          <div className="mb-3 flex items-center justify-between border-b border-[#E7E0D7]/60 pb-2.5">
+            <h4 className="font-display text-sm font-bold text-[#292826] flex items-center gap-2">
+              <Icon size={15} className="text-[#E76F2E]" />
+              Select {placeholder}
+            </h4>
+            <button
+              type="button"
+              onClick={onToggle}
+              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-[#54504A] hover:bg-[#F5F2EC]"
+            >
+              Close <Icons.Close size={12} />
+            </button>
+          </div>
+          <div className="max-h-[50vh] overflow-y-auto space-y-1">
+            {value && (
+              <button
+                type="button"
+                onClick={() => onChange('')}
+                className="mb-1 flex w-full items-center justify-between rounded-lg border border-dashed border-[#E7E0D7] bg-[#FAF8F5] px-3.5 py-2.5 text-xs font-bold text-[#54504A] transition hover:bg-[#F5F2EC]"
+              >
+                <span>Any {placeholder} (Clear)</span>
+                <Icons.Close size={12} />
+              </button>
+            )}
+            {options.map((opt) => {
+              const active = value === opt
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => onChange(opt)}
+                  className={`flex w-full items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-left text-xs font-bold transition ${
+                    active ? 'bg-[#FFF6E8] text-[#E76F2E] border border-[#E76F2E]/30' : 'text-[#292826] hover:bg-[#F5F2EC]'
+                  }`}
+                >
+                  <span>{opt}</span>
+                  {active && <Icons.Check size={14} className="text-[#E76F2E]" />}
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -499,34 +550,49 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
           </p>
         </div>
 
-        {/* Compact Trust & Specification Metadata Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-white border border-[#E7E0D7] shadow-2xs mb-6">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#54504A]">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] px-3 py-1 text-[#E76F2E] font-bold">
-              <Icons.ShieldCheck size={13} />
-              <span>GHMC & BBMP Setbacks</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] px-3 py-1 text-[#E76F2E] font-bold">
-              <Icons.Sun size={13} />
-              <span>100% Vastu Approved</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#FFF6E8] border border-[#E7E0D7] px-3 py-1 text-[#E76F2E] font-bold">
-              <Icons.Blueprint size={13} />
-              <span>Structural CAD Sets</span>
-            </span>
+        {/* Compact Trust & Specification Cards Bar */}
+        <div className="rounded-2xl bg-white border border-[#E7E0D7] p-3 sm:p-4 shadow-2xs mb-6">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {/* Card 1: GHMC & BBMP Setbacks */}
+            <div className="flex flex-col items-center justify-center text-center p-2 sm:p-3 rounded-xl bg-[#FAF8F5] border border-[#E7E0D7] hover:border-[#E76F2E]/40 hover:bg-[#FFF6E8] transition group">
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-[#FFF6E8] text-[#E76F2E] flex items-center justify-center mb-1.5 border border-[#E76F2E]/20 shadow-xs group-hover:scale-105 transition-transform">
+                <Icons.ShieldCheck size={16} />
+              </div>
+              <span className="text-[10px] sm:text-xs font-extrabold text-[#292826] leading-tight">
+                GHMC &amp; BBMP Setbacks
+              </span>
+            </div>
+
+            {/* Card 2: 100% Vastu Approved */}
+            <div className="flex flex-col items-center justify-center text-center p-2 sm:p-3 rounded-xl bg-[#FAF8F5] border border-[#E7E0D7] hover:border-[#E76F2E]/40 hover:bg-[#FFF6E8] transition group">
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-[#FFF6E8] text-[#E76F2E] flex items-center justify-center mb-1.5 border border-[#E76F2E]/20 shadow-xs group-hover:scale-105 transition-transform">
+                <Icons.Sun size={16} />
+              </div>
+              <span className="text-[10px] sm:text-xs font-extrabold text-[#292826] leading-tight">
+                100% Vastu Approved
+              </span>
+            </div>
+
+            {/* Card 3: Structural CAD Sets */}
+            <div className="flex flex-col items-center justify-center text-center p-2 sm:p-3 rounded-xl bg-[#FAF8F5] border border-[#E7E0D7] hover:border-[#E76F2E]/40 hover:bg-[#FFF6E8] transition group">
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-[#FFF6E8] text-[#E76F2E] flex items-center justify-center mb-1.5 border border-[#E76F2E]/20 shadow-xs group-hover:scale-105 transition-transform">
+                <Icons.Blueprint size={16} />
+              </div>
+              <span className="text-[10px] sm:text-xs font-extrabold text-[#292826] leading-tight">
+                Structural CAD Sets
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-[#54504A] hidden sm:inline">
-              12,000+ verified plans available
-            </span>
+          {/* Centered Custom Layout Action Button */}
+          <div className="mt-3 sm:mt-3.5 flex items-center justify-center">
             <button
               type="button"
               onClick={() => onOpenConsult('Custom Architecture Consultation')}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#E76F2E] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#C65320] transition active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#E76F2E] via-[#F27E3D] to-[#E76F2E] px-5 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:brightness-105 active:scale-[0.98] transition cursor-pointer"
             >
               <span>Custom Layout</span>
-              <Icons.ChevronRight size={13} />
+              <Icons.ChevronRight size={14} />
             </button>
           </div>
         </div>

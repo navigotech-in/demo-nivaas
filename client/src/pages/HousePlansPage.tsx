@@ -238,16 +238,21 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
               <label className="block text-[9px] sm:text-[10px] font-bold uppercase text-[#74706A] mb-1 truncate">
                 Built-up Area
               </label>
-              <select
-                value={selectedArea}
-                onChange={(e) => setSelectedArea(e.target.value)}
-                aria-label="Filter by Built-up Area"
-                className="w-full bg-white border border-[#E7E0D7] rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 text-[11px] sm:text-xs text-[#292826] font-medium outline-none focus:border-[#C94F36] transition cursor-pointer truncate"
-              >
-                {areaOptions.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+              <div className="relative min-w-0 w-full">
+                <select
+                  value={selectedArea}
+                  onChange={(e) => setSelectedArea(e.target.value)}
+                  aria-label="Filter by Built-up Area"
+                  className="w-full bg-white border border-[#E7E0D7] rounded-lg pl-2 pr-5 py-2 sm:py-2.5 text-[11px] sm:text-xs text-[#292826] font-medium outline-none focus:border-[#C94F36] transition cursor-pointer truncate appearance-none box-border"
+                >
+                  {areaOptions.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 text-[#74706A]">
+                  <Icons.ChevronDown size={11} />
+                </div>
+              </div>
             </div>
 
             {/* Vastu Direction */}
@@ -255,16 +260,21 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
               <label className="block text-[9px] sm:text-[10px] font-bold uppercase text-[#74706A] mb-1 truncate">
                 Vastu Direction
               </label>
-              <select
-                value={selectedDirection}
-                onChange={(e) => setSelectedDirection(e.target.value)}
-                aria-label="Filter by Vastu Direction"
-                className="w-full bg-white border border-[#E7E0D7] rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 text-[11px] sm:text-xs text-[#292826] font-medium outline-none focus:border-[#C94F36] transition cursor-pointer truncate"
-              >
-                {directionOptions.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+              <div className="relative min-w-0 w-full">
+                <select
+                  value={selectedDirection}
+                  onChange={(e) => setSelectedDirection(e.target.value)}
+                  aria-label="Filter by Vastu Direction"
+                  className="w-full bg-white border border-[#E7E0D7] rounded-lg pl-2 pr-5 py-2 sm:py-2.5 text-[11px] sm:text-xs text-[#292826] font-medium outline-none focus:border-[#C94F36] transition cursor-pointer truncate appearance-none box-border"
+                >
+                  {directionOptions.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 text-[#74706A]">
+                  <Icons.ChevronDown size={11} />
+                </div>
+              </div>
             </div>
 
             {/* Major City with Searchable Input */}
@@ -272,25 +282,26 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
               <label className="block text-[9px] sm:text-[10px] font-bold uppercase text-[#74706A] mb-1 truncate">
                 Major City
               </label>
-              <div ref={cityDropdownRef} className="relative">
+              <div ref={cityDropdownRef} className="relative min-w-0">
                 <button
                   type="button"
                   onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
                   aria-label="Filter by Major City"
-                  className="w-full bg-white border border-[#E7E0D7] rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 text-[11px] sm:text-xs text-left text-[#292826] font-medium flex items-center justify-between outline-none focus:border-[#C94F36] transition cursor-pointer"
+                  className="w-full bg-white border border-[#E7E0D7] rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 text-[11px] sm:text-xs text-left text-[#292826] font-medium flex items-center justify-between outline-none focus:border-[#C94F36] transition cursor-pointer truncate box-border"
                 >
                   <span className="truncate">{selectedCity}</span>
-                  <Icons.ChevronDown size={12} className="text-[#74706A] shrink-0 ml-1" />
+                  <Icons.ChevronDown size={11} className="text-[#74706A] shrink-0 ml-1" />
                 </button>
 
+                {/* Desktop popover - anchored right-0 to never overflow */}
                 {cityDropdownOpen && (
-                  <div className="absolute left-0 right-0 sm:right-auto sm:w-56 top-full mt-1 bg-white border border-[#E7E0D7] rounded-lg shadow-lg z-50 p-2 text-xs">
+                  <div className="hidden sm:block absolute right-0 w-64 max-w-[calc(100vw-32px)] top-full mt-1 bg-white border border-[#E7E0D7] rounded-xl shadow-xl z-50 p-2.5 text-xs animate-fadeIn">
                     <input
                       type="text"
                       value={citySearch}
                       onChange={(e) => setCitySearch(e.target.value)}
                       placeholder="Search city…"
-                      className="w-full bg-[#FAF8F5] border border-[#E7E0D7] rounded px-2 py-1.5 text-xs text-[#292826] outline-none focus:border-[#C94F36] mb-1.5"
+                      className="w-full bg-[#FAF8F5] border border-[#E7E0D7] rounded-lg px-2.5 py-1.5 text-xs text-[#292826] outline-none focus:border-[#C94F36] mb-1.5"
                       autoFocus
                     />
                     <div className="max-h-48 overflow-y-auto space-y-0.5 no-scrollbar">
@@ -300,7 +311,7 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
                           setSelectedCity('All Cities')
                           setCityDropdownOpen(false)
                         }}
-                        className="w-full text-left px-2 py-1 rounded hover:bg-[#FFF6E8] hover:text-[#C94F36] font-medium text-xs cursor-pointer"
+                        className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-[#FFF6E8] hover:text-[#C94F36] font-medium text-xs cursor-pointer"
                       >
                         All Cities
                       </button>
@@ -312,7 +323,63 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
                             setSelectedCity(c.name)
                             setCityDropdownOpen(false)
                           }}
-                          className={`w-full text-left px-2 py-1 rounded hover:bg-[#FFF6E8] hover:text-[#C94F36] font-medium text-xs cursor-pointer flex items-center justify-between ${
+                          className={`w-full text-left px-2 py-1.5 rounded-lg hover:bg-[#FFF6E8] hover:text-[#C94F36] font-medium text-xs cursor-pointer flex items-center justify-between ${
+                            selectedCity === c.name ? 'bg-[#FFF6E8] text-[#C94F36] font-bold' : 'text-[#292826]'
+                          }`}
+                        >
+                          <span className="truncate">{c.name}</span>
+                          <span className="text-[10px] text-[#74706A] font-normal ml-1 shrink-0">{c.state}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Mobile Bottom Sheet for City Selection */}
+                {cityDropdownOpen && (
+                  <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-white p-4 pb-6 shadow-2xl animate-fadeIn border-t border-[#E7E0D7]">
+                    <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[#E7E0D7]" />
+                    <div className="mb-3 flex items-center justify-between border-b border-[#E7E0D7]/60 pb-2.5">
+                      <h4 className="font-display text-sm font-bold text-[#292826] flex items-center gap-1.5">
+                        <Icons.MapPin size={15} className="text-[#C94F36]" />
+                        Select City
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => setCityDropdownOpen(false)}
+                        className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-[#54504A] hover:bg-[#F5F2EC]"
+                      >
+                        Close <Icons.Close size={12} />
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={citySearch}
+                      onChange={(e) => setCitySearch(e.target.value)}
+                      placeholder="Search city…"
+                      className="w-full bg-[#FAF8F5] border border-[#E7E0D7] rounded-lg px-3 py-2 text-xs text-[#292826] outline-none focus:border-[#C94F36] mb-2"
+                      autoFocus
+                    />
+                    <div className="max-h-[45vh] overflow-y-auto space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCity('All Cities')
+                          setCityDropdownOpen(false)
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-[#FFF6E8] hover:text-[#C94F36] font-medium text-xs cursor-pointer"
+                      >
+                        All Cities (Reset)
+                      </button>
+                      {filteredCities.map((c) => (
+                        <button
+                          key={c.name}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCity(c.name)
+                            setCityDropdownOpen(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg hover:bg-[#FFF6E8] hover:text-[#C94F36] font-medium text-xs cursor-pointer flex items-center justify-between ${
                             selectedCity === c.name ? 'bg-[#FFF6E8] text-[#C94F36] font-bold' : 'text-[#292826]'
                           }`}
                         >
