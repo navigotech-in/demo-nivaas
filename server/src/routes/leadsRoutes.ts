@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { db } from '../db/store.js'
 import { optionalAuth, requireAuth, requireRole } from '../middleware/auth.js'
 import { Lead, LeadStatus } from '../types/models.js'
+import { emailService } from '../services/emailService.js'
 
 const router = Router()
 
@@ -45,7 +46,7 @@ router.post(
         type: validated.type,
         name: formattedName,
         phone: validated.phone.trim(),
-        email: validated.email?.trim(),
+        email: validated.email?.trim() || req.user?.email,
         city: validated.city?.trim() || 'Indore',
         plotSize: validated.plotSize?.trim(),
         budgetRange: validated.budgetRange?.trim(),
@@ -62,6 +63,11 @@ router.post(
       }
 
       db.leads.set(leadId, newLead)
+
+      // Asynchronously dispatch email notification via Nodemailer to Admin and Customer
+      emailService.sendLeadNotification(newLead).catch((err) => {
+        console.warn('[LeadsRoutes] Failed to send lead notification email:', err?.message)
+      })
 
       db.logAudit({
         actorId: userId,

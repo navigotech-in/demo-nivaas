@@ -6,6 +6,7 @@ import { db } from '../db/store.js'
 import { prisma } from '../db/prisma.js'
 import { prismaDb } from '../db/prismaService.js'
 import { authService } from '../services/authService.js'
+import { otpService } from '../services/otpService.js'
 import { requireAuth } from '../middleware/auth.js'
 import { authRateLimiter, refreshRateLimiter } from '../middleware/rateLimiter.js'
 
@@ -74,6 +75,7 @@ router.post(
 const loginSchema = z.object({
   identifier: z.string().min(3, 'Email or Phone is required'),
   password: z.string().min(1, 'Password is required'),
+  portal: z.enum(['admin', 'client']).optional(),
 })
 
 router.post(
@@ -88,6 +90,7 @@ router.post(
       const result = await authService.login({
         identifier: validated.identifier,
         password: validated.password,
+        portal: validated.portal,
         ipAddress,
         userAgent,
       })
@@ -102,6 +105,26 @@ router.post(
         },
       })
     } catch (err) {
+      if ((err as Error)?.message === 'ADMIN_PORTAL_ONLY') {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: 'ADMIN_PORTAL_ONLY',
+            message: 'Access Denied: Only authorized administrators can sign in here.',
+          },
+        })
+        return
+      }
+      if ((err as Error)?.message === 'CLIENT_PORTAL_ONLY') {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: 'CLIENT_PORTAL_ONLY',
+            message: 'Access restricted: This account cannot sign in from here.',
+          },
+        })
+        return
+      }
       next(err)
     }
   }
@@ -114,6 +137,18 @@ router.post(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const rawRefreshToken = req.cookies?.[config.cookie.name]
+      if (!rawRefreshToken) {
+        res.status(200).json({
+          success: false,
+          data: null,
+          error: {
+            code: 'NO_SESSION',
+            message: 'No active session found.',
+          },
+        })
+        return
+      }
+
       const ipAddress = req.ip || req.socket.remoteAddress || '127.0.0.1'
       const userAgent = req.headers['user-agent'] || 'Unknown'
 
@@ -133,9 +168,34 @@ router.post(
           accessToken: result.accessToken,
         },
       })
-    } catch (err) {
-      // Clear cookie on refresh failure
-      clearRefreshTokenCookie(res)
+    } catch (err: any) {
+      // Only clear the cookie on terminal failures. TOKEN_ALREADY_ROTATED is a
+      // concurrent-rotation race: the winning request just set a valid new
+      // cookie, and clearing it here would log the session out permanently.
+      if (err?.message !== 'TOKEN_ALREADY_ROTATED') {
+        clearRefreshTokenCookie(res)
+      }
+
+      // If the session has expired, is invalid, or was not found, return HTTP 200 with success: false
+      // so browser devtools doesn't log a red 401 network error on app load or guest visits.
+      if (
+        err?.message === 'NO_REFRESH_TOKEN' ||
+        err?.message === 'INVALID_REFRESH_TOKEN' ||
+        err?.message === 'REFRESH_TOKEN_EXPIRED' ||
+        err?.message === 'TOKEN_REUSE_DETECTED' ||
+        err?.message === 'USER_NOT_FOUND'
+      ) {
+        res.status(200).json({
+          success: false,
+          data: null,
+          error: {
+            code: err.message,
+            message: 'Session has expired or is invalid. Please sign in again.',
+          },
+        })
+        return
+      }
+
       next(err)
     }
   }
@@ -190,8 +250,19 @@ router.get(
 )
 
 // 6. Password Reset Request & Confirmation Schemas
-const forgotPasswordSchema = z.object({
-  email: z.string().email(),
+const forgotPasswordSchema = z
+  .object({
+    identifier: z.string().optional(),
+    email: z.string().optional(),
+  })
+  .refine((data) => Boolean(data.identifier || data.email), {
+    message: 'Please provide either an email or phone number',
+  })
+
+const resetPasswordSchema = z.object({
+  identifier: z.string().min(3, 'Email or phone number is required'),
+  code: z.string().min(4, 'Code must be at least 4 digits').max(10),
+  newPassword: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
 router.post(
@@ -199,13 +270,29 @@ router.post(
   authRateLimiter,
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { email } = forgotPasswordSchema.parse(req.body)
-      // Standard safe response: Always return 200 without leaking user existence
+      const parsed = forgotPasswordSchema.parse(req.body)
+      const target = (parsed.identifier || parsed.email)!.trim()
+      const result = await authService.requestPasswordReset(target)
       res.json({
         success: true,
-        data: {
-          message: `If an account exists for ${email}, a password reset link has been dispatched.`,
-        },
+        data: result,
+      })
+    } catch (err) {
+      next(err)
+    }
+  }
+)
+
+router.post(
+  '/reset-password',
+  authRateLimiter,
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { identifier, code, newPassword } = resetPasswordSchema.parse(req.body)
+      const result = await authService.resetPassword({ identifier, code, newPassword })
+      res.json({
+        success: true,
+        data: result,
       })
     } catch (err) {
       next(err)
@@ -370,6 +457,87 @@ router.post(
         return
       }
       next(err)
+    }
+  }
+)
+
+// 8. OTP Authentication Routes (Mobile SMS via Twilio + Email via Nodemailer)
+const sendOtpSchema = z.object({
+  identifier: z.string().min(3, 'Email or Phone is required'),
+  purpose: z.enum(['LOGIN', 'SIGNUP']).optional(),
+})
+
+router.post(
+  '/otp/send',
+  authRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { identifier, purpose } = sendOtpSchema.parse(req.body)
+      const ipAddress = req.ip || req.socket.remoteAddress || '127.0.0.1'
+
+      const result = await otpService.sendOtp({
+        identifier,
+        purpose,
+        ipAddress,
+      })
+
+      res.json({
+        success: true,
+        data: result,
+      })
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'OTP_SEND_FAILED',
+          message: err.message || 'Failed to dispatch verification code.',
+        },
+      })
+    }
+  }
+)
+
+const verifyOtpSchema = z.object({
+  identifier: z.string().min(3, 'Email or Phone is required'),
+  code: z.string().min(6, 'Verification code must be 6 digits').max(6),
+  name: z.string().optional(),
+})
+
+router.post(
+  '/otp/verify',
+  authRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { identifier, code, name } = verifyOtpSchema.parse(req.body)
+      const ipAddress = req.ip || req.socket.remoteAddress || '127.0.0.1'
+      const userAgent = (req.headers['user-agent'] as string) || 'Unknown'
+
+      const result = await otpService.verifyOtp({
+        identifier,
+        code,
+        name,
+        ipAddress,
+        userAgent,
+      })
+
+      setRefreshTokenCookie(res, result.rawRefreshToken)
+
+      res.json({
+        success: true,
+        data: {
+          user: result.user,
+          accessToken: result.accessToken,
+          isNewUser: result.isNewUser,
+        },
+      })
+    } catch (err: any) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'OTP_VERIFY_FAILED',
+          message: err.message || 'Invalid or expired verification code.',
+        },
+      })
     }
   }
 )

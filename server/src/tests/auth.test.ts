@@ -367,4 +367,124 @@ describe('Indore House Makers — Auth & Credit Ledger API Test Suite', () => {
     expect(successful.length).toBe(1)
     expect(rejected.length).toBe(1)
   })
+
+  // 13. Portal Isolation: Admin only on admin portal, User only on client portal
+  it('Portal Isolation: rejects admin login on client portal and user login on admin portal', async () => {
+    // Register user
+    await request(app).post('/api/v1/auth/signup').send({
+      name: 'Portal Test User',
+      email: 'user_portal@example.com',
+      password: 'UserPass123!',
+      phone: '9876543222',
+    })
+
+    // Setup an admin directly in db
+    const bcrypt = await import('bcryptjs')
+    const adminPasswordHash = await bcrypt.default.hash('AdminPass123!', 10)
+    db.createUser({
+      id: 'admin_test_id',
+      email: 'admin_portal@ihm.com',
+      name: 'IHM Administrator',
+      phone: '9876543233',
+      passwordHash: adminPasswordHash,
+      role: 'ADMIN',
+      isEmailVerified: true,
+      isPhoneVerified: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+
+    // 1. Regular user trying to login on admin portal -> 403 ADMIN_PORTAL_ONLY
+    const userOnAdminRes = await request(app).post('/api/v1/auth/login').send({
+      identifier: 'user_portal@example.com',
+      password: 'UserPass123!',
+      portal: 'admin',
+    })
+    expect(userOnAdminRes.status).toBe(403)
+    expect(userOnAdminRes.body.error.code).toBe('ADMIN_PORTAL_ONLY')
+
+    // 2. Admin trying to login on client portal -> 403 CLIENT_PORTAL_ONLY
+    const adminOnClientRes = await request(app).post('/api/v1/auth/login').send({
+      identifier: 'admin_portal@ihm.com',
+      password: 'AdminPass123!',
+      portal: 'client',
+    })
+    expect(adminOnClientRes.status).toBe(403)
+    expect(adminOnClientRes.body.error.code).toBe('CLIENT_PORTAL_ONLY')
+
+    // 3. Regular user on client portal -> 200 OK
+    const userOnClientRes = await request(app).post('/api/v1/auth/login').send({
+      identifier: 'user_portal@example.com',
+      password: 'UserPass123!',
+      portal: 'client',
+    })
+    expect(userOnClientRes.status).toBe(200)
+    expect(userOnClientRes.body.data.user.role).toBe('USER')
+
+    // 4. Admin on admin portal -> 200 OK
+    const adminOnAdminRes = await request(app).post('/api/v1/auth/login').send({
+      identifier: 'admin_portal@ihm.com',
+      password: 'AdminPass123!',
+      portal: 'admin',
+    })
+    expect(adminOnAdminRes.status).toBe(200)
+    expect(adminOnAdminRes.body.data.user.role).toBe('ADMIN')
+  })
+
+  // 15. Password Reset Flow: /forgot-password & /reset-password
+  it('should complete end-to-end forgot password and reset password flow', async () => {
+    // 1. Sign up user
+    await request(app).post('/api/v1/auth/signup').send({
+      name: 'Reset Test User',
+      email: 'resetuser@example.com',
+      password: 'OldPassword123!',
+      phone: '9822334455',
+    })
+
+    // 2. Request reset code
+    const forgotRes = await request(app).post('/api/v1/auth/forgot-password').send({
+      identifier: 'resetuser@example.com',
+    })
+    expect(forgotRes.status).toBe(200)
+    expect(forgotRes.body.success).toBe(true)
+    const devCode = forgotRes.body.data.devCode
+    expect(devCode).toBeDefined()
+    expect(devCode.length).toBe(6)
+
+    // 3. Reset with wrong code -> Should fail
+    const wrongCodeRes = await request(app).post('/api/v1/auth/reset-password').send({
+      identifier: 'resetuser@example.com',
+      code: '000000',
+      newPassword: 'BrandNewPassword123!',
+    })
+    expect(wrongCodeRes.body.success).toBe(false)
+
+    // 4. Reset with valid code
+    const resetRes = await request(app).post('/api/v1/auth/reset-password').send({
+      identifier: 'resetuser@example.com',
+      code: devCode,
+      newPassword: 'BrandNewPassword123!',
+    })
+    expect(resetRes.status).toBe(200)
+    expect(resetRes.body.success).toBe(true)
+    expect(resetRes.body.data.message).toContain('Password reset successfully')
+
+    // 5. Old password login should now fail
+    const oldLoginRes = await request(app).post('/api/v1/auth/login').send({
+      identifier: 'resetuser@example.com',
+      password: 'OldPassword123!',
+      portal: 'client',
+    })
+    expect(oldLoginRes.status).toBe(401)
+
+    // 6. New password login should succeed
+    const newLoginRes = await request(app).post('/api/v1/auth/login').send({
+      identifier: 'resetuser@example.com',
+      password: 'BrandNewPassword123!',
+      portal: 'client',
+    })
+    expect(newLoginRes.status).toBe(200)
+    expect(newLoginRes.body.success).toBe(true)
+    expect(newLoginRes.body.data.user.email).toBe('resetuser@example.com')
+  })
 })

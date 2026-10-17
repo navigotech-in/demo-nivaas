@@ -63,7 +63,7 @@ router.post('/free-2d-preview', requireAuth, async (req, res, next) => {
 router.post('/3d', requireAuth, async (req, res, next) => {
   try {
     const userId = req.user!.sub
-    const { wizardSessionId, idempotencyKey } = req.body
+    const { wizardSessionId, idempotencyKey, wizardData } = req.body
 
     if (!wizardSessionId) {
       res.status(400).json({
@@ -77,6 +77,7 @@ router.post('/3d', requireAuth, async (req, res, next) => {
       userId,
       wizardSessionId,
       idempotencyKey,
+      wizardData: wizardData && typeof wizardData === 'object' ? wizardData : undefined,
     })
 
     res.status(202).json({

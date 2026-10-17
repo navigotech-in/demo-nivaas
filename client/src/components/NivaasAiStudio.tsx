@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { site } from '../lib/data'
 import { Icons } from './Icons'
-import { useAuth } from '../lib/authContext'
+import { usePublicAuth } from '../lib/publicAuth'
 import {
-  createUserProject,
   generateFree2DPreview,
   fetchUserEntitlements,
   type UserEntitlements,
@@ -57,7 +56,7 @@ export default function NivaasAiStudio({
   initialWidth = 30,
   initialDepth = 50,
 }: NivaasAiStudioProps) {
-  const { user, accessToken, refreshAuth, isAuthenticated } = useAuth()
+  const { user, accessToken, refreshAuth, isAuthenticated } = usePublicAuth()
   const [activeTab, setActiveTab] = useState<'generator' | 'chat'>(initialMode)
 
   // -----------------------------------------------------------
@@ -205,7 +204,7 @@ export default function NivaasAiStudio({
   ])
 
   // Single Source of Truth: Refresh live entitlements from backend
-  const refreshEntitlements = async () => {
+  const refreshEntitlements = useCallback(async () => {
     if (!accessToken || !isAuthenticated) {
       setEntitlements(null)
       return
@@ -214,9 +213,9 @@ export default function NivaasAiStudio({
       const data = await fetchUserEntitlements({ Authorization: `Bearer ${accessToken}` })
       setEntitlements(data)
     } catch {
-      // Fallback
+      setEntitlements(null)
     }
-  }
+  }, [accessToken, isAuthenticated])
 
   // Check entitlements when user changes
   useEffect(() => {
@@ -409,14 +408,6 @@ export default function NivaasAiStudio({
         { Authorization: `Bearer ${accessToken}` }
       )
 
-      await createUserProject(
-        {
-          jobType: '2D_FLOOR_PLAN',
-          inputPayload: wizardPayload,
-        },
-        { Authorization: `Bearer ${accessToken}` }
-      ).catch(() => null)
-
       await refreshEntitlements().catch(() => null)
       await refreshAuth().catch(() => null)
       notifyDataChanged('generations')
@@ -459,6 +450,9 @@ export default function NivaasAiStudio({
         leadName: user?.name || 'Indore Client',
         leadCity: (user as any)?.city || 'Indore, MP',
         title: `${isRegular ? `${plotWidth}x${plotDepth} ft` : `${rawPlotAreaSqFt} sq.ft`} ${plotDirection} Facing ${floors.split(' ')[0]} Luxury 3D Design`,
+        image: getElevationImage(),
+        has3D: true,
+        is3DUnlocked: true,
       }
 
       const session = await saveWizardDraft(
@@ -468,23 +462,16 @@ export default function NivaasAiStudio({
 
       const sessionId = session?.id || 'session_' + Date.now()
 
-      const genRes = await startPaid3DGeneration(sessionId, { Authorization: `Bearer ${accessToken}` })
+      const genRes = await startPaid3DGeneration(sessionId, { Authorization: `Bearer ${accessToken}` }, {
+        idempotencyKey: `gen3d_${sessionId}`,
+        wizardData: wizardPayload,
+      })
       if (genRes?.creditsRemaining !== undefined) {
         setCreditsRemaining(genRes.creditsRemaining)
       }
 
-      await createUserProject(
-        {
-          jobType: 'THREE_D_GENERATION',
-          inputPayload: {
-            ...wizardPayload,
-            has3D: true,
-            is3DUnlocked: true,
-            image: getElevationImage(),
-          },
-        },
-        { Authorization: `Bearer ${accessToken}` }
-      ).catch(() => null)
+      // The generation job itself now persists the project (single source of truth),
+      // so no separate createUserProject call is needed here.
 
       // The design package is already generated (1 credit reserved). Mark it generated
       // so the results screen shows the completed 3D render instead of prompting for a
@@ -704,52 +691,53 @@ export default function NivaasAiStudio({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1A1815]/75 backdrop-blur-sm p-2 sm:p-4 animate-fadeIn">
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-[#1A1815]/75 backdrop-blur-sm p-2 sm:p-4 animate-fadeIn">
       <div
-        className="relative w-full max-w-3xl lg:max-w-4xl h-[88vh] max-h-[780px] min-h-[560px] bg-white rounded-2xl shadow-2xl border border-[#E7E0D7] flex flex-col overflow-hidden text-[#292826]"
+        className="relative w-[88vw] sm:w-full max-w-3xl lg:max-w-4xl h-[75vh] sm:h-[88vh] max-h-[560px] sm:max-h-[780px] min-h-0 sm:min-h-[520px] bg-white rounded-xl sm:rounded-2xl shadow-2xl border border-[#E7E0D7] flex flex-col overflow-hidden text-[#292826]"
       >
         {/* Admin Test Simulation Mode Banner */}
         {user?.role === 'ADMIN' && (
-          <div className="bg-[#292826] text-white px-4 py-1.5 text-xs flex items-center justify-between border-b border-black/20 shrink-0">
+          <div className="bg-[#292826] text-white px-3 sm:px-4 py-1 sm:py-1.5 text-xs flex items-center justify-between border-b border-black/20 shrink-0">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-bold text-amber-400 text-[11px] uppercase tracking-wider">
+              <span className="font-bold text-amber-400 text-[10px] sm:text-[11px] uppercase tracking-wider">
                 Admin Live Test Mode
               </span>
               <span className="hidden sm:inline text-[11px] text-[#C5BFB8]">
                 · Unlimited simulation preview (Zero customer credits consumed)
               </span>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#C94F36] text-white uppercase tracking-wider">
+            <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded bg-[#C94F36] text-white uppercase tracking-wider">
               Admin Privilege
             </span>
           </div>
         )}
 
         {/* Top Header */}
-        <header className="shrink-0 bg-white border-b border-[#EEE9E3] px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E76F2E] text-white shadow-sm ring-2 ring-[#E76F2E]/20">
-              <Icons.Sparkles size={18} className="text-white animate-pulse" />
+        <header className="shrink-0 bg-white border-b border-[#EEE9E3] px-2.5 sm:px-6 py-1.5 sm:py-3 flex items-center justify-between gap-1.5 sm:gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+            <div className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg sm:rounded-xl bg-[#E76F2E] text-white shadow-sm ring-2 ring-[#E76F2E]/20 shrink-0">
+              <Icons.Sparkles size={14} className="text-white animate-pulse sm:hidden" />
+              <Icons.Sparkles size={16} className="text-white animate-pulse hidden sm:block" />
             </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-display font-extrabold text-base tracking-tight text-[#292826] flex items-center gap-1.5">
-                  <span>Indore House Makers</span>
-                  <span className="text-[#C94F36] whitespace-nowrap">{activeTab === 'chat' ? 'AI Design Desk' : 'AI Architect Studio'}</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="font-display font-black text-xs sm:text-base tracking-tight text-[#111827] flex items-center gap-1 truncate">
+                  <span className="hidden md:inline text-[#111827]">Indore House Makers</span>
+                  <span className="text-[#C94F36] truncate">{activeTab === 'chat' ? 'AI Design Desk' : 'AI Architect Studio'}</span>
                 </span>
                 {activeTab === 'generator' ? (
-                  <span className="hidden sm:inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#FFF6E8] text-[#C65320] border border-[#E76F2E]/20 rounded-full">
+                  <span className="hidden lg:inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#FFF6E8] text-[#C65320] border border-[#E76F2E]/20 rounded-full shrink-0">
                     {isRegular ? '20-Step Regular Flow' : '23-Step Asymmetric Engine'}
                   </span>
                 ) : (
-                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
+                  <span className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full shrink-0">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Online • Instant AI Answers
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-[#54504A]">
+              <p className="text-[11px] text-[#54504A] hidden sm:block truncate max-w-[240px] md:max-w-md">
                 {activeTab === 'chat'
                   ? 'Ask any question on 2D house plans, Vastu directions, 3D facades & turnkey cost estimation in Indore'
                   : "India's First AI Engine for Regular & Asymmetric Plots with 100% Vastu"}
@@ -757,7 +745,7 @@ export default function NivaasAiStudio({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1 sm:gap-3 shrink-0">
             {/* Live User Credit / Entitlement Indicator */}
             {entitlements?.designPass.active ? (
               <div className="hidden md:flex items-center gap-2">
@@ -788,27 +776,28 @@ export default function NivaasAiStudio({
             ) : null}
 
             {/* Mode Switcher Tabs */}
-            <div className="flex items-center bg-[#F4EFEA] p-1 rounded-xl border border-[#E7E0D7]">
+            <div className="flex items-center bg-[#F4EFEA] p-0.5 sm:p-1 rounded-lg sm:rounded-xl border border-[#E7E0D7] shrink-0">
               <button
                 type="button"
                 onClick={() => setActiveTab('generator')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'generator'
-                  ? 'bg-white text-[#E76F2E] shadow-sm'
+                className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[10.5px] sm:text-xs font-bold transition whitespace-nowrap cursor-pointer ${activeTab === 'generator'
+                  ? 'bg-white text-[#E76F2E] shadow-xs'
                   : 'text-[#54504A] hover:text-[#292826]'
                   }`}
               >
-                <Icons.Blueprint size={13} />
+                <Icons.Blueprint size={12} className="shrink-0 sm:hidden" />
+                <Icons.Blueprint size={13} className="shrink-0 hidden sm:block" />
                 <span>AI Plan Generator</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('chat')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'chat'
-                  ? 'bg-white text-[#E76F2E] shadow-sm'
+                className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[10.5px] sm:text-xs font-bold transition whitespace-nowrap cursor-pointer ${activeTab === 'chat'
+                  ? 'bg-white text-[#E76F2E] shadow-xs'
                   : 'text-[#54504A] hover:text-[#292826]'
                   }`}
               >
-                <span>💬</span>
+                <span className="shrink-0 text-xs">💬</span>
                 <span>Ask AI</span>
               </button>
             </div>
@@ -817,10 +806,11 @@ export default function NivaasAiStudio({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-[#54504A] hover:text-[#292826] hover:bg-[#F4EFEA] transition"
+              className="p-1 sm:p-2 rounded-lg sm:rounded-xl text-[#54504A] hover:text-[#292826] hover:bg-[#F4EFEA] transition shrink-0 cursor-pointer"
               aria-label="Close AI Studio"
             >
-              <Icons.Close size={18} />
+              <Icons.Close size={16} className="sm:hidden" />
+              <Icons.Close size={18} className="hidden sm:block" />
             </button>
           </div>
         </header>
@@ -832,9 +822,9 @@ export default function NivaasAiStudio({
           <div className="flex-1 flex flex-col min-h-0 bg-[#FDFCF9]">
             {/* Dynamic Step Progress Bar */}
             {step <= totalWizardSteps && (
-              <div className="shrink-0 bg-white border-b border-[#EEE9E3] px-6 py-2.5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-[#E76F2E]">
+              <div className="shrink-0 bg-white border-b border-[#EEE9E3] px-3 sm:px-6 py-1.5 sm:py-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="text-[11px] sm:text-xs font-bold text-[#E76F2E]">
                     Step {step} of {totalWizardSteps}
                   </span>
                   <span className="hidden sm:inline-block text-xs text-[#54504A]">|</span>
@@ -843,7 +833,7 @@ export default function NivaasAiStudio({
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-28 sm:w-48 h-2 bg-[#F1ECE5] rounded-full overflow-hidden">
+                  <div className="w-20 sm:w-48 h-1.5 sm:h-2 bg-[#F1ECE5] rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-[#E76F2E] to-[#C94F36] rounded-full transition-all duration-300"
                       style={{ width: `${(step / totalWizardSteps) * 100}%` }}
@@ -857,56 +847,58 @@ export default function NivaasAiStudio({
             )}
 
             {/* Main Interactive Wizard Stage */}
-            <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-8 flex justify-center items-start">
+            <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-8 sm:py-8 flex justify-center items-start">
               <div className="w-full max-w-xl">
                 {/* ------------------------------------------------------------- */}
                 {/* STEP 1: PLOT SHAPE SELECTION */}
                 {/* ------------------------------------------------------------- */}
                 {currentStepKey === 'shape' && (
-                  <div className="space-y-6 animate-fadeIn">
+                  <div className="space-y-3.5 sm:space-y-6 animate-fadeIn">
                     <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md border border-[#E76F2E]/20">
                         Step 1 of {totalWizardSteps}: Plot Geometry
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         What shape is your plot / land?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
+                      <p className="text-[11px] sm:text-sm text-[#54504A] mt-0.5 sm:mt-1">
                         Choose your plot geometry so our AI can configure accurate setbacks, column alignments, and Vastu grids.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
                       {/* Regular Card */}
                       <button
                         type="button"
                         onClick={() => setPlotShape('regular')}
-                        className={`p-5 rounded-2xl border-2 text-left transition relative overflow-hidden group ${plotShape === 'regular'
-                          ? 'border-[#E76F2E] shadow-md ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
+                        className={`p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 text-left transition relative overflow-hidden group ${plotShape === 'regular'
+                          ? 'border-[#E76F2E] shadow-sm ring-1 sm:ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
                           : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
                           }`}
                       >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-9 h-9 rounded-xl bg-[#FAF8F5] border border-[#E7E0D7] flex items-center justify-center text-[#292826] shadow-2xs">
-                              <Icons.Grid size={18} className="text-[#292826]" />
+                        <div className="flex items-center justify-between mb-2 sm:mb-3">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[#FAF8F5] border border-[#E7E0D7] flex items-center justify-center text-[#292826] shadow-2xs">
+                              <Icons.Grid size={15} className="text-[#292826] sm:hidden" />
+                              <Icons.Grid size={18} className="text-[#292826] hidden sm:block" />
                             </div>
-                            <span className="px-2.5 py-0.5 rounded-md bg-[#FAF8F5] text-[#292826] text-[11px] font-bold tracking-wide uppercase border border-[#E7E0D7]">
+                            <span className="px-2 py-0.5 rounded-md bg-[#FAF8F5] text-[#292826] text-[10px] sm:text-[11px] font-bold tracking-wide uppercase border border-[#E7E0D7]">
                               Regular
                             </span>
                           </div>
                           {plotShape === 'regular' && (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E76F2E] text-white shadow-xs">
-                              <Icons.Check size={13} />
+                            <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-[#E76F2E] text-white shadow-xs">
+                              <Icons.Check size={11} className="sm:hidden" />
+                              <Icons.Check size={13} className="hidden sm:block" />
                             </span>
                           )}
                         </div>
-                        <h4 className="font-extrabold text-base text-black tracking-tight">Rectangle / Square Plot</h4>
-                        <p className="text-xs text-stone-700 mt-1.5 leading-relaxed font-medium">
+                        <h4 className="font-extrabold text-sm sm:text-base text-black tracking-tight">Rectangle / Square Plot</h4>
+                        <p className="text-[11px] sm:text-xs text-stone-700 mt-1 leading-snug font-medium">
                           Standard 4-side rectangular plot with standard 90° corners (e.g. 30x50, 40x60, 20x40).
                         </p>
-                        <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-bold text-[#E76F2E]">
-                          <Icons.Grid size={13} className="text-[#E76F2E]" />
+                        <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-[#E76F2E]">
+                          <Icons.Grid size={12} className="text-[#E76F2E]" />
                           <span>23 questions grouped into 6 stages</span>
                         </div>
                       </button>
@@ -915,41 +907,43 @@ export default function NivaasAiStudio({
                       <button
                         type="button"
                         onClick={() => setPlotShape('irregular')}
-                        className={`p-5 rounded-2xl border-2 text-left transition relative overflow-hidden group ${plotShape === 'irregular'
-                          ? 'border-[#E76F2E] shadow-md ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
+                        className={`p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 text-left transition relative overflow-hidden group ${plotShape === 'irregular'
+                          ? 'border-[#E76F2E] shadow-sm ring-1 sm:ring-2 ring-[#E76F2E] bg-[#FFF6E8]'
                           : 'border-[#E7E0D7] bg-white hover:border-[#E76F2E]'
                           }`}
                       >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-9 h-9 rounded-xl bg-[#FAF8F5] border border-[#E7E0D7] flex items-center justify-center text-[#292826] shadow-2xs">
-                              <Icons.Layers size={18} className="text-[#292826]" />
+                        <div className="flex items-center justify-between mb-2 sm:mb-3">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[#FAF8F5] border border-[#E7E0D7] flex items-center justify-center text-[#292826] shadow-2xs">
+                              <Icons.Layers size={15} className="text-[#292826] sm:hidden" />
+                              <Icons.Layers size={18} className="text-[#292826] hidden sm:block" />
                             </div>
-                            <span className="px-2.5 py-0.5 rounded-md bg-[#FAF8F5] text-[#292826] text-[11px] font-bold tracking-wide uppercase border border-[#E7E0D7]">
+                            <span className="px-2 py-0.5 rounded-md bg-[#FAF8F5] text-[#292826] text-[10px] sm:text-[11px] font-bold tracking-wide uppercase border border-[#E7E0D7]">
                               Irregular
                             </span>
                           </div>
                           {plotShape === 'irregular' && (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E76F2E] text-white shadow-xs">
-                              <Icons.Check size={13} />
+                            <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-[#E76F2E] text-white shadow-xs">
+                              <Icons.Check size={11} className="sm:hidden" />
+                              <Icons.Check size={13} className="hidden sm:block" />
                             </span>
                           )}
                         </div>
-                        <h4 className="font-extrabold text-base text-black tracking-tight">Asymmetric / Odd Shape</h4>
-                        <p className="text-xs text-stone-700 mt-1.5 leading-relaxed font-medium">
+                        <h4 className="font-extrabold text-sm sm:text-base text-black tracking-tight">Asymmetric / Odd Shape</h4>
+                        <p className="text-[11px] sm:text-xs text-stone-700 mt-1 leading-snug font-medium">
                           L-shape, Triangle, Trapezoid, Corner cut, or curved odd-shaped plot boundary.
                         </p>
-                        <div className="mt-3 pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[11px] font-bold text-[#E76F2E]">
-                          <Icons.Layers size={13} className="text-[#E76F2E]" />
+                        <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-[#EEE9E3] flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-[#E76F2E]">
+                          <Icons.Layers size={12} className="text-[#E76F2E]" />
                           <span>23 questions grouped into 6 stages</span>
                         </div>
                       </button>
                     </div>
 
                     {/* Not Sure Banner with Direct File Upload & Auto-Detect */}
-                    <div className="pt-1">
-                      <label className={`w-full p-4 sm:p-5 rounded-2xl border-2 border-dashed transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer group shadow-sm ${plotShape === 'not_sure'
-                        ? 'border-[#E76F2E] bg-[#FFF6E8] ring-2 ring-[#E76F2E]'
+                    <div className="pt-0.5">
+                      <label className={`w-full p-3 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-dashed transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 cursor-pointer group shadow-xs ${plotShape === 'not_sure'
+                        ? 'border-[#E76F2E] bg-[#FFF6E8] ring-1 sm:ring-2 ring-[#E76F2E]'
                         : 'border-[#E76F2E]/40 bg-[#FFF6E8]/40 hover:bg-[#FFF6E8] hover:border-[#E76F2E]'
                         }`}>
                         <input
@@ -962,21 +956,22 @@ export default function NivaasAiStudio({
                           }}
                           className="hidden"
                         />
-                        <div className="flex items-center gap-3.5">
-                          <div className="w-12 h-12 rounded-xl bg-white border border-[#E76F2E]/30 flex items-center justify-center text-xl text-[#E76F2E] shadow-2xs group-hover:scale-105 transition shrink-0">
-                            <Icons.Upload size={22} />
+                        <div className="flex items-center gap-2.5 sm:gap-3.5">
+                          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white border border-[#E76F2E]/30 flex items-center justify-center text-lg sm:text-xl text-[#E76F2E] shadow-2xs group-hover:scale-105 transition shrink-0">
+                            <Icons.Upload size={18} className="sm:hidden" />
+                            <Icons.Upload size={22} className="hidden sm:block" />
                           </div>
                           <div>
-                            <div className="font-extrabold text-sm sm:text-base text-[#292826]">
+                            <div className="font-extrabold text-xs sm:text-base text-[#292826]">
                               Not Sure? Upload Photo &amp; AI Will Detect
                             </div>
-                            <div className="text-xs text-[#54504A] mt-0.5 leading-relaxed">
+                            <div className="text-[10.5px] sm:text-xs text-[#54504A] mt-0.5 leading-snug">
                               Upload your plot photo or registry map — our AI will automatically analyze boundaries &amp; angles.
                             </div>
                           </div>
                         </div>
-                        <div className="flex flex-col items-end justify-center gap-1.5 shrink-0 self-end sm:self-auto">
-                          <span className="px-2.5 py-0.5 rounded-md bg-orange-100/90 text-[#C65320] border border-orange-200 text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-1.5 shrink-0 w-full sm:w-auto">
+                          <span className="px-2 py-0.5 rounded-md bg-orange-100/90 text-[#C65320] border border-orange-200 text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow-2xs">
                             ⚡ Auto-Detect
                           </span>
                           <span
@@ -985,10 +980,10 @@ export default function NivaasAiStudio({
                               setPlotShape('irregular')
                               setStep(2)
                             }}
-                            className="px-4 py-2 rounded-xl bg-[#E76F2E] text-white text-xs font-bold shadow-xs hover:bg-[#C65320] transition flex items-center gap-1.5 cursor-pointer"
+                            className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl bg-[#E76F2E] text-white text-[11px] sm:text-xs font-bold shadow-xs hover:bg-[#C65320] transition flex items-center gap-1 cursor-pointer"
                           >
                             <span>Upload &amp; Detect</span>
-                            <Icons.ChevronRight size={14} />
+                            <Icons.ChevronRight size={13} />
                           </span>
                         </div>
                       </label>
@@ -1000,20 +995,20 @@ export default function NivaasAiStudio({
                 {/* REGULAR PATH: STEP 2 (WIDTH) & STEP 3 (DEPTH) */}
                 {/* ------------------------------------------------------------- */}
                 {currentStepKey === 'width' && (
-                  <div className="space-y-6 animate-fadeIn">
+                  <div className="space-y-4 sm:space-y-6 animate-fadeIn">
                     <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Plot Frontage
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         What is your Plot Width (Frontage)?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
+                      <p className="text-[11px] sm:text-sm text-[#54504A] mt-0.5 sm:mt-1">
                         Enter the front width facing the road in feet.
                       </p>
                     </div>
 
-                    <div className="bg-white p-6 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-4">
+                    <div className="bg-white p-3.5 sm:p-6 rounded-xl sm:rounded-2xl border border-[#E7E0D7] shadow-xs space-y-3 sm:space-y-4">
                       <div className="flex items-center gap-3">
                         <div className="relative flex-1">
                           <input
@@ -1023,26 +1018,26 @@ export default function NivaasAiStudio({
                             value={plotWidth || ''}
                             onChange={(e) => setPlotWidth(Number(e.target.value))}
                             placeholder="Enter width (e.g. 30)"
-                            className="w-full px-4 py-3.5 text-lg font-bold rounded-xl border border-[#E7E0D7] focus:ring-2 focus:ring-[#E76F2E] outline-none bg-[#FDFCF9]"
+                            className="w-full px-3 py-2 sm:px-4 sm:py-3.5 text-base sm:text-lg font-bold rounded-lg sm:rounded-xl border border-[#E7E0D7] focus:ring-2 focus:ring-[#E76F2E] outline-none bg-[#FDFCF9]"
                           />
-                          <span className="absolute right-4 top-3.5 text-sm font-bold text-[#54504A]">
+                          <span className="absolute right-3 sm:right-4 top-2 sm:top-3.5 text-xs sm:text-sm font-bold text-[#54504A]">
                             Feet (ft)
                           </span>
                         </div>
                       </div>
 
                       <div>
-                        <span className="text-xs text-[#54504A] font-semibold block mb-2">
+                        <span className="text-[11px] sm:text-xs text-[#54504A] font-semibold block mb-1.5 sm:mb-2">
                           Popular Indian Plot Widths:
                         </span>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
                           {[20, 25, 30, 35, 40, 50].map((w) => (
                             <button
                               key={w}
                               type="button"
                               onClick={() => setPlotWidth(w)}
-                              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition ${plotWidth === w
-                                ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
+                              className={`px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-bold border transition ${plotWidth === w
+                                ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-xs'
                                 : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E] hover:bg-[#FFF6E8]'
                                 }`}
                             >
@@ -1056,20 +1051,20 @@ export default function NivaasAiStudio({
                 )}
 
                 {currentStepKey === 'depth' && (
-                  <div className="space-y-6 animate-fadeIn">
+                  <div className="space-y-4 sm:space-y-6 animate-fadeIn">
                     <div className="text-center sm:text-left">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
+                      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Plot Depth
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         What is your Plot Depth (Length)?
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#54504A] mt-1">
+                      <p className="text-[11px] sm:text-sm text-[#54504A] mt-0.5 sm:mt-1">
                         Enter the plot length from front to back in feet.
                       </p>
                     </div>
 
-                    <div className="bg-white p-6 rounded-2xl border border-[#E7E0D7] shadow-sm space-y-4">
+                    <div className="bg-white p-3.5 sm:p-6 rounded-xl sm:rounded-2xl border border-[#E7E0D7] shadow-xs space-y-3 sm:space-y-4">
                       <div className="relative">
                         <input
                           type="number"
@@ -1078,25 +1073,25 @@ export default function NivaasAiStudio({
                           value={plotDepth || ''}
                           onChange={(e) => setPlotDepth(Number(e.target.value))}
                           placeholder="Enter depth (e.g. 50)"
-                          className="w-full px-4 py-3.5 text-lg font-bold rounded-xl border border-[#E7E0D7] focus:ring-2 focus:ring-[#E76F2E] outline-none bg-[#FDFCF9]"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-3.5 text-base sm:text-lg font-bold rounded-lg sm:rounded-xl border border-[#E7E0D7] focus:ring-2 focus:ring-[#E76F2E] outline-none bg-[#FDFCF9]"
                         />
-                        <span className="absolute right-4 top-3.5 text-sm font-bold text-[#54504A]">
+                        <span className="absolute right-3 sm:right-4 top-2 sm:top-3.5 text-xs sm:text-sm font-bold text-[#54504A]">
                           Feet (ft)
                         </span>
                       </div>
 
                       <div>
-                        <span className="text-xs text-[#54504A] font-semibold block mb-2">
+                        <span className="text-[11px] sm:text-xs text-[#54504A] font-semibold block mb-1.5 sm:mb-2">
                           Popular Indian Plot Lengths:
                         </span>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
                           {[30, 40, 45, 50, 60, 70].map((d) => (
                             <button
                               key={d}
                               type="button"
                               onClick={() => setPlotDepth(d)}
-                              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition ${plotDepth === d
-                                ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-sm'
+                              className={`px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-bold border transition ${plotDepth === d
+                                ? 'bg-[#E76F2E] text-white border-[#E76F2E] shadow-xs'
                                 : 'bg-white text-[#292826] border-[#E7E0D7] hover:border-[#E76F2E] hover:bg-[#FFF6E8]'
                                 }`}
                             >
@@ -1106,7 +1101,7 @@ export default function NivaasAiStudio({
                         </div>
                       </div>
 
-                      <div className="p-3 bg-[#FFF6E8] rounded-xl border border-[#E76F2E]/20 flex items-center justify-between text-xs">
+                      <div className="p-2.5 sm:p-3 bg-[#FFF6E8] rounded-lg sm:rounded-xl border border-[#E76F2E]/20 flex items-center justify-between text-xs">
                         <span className="font-semibold text-[#54504A]">Total Plot Area:</span>
                         <span className="font-extrabold text-[#C65320]">
                           {rawPlotAreaSqFt} sq.ft (~{plotAreaSqYards} sq.yards)
@@ -1125,7 +1120,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Upload Plot Reference
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Upload Plot Survey Map or Photo
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1204,7 +1199,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Side Dimensions &amp; Access
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Enter Plot Side Dimensions
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1359,7 +1354,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: AI Smart Recommendations
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Smart Blueprint Setup for Your Plot
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1565,7 +1560,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Number of Floors
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         How many floors are you planning?
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1660,7 +1655,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Master Bedrooms
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Number of Master Bedrooms?
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1693,7 +1688,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Married Couples
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         How many Married Couples in the house?
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1726,7 +1721,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Kids &amp; Study
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         How many Children / Kids?
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1759,7 +1754,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Kids Room
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Need a Dedicated Kids Bedroom?
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1792,7 +1787,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Kitchen Floor
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Which Floor for Main Kitchen?
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1852,7 +1847,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Kitchen Style
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Kitchen Layout Style
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1899,7 +1894,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Pooja Mandir
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Pooja / Mandir Preference
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1946,7 +1941,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Balconies
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Balconies for Bedrooms?
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -1979,7 +1974,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Home Office / Study
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Need a Home Office / Study Space?
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -2012,7 +2007,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Parking Space
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Parking Requirements
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -2083,7 +2078,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Landscape &amp; Garden
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Garden or Courtyard Area?
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -2116,7 +2111,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Home Lift
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Provision for Home Elevator / Lift?
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -2149,7 +2144,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Bathroom Proportions
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Bathroom Size Preference
                       </h3>
                       <p className="text-xs sm:text-sm text-[#1F2937] font-medium mt-1">
@@ -2197,7 +2192,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Vastu Alignment
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Main Road Facing Direction
                       </h3>
                       <p className="text-xs sm:text-sm text-[#1F2937] font-medium mt-1">
@@ -2247,7 +2242,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: 3D Facade Style
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Choose 3D Front Facade Style
                       </h3>
                       <p className="text-xs sm:text-sm text-[#1F2937] font-medium mt-1">
@@ -2312,7 +2307,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step {step} of {totalWizardSteps}: Material &amp; Construction Grade
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Select Material Quality &amp; Budget Grade
                       </h3>
                       <p className="text-xs sm:text-sm text-[#1F2937] font-medium mt-1">
@@ -2417,7 +2412,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step 22 of {totalWizardSteps}: Site Geometry Review
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Asymmetric Boundary Alignment
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -2460,7 +2455,7 @@ export default function NivaasAiStudio({
                       <span className="text-xs font-bold uppercase tracking-wider text-[#E76F2E] bg-[#FFF6E8] px-2.5 py-1 rounded-md border border-[#E76F2E]/20">
                         Step 23 of {totalWizardSteps}: Final Specification Review
                       </span>
-                      <h3 className="font-display text-2xl sm:text-3xl font-bold mt-2 text-[#292826]">
+                      <h3 className="font-display text-lg sm:text-2xl lg:text-3xl font-bold mt-1 text-[#292826]">
                         Ready to Synthesize Your Custom Blueprint
                       </h3>
                       <p className="text-xs sm:text-sm text-[#54504A] mt-1">
@@ -3002,28 +2997,28 @@ export default function NivaasAiStudio({
                       </div>
                     </div>
 
-                    {/* Interactive 3D Render & 2D CAD Blueprint Display */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {/* 3D Photorealistic Exterior / Paywalled Teaser */}
+                    {/* Interactive 3D Render (Top) & 2D CAD Blueprint Display (Horizontally Below) */}
+                    <div className="flex flex-col gap-6">
+                      {/* 1. 3D Photorealistic Exterior / Paywalled Teaser (Shown on Top) */}
                       <div className="bg-white rounded-2xl border border-[#E7E0D7] overflow-hidden shadow-sm flex flex-col">
-                        <div className="p-3.5 border-b border-[#EEE9E3] flex items-center justify-between bg-[#FDFCF9]">
+                        <div className="p-4 border-b border-[#EEE9E3] flex items-center justify-between bg-[#FDFCF9]">
                           <div className="flex items-center gap-2">
                             <span className={`h-2.5 w-2.5 rounded-full ${is3DUnlocked ? 'bg-emerald-500' : 'bg-[#E76F2E]'}`} />
-                            <span className="font-black text-xs text-[#111827]">
+                            <span className="font-black text-xs sm:text-sm text-[#111827]">
                               {is3DUnlocked ? `3D Elevation & Walkthrough (${elevationStyle})` : '3D Elevation (Locked Preview)'}
                             </span>
                           </div>
                           {is3DUnlocked ? (
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                ✓ Pass Active · {creditsRemaining || 5} Credits
+                              <span className="text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                ✓ Pass Active · {creditsRemaining ?? 0} Credits
                               </span>
                               {is3DGenerated && (
-                                <div className="flex items-center gap-1 bg-[#EEE9E3] p-0.5 rounded-lg text-[10px] font-bold">
+                                <div className="flex items-center gap-1 bg-[#EEE9E3] p-0.5 rounded-lg text-[10px] sm:text-xs font-bold">
                                   <button
                                     type="button"
                                     onClick={() => setIsNightLighting(false)}
-                                    className={`px-2.5 py-0.5 rounded transition ${!isNightLighting ? 'bg-white text-black shadow-xs' : 'text-[#1F2937]'
+                                    className={`px-2.5 py-0.5 rounded transition cursor-pointer ${!isNightLighting ? 'bg-white text-black shadow-xs' : 'text-[#1F2937]'
                                       }`}
                                   >
                                     Daylight
@@ -3031,7 +3026,7 @@ export default function NivaasAiStudio({
                                   <button
                                     type="button"
                                     onClick={() => setIsNightLighting(true)}
-                                    className={`px-2.5 py-0.5 rounded transition ${isNightLighting ? 'bg-[#292826] text-white shadow-xs' : 'text-[#1F2937]'
+                                    className={`px-2.5 py-0.5 rounded transition cursor-pointer ${isNightLighting ? 'bg-[#292826] text-white shadow-xs' : 'text-[#1F2937]'
                                       }`}
                                   >
                                     Twilight
@@ -3040,7 +3035,7 @@ export default function NivaasAiStudio({
                               )}
                             </div>
                           ) : (
-                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">
+                            <span className="text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">
                               🔒 ₹299 Design Pass
                             </span>
                           )}
@@ -3048,7 +3043,7 @@ export default function NivaasAiStudio({
 
                         {/* If 3D is NOT unlocked: Show Watermarked Teaser Card with ₹299 Paywall */}
                         {!is3DUnlocked && (
-                          <div className="relative min-h-[340px] bg-slate-900 overflow-hidden group flex items-center justify-center p-4 sm:p-6">
+                          <div className="relative min-h-[340px] sm:min-h-[380px] bg-slate-900 overflow-hidden group flex items-center justify-center p-4 sm:p-8">
                             {/* Blurred Teaser Image Background */}
                             <img
                               src={getElevationImage()}
@@ -3057,37 +3052,37 @@ export default function NivaasAiStudio({
                             />
 
                             {/* Watermark Diagonal Banner */}
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none rotate-[-15deg] opacity-25">
-                              <span className="text-white font-black text-xl sm:text-2xl tracking-[0.2em] whitespace-nowrap uppercase border-y-2 border-white/40 py-2">
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none rotate-[-12deg] opacity-20">
+                              <span className="text-white font-black text-2xl sm:text-3xl tracking-[0.25em] whitespace-nowrap uppercase border-y-2 border-white/40 py-2.5">
                                 INDORE HOUSE MAKERS PREVIEW
                               </span>
                             </div>
 
                             {/* Paywall Overlay Card */}
-                            <div className="relative z-10 w-full max-w-sm bg-white/95 backdrop-blur-md p-5 rounded-2xl border border-[#E76F2E]/40 shadow-2xl text-center space-y-3">
-                              <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E76F2E] to-[#C94F36] text-white shadow-md font-bold text-xl mx-auto">
+                            <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-md p-6 sm:p-7 rounded-2xl border border-[#E7E0D7] shadow-2xl text-center space-y-3.5">
+                              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E76F2E] to-[#C94F36] text-white shadow-md font-bold text-xl mx-auto">
                                 🔒
                               </div>
                               <div>
-                                <h5 className="font-display font-black text-base sm:text-lg text-[#111827]">
+                                <h5 className="font-display font-black text-lg sm:text-xl text-[#111827]">
                                   Premium 3D Concept Model
                                 </h5>
-                                <p className="text-xs text-[#4B5563] mt-1 font-medium leading-relaxed">
+                                <p className="text-xs sm:text-sm text-[#4B5563] mt-1 font-medium leading-relaxed">
                                   Unlock 5 complete 3D design packages · Day &amp; Twilight renders · Floor-by-floor dollhouse views · Interactive walkthrough
                                 </p>
                               </div>
 
                               <div className="pt-1">
-                                <div className="inline-block px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-900 mb-2.5">
+                                <div className="inline-block px-3.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold text-amber-900 mb-3">
                                   ₹299 one-time · 30 Days Validity · 5 Credits
                                 </div>
                                 <button
                                   type="button"
                                   onClick={() => setShowPassModal(true)}
-                                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white font-black text-xs shadow-lg shadow-orange-500/20 transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                                  className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white font-black text-xs sm:text-sm shadow-lg shadow-orange-500/20 transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                                 >
                                   <span>Unlock 3D Designs (₹299)</span>
-                                  <Icons.ChevronRight size={14} />
+                                  <Icons.ChevronRight size={15} />
                                 </button>
                               </div>
                             </div>
@@ -3096,17 +3091,19 @@ export default function NivaasAiStudio({
 
                         {/* If 3D IS unlocked but not yet generated: Show 1-Credit Confirmation */}
                         {is3DUnlocked && !is3DGenerated && (
-                          <div className="aspect-[4/3] bg-[#FAF7F2] p-6 flex flex-col items-center justify-center text-center space-y-4">
-                            <div className="h-12 w-12 rounded-2xl bg-emerald-100 border border-emerald-300 text-emerald-700 flex items-center justify-center font-bold text-xl shadow-xs">
-                              ✨
-                            </div>
-                            <div>
-                              <h5 className="font-display font-extrabold text-lg text-black">
-                                3D Access Unlocked!
-                              </h5>
-                              <p className="text-xs text-[#4B5563] mt-1 font-medium max-w-xs mx-auto">
-                                Credits available: <strong className="text-emerald-700">{creditsRemaining || 5}</strong> · This generation will consume <strong className="text-black">1 credit</strong>.
-                              </p>
+                          <div className="min-h-[200px] bg-gradient-to-br from-[#FAF7F2] to-[#F5EFE6] p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+                            <div className="flex items-center gap-4">
+                              <div className="h-14 w-14 rounded-2xl bg-emerald-100 border border-emerald-300 text-emerald-700 flex items-center justify-center font-bold text-2xl shadow-xs shrink-0">
+                                ✨
+                              </div>
+                              <div>
+                                <h5 className="font-display font-extrabold text-lg sm:text-xl text-black">
+                                  3D Access Unlocked!
+                                </h5>
+                                <p className="text-xs sm:text-sm text-[#4B5563] mt-1 font-medium max-w-md">
+                                  Credits available: <strong className="text-emerald-700">{creditsRemaining ?? 0}</strong> · This generation will consume <strong className="text-black">1 credit</strong>.
+                                </p>
+                              </div>
                             </div>
                             <button
                               type="button"
@@ -3116,10 +3113,38 @@ export default function NivaasAiStudio({
                                 try {
                                   const authHeader: Record<string, string> = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
                                   
-                                  // 1. Authoritative Backend 3D Generation & Ledger Deduction
+                                  // 1. Build the single project payload (persisted with the generation job)
+                                  const plotDimensionStr = isRegular ? `${plotWidth}×${plotDepth} ft` : `${rawPlotAreaSqFt} sq.ft`
+                                  const projectPayload = {
+                                    title: `${plotDimensionStr} ${plotDirection} Facing ${floors.split(' ')[0]} Residence`,
+                                    plotSize: plotDimensionStr,
+                                    dimensions: plotDimensionStr,
+                                    plotWidth: isRegular ? plotWidth : Math.round(Math.sqrt(rawPlotAreaSqFt)),
+                                    plotDepth: isRegular ? plotDepth : Math.round(Math.sqrt(rawPlotAreaSqFt)),
+                                    rawPlotAreaSqFt,
+                                    plotAreaSqFt: rawPlotAreaSqFt,
+                                    plotAreaSqYards,
+                                    facing: `${plotDirection} Facing`,
+                                    bhk: `${suggestedBHK} BHK`,
+                                    floors,
+                                    elevationStyle,
+                                    materialGrade,
+                                    builtUpArea,
+                                    carpetArea,
+                                    estimatedCostLakhs,
+                                    vastuScore: 98,
+                                    leadName: user?.name || 'Indore Client',
+                                    leadCity: (user as any)?.city || 'Indore, MP',
+                                    image: getElevationImage(),
+                                    has3D: true,
+                                    is3DUnlocked: true,
+                                    status: 'COMPLETED',
+                                  }
+
+                                  // 2. Authoritative Backend 3D Generation & Ledger Deduction
                                   if (accessToken) {
                                     try {
-                                      const genRes = await startPaid3DGeneration(`wiz_studio_${Date.now()}`, authHeader)
+                                      const genRes = await startPaid3DGeneration(`wiz_studio_${Date.now()}`, authHeader, { wizardData: projectPayload })
                                       if (genRes?.creditsRemaining !== undefined) {
                                         setCreditsRemaining(genRes.creditsRemaining)
                                         notifyDataChanged('generations')
@@ -3128,43 +3153,6 @@ export default function NivaasAiStudio({
                                     } catch (err: any) {
                                       console.warn('Backend 3D generation notice:', err?.message)
                                     }
-                                  }
-
-                                  // 2. Persist Project with explicit dimensions & 3D attributes
-                                  if (accessToken) {
-                                    const plotDimensionStr = isRegular ? `${plotWidth}×${plotDepth} ft` : `${rawPlotAreaSqFt} sq.ft`
-                                    const projectPayload = {
-                                      title: `${plotDimensionStr} ${plotDirection} Facing ${floors.split(' ')[0]} Residence`,
-                                      plotSize: plotDimensionStr,
-                                      dimensions: plotDimensionStr,
-                                      plotWidth: isRegular ? plotWidth : Math.round(Math.sqrt(rawPlotAreaSqFt)),
-                                      plotDepth: isRegular ? plotDepth : Math.round(Math.sqrt(rawPlotAreaSqFt)),
-                                      rawPlotAreaSqFt,
-                                      plotAreaSqFt: rawPlotAreaSqFt,
-                                      plotAreaSqYards,
-                                      facing: `${plotDirection} Facing`,
-                                      bhk: `${suggestedBHK} BHK`,
-                                      floors,
-                                      elevationStyle,
-                                      materialGrade,
-                                      builtUpArea,
-                                      carpetArea,
-                                      estimatedCostLakhs,
-                                      vastuScore: 98,
-                                      leadName: user?.name || 'Indore Client',
-                                      leadCity: (user as any)?.city || 'Indore, MP',
-                                      image: getElevationImage(),
-                                      has3D: true,
-                                      is3DUnlocked: true,
-                                      status: 'COMPLETED',
-                                    }
-                                    await createUserProject(
-                                      {
-                                        jobType: 'THREE_D_GENERATION',
-                                        inputPayload: projectPayload,
-                                      },
-                                      authHeader
-                                    ).catch(() => null)
                                   }
 
                                   // 3. Refresh user balances across the app
@@ -3178,17 +3166,17 @@ export default function NivaasAiStudio({
                                   setGenerating3D(false)
                                 }
                               }}
-                              className="py-3 px-6 rounded-xl bg-[#E76F2E] hover:bg-[#C65320] text-white font-extrabold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                              className="py-3.5 px-6 rounded-xl bg-[#E76F2E] hover:bg-[#C65320] text-white font-extrabold text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shrink-0"
                             >
                               {generating3D ? (
                                 <>
-                                  <span className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                  <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
                                   <span>Synthesizing 3D Walkthrough &amp; Saving...</span>
                                 </>
                               ) : (
                                 <>
                                   <span>Use 1 Credit &amp; Generate 3D Design</span>
-                                  <Icons.Sparkles size={14} />
+                                  <Icons.Sparkles size={15} />
                                 </>
                               )}
                             </button>
@@ -3197,31 +3185,31 @@ export default function NivaasAiStudio({
 
                         {/* If 3D IS unlocked & generated: Show full photorealistic render with CTAs */}
                         {is3DUnlocked && is3DGenerated && (
-                          <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden group">
+                          <div className="relative w-full h-[360px] sm:h-[460px] md:h-[520px] bg-gray-100 overflow-hidden group">
                             <img
                               src={getElevationImage()}
                               alt="3D Elevation Render"
-                              className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
+                              className="w-full h-full object-cover object-center transition duration-700 group-hover:scale-105"
                             />
-                            <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded-lg text-white text-[10.5px] font-bold border border-white/20 shadow-md flex items-center gap-1.5">
-                              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md px-3.5 py-1.5 rounded-xl text-white text-xs font-bold border border-white/20 shadow-md flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                               <span>Full 3D Elevation &amp; Walkthrough Unlocked</span>
                             </div>
-                            <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                            <div className="absolute bottom-4 right-4 flex items-center gap-2">
                               <button
                                 type="button"
                                 onClick={() => window.open(getElevationImage(), '_blank')}
-                                className="px-3 py-1.5 rounded-lg bg-black/80 hover:bg-black text-white text-[11px] font-bold backdrop-blur-md border border-white/20 shadow-md transition flex items-center gap-1 cursor-pointer"
+                                className="px-3.5 py-2 rounded-xl bg-black/80 hover:bg-black text-white text-xs font-bold backdrop-blur-md border border-white/20 shadow-md transition flex items-center gap-1.5 cursor-pointer"
                               >
-                                <Icons.Eye size={12} />
-                                <span>View HD</span>
+                                <Icons.Eye size={13} />
+                                <span>View Full HD</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={handleSharePlan}
-                                className="px-3 py-1.5 rounded-lg bg-white/95 hover:bg-white text-black text-[11px] font-bold backdrop-blur-md shadow-md transition flex items-center gap-1 cursor-pointer"
+                                className="px-3.5 py-2 rounded-xl bg-white/95 hover:bg-white text-black text-xs font-bold backdrop-blur-md shadow-md transition flex items-center gap-1.5 cursor-pointer"
                               >
-                                <Icons.Share size={12} />
+                                <Icons.Share size={13} />
                                 <span>{copiedLink ? 'Copied' : 'Share'}</span>
                               </button>
                             </div>
@@ -3229,20 +3217,20 @@ export default function NivaasAiStudio({
                         )}
                       </div>
 
-                      {/* Conceptual 2D Floor Plan Preview (High-Contrast Blueprint) */}
+                      {/* 2. Conceptual 2D Floor Plan Preview (High-Contrast Blueprint - Placed Underneath Horizontally) */}
                       <div className="bg-white rounded-2xl border border-[#E7E0D7] overflow-hidden shadow-sm flex flex-col">
-                        <div className="p-3.5 border-b border-[#EEE9E3] flex items-center justify-between bg-[#FDFCF9]">
-                          <div className="flex items-center gap-2">
-                            <Icons.Blueprint size={15} className="text-[#E76F2E]" />
-                            <span className="font-bold text-xs text-black">
-                              Conceptual 2D Floor Plan Preview
+                        <div className="p-4 border-b border-[#EEE9E3] flex items-center justify-between bg-[#FDFCF9]">
+                          <div className="flex items-center gap-2.5">
+                            <Icons.Blueprint size={16} className="text-[#E76F2E]" />
+                            <span className="font-bold text-xs sm:text-sm text-black">
+                              Conceptual 2D Floor Plan Blueprint (Ground &amp; First Floor Layout)
                             </span>
                           </div>
-                          <div className="flex items-center gap-1 bg-[#EEE9E3] p-0.5 rounded-lg text-[10px] font-bold">
+                          <div className="flex items-center gap-1 bg-[#EEE9E3] p-1 rounded-xl text-xs font-bold">
                             <button
                               type="button"
                               onClick={() => setActiveFloorView('ground')}
-                              className={`px-2.5 py-0.5 rounded transition ${activeFloorView === 'ground' ? 'bg-white text-black shadow-xs' : 'text-[#1F2937]'
+                              className={`px-3 py-1 rounded-lg transition cursor-pointer ${activeFloorView === 'ground' ? 'bg-white text-black shadow-xs' : 'text-[#1F2937]'
                                 }`}
                             >
                               Ground Plan
@@ -3250,7 +3238,7 @@ export default function NivaasAiStudio({
                             <button
                               type="button"
                               onClick={() => setActiveFloorView('first')}
-                              className={`px-2.5 py-0.5 rounded transition ${activeFloorView === 'first' ? 'bg-white text-black shadow-xs' : 'text-[#1F2937]'
+                              className={`px-3 py-1 rounded-lg transition cursor-pointer ${activeFloorView === 'first' ? 'bg-white text-black shadow-xs' : 'text-[#1F2937]'
                                 }`}
                             >
                               First Floor
@@ -3259,9 +3247,9 @@ export default function NivaasAiStudio({
                         </div>
 
                         {/* Architectural Vector Blueprint Canvas */}
-                        <div className="p-3 bg-[#0A1628] flex-1 flex flex-col justify-between text-white font-mono text-xs select-none relative overflow-hidden min-h-[360px]">
+                        <div className="p-4 sm:p-6 bg-[#0A1628] flex-1 flex flex-col justify-between text-white font-mono text-xs select-none relative overflow-hidden min-h-[420px]">
                           {/* Top Header */}
-                          <div className="flex justify-between items-center text-[10px] font-bold border-b border-sky-500/30 pb-1.5">
+                          <div className="flex justify-between items-center text-[11px] font-bold border-b border-sky-500/30 pb-2">
                             <span className="text-sky-300">
                               {activeFloorView === 'ground' ? 'GROUND FLOOR LAYOUT (SCALE 1:100)' : 'FIRST FLOOR LAYOUT (SCALE 1:100)'}
                             </span>
@@ -3269,8 +3257,8 @@ export default function NivaasAiStudio({
                           </div>
 
                           {/* Architectural SVG Floor Plan Drawing */}
-                          <div className="my-2 flex-1 flex items-center justify-center">
-                            <svg viewBox="0 0 400 280" className="w-full h-full max-h-[260px] drop-shadow-md">
+                          <div className="my-4 flex-1 flex items-center justify-center">
+                            <svg viewBox="0 0 400 280" className="w-full h-full max-w-3xl max-h-[360px] sm:max-h-[420px] drop-shadow-md">
                               {/* Background Blueprint Grid */}
                               <defs>
                                 <pattern id="blueprintGrid" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -3447,31 +3435,31 @@ export default function NivaasAiStudio({
 
             {/* Bottom Action Footer Navigation Bar */}
             {step <= totalWizardSteps && (
-              <footer className="shrink-0 bg-white border-t border-[#EEE9E3] px-6 py-3.5 flex items-center justify-between">
+              <footer className="shrink-0 bg-white border-t border-[#EEE9E3] px-3 sm:px-6 py-2 sm:py-3.5 flex items-center justify-between gap-2 pb-[max(0.6rem,env(safe-area-inset-bottom))]">
                 <button
                   type="button"
                   onClick={handleBack}
                   disabled={step === 1}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${step === 1
+                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-bold border transition flex items-center gap-1 sm:gap-1.5 cursor-pointer ${step === 1
                     ? 'opacity-40 border-[#E7E0D7] text-[#54504A] cursor-not-allowed'
                     : 'border-[#E7E0D7] text-[#292826] hover:border-[#292826] bg-white'
                     }`}
                 >
-                  <Icons.ChevronLeft size={16} />
+                  <Icons.ChevronLeft size={15} />
                   <span>Back</span>
                 </button>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <span className="text-[11px] font-bold text-[#54504A] hidden sm:inline-block">
                     {step === totalWizardSteps ? 'Ready to Synthesize' : `Next: Step ${step + 1} of ${totalWizardSteps}`}
                   </span>
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="px-7 py-2.5 rounded-xl bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] transition shadow-md active:scale-95 flex items-center gap-1.5"
+                    className="px-4.5 sm:px-7 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] transition shadow-xs active:scale-95 flex items-center gap-1 sm:gap-1.5 cursor-pointer"
                   >
                     <span>{step === totalWizardSteps ? 'Generate AI Plan ✨' : 'Next'}</span>
-                    <Icons.ChevronRight size={16} />
+                    <Icons.ChevronRight size={15} />
                   </button>
                 </div>
               </footer>

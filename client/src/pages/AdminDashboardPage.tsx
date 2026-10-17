@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../lib/authContext'
 import { Icons } from '../components/Icons'
 import {
@@ -87,10 +87,33 @@ export type AdminTab =
   | 'blogs'
   | 'audit'
   | 'settings'
+  | 'profile'
 
 export default function AdminDashboardPage() {
   const { user, getAuthHeaders, isAuthenticated, isLoading } = useAuth()
-  const [activeTab, setActiveTab] = useState<AdminTab>('overview')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab') as AdminTab | null
+  const [activeTab, setActiveTabState] = useState<AdminTab>(
+    tabParam && ['overview', 'passes', 'users', 'payments', 'generations', 'leads', 'credits', 'audit', 'settings', 'profile'].includes(tabParam)
+      ? tabParam
+      : 'overview'
+  )
+
+  const setActiveTab = useCallback((tab: AdminTab) => {
+    setActiveTabState(tab)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', tab)
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
+
+  useEffect(() => {
+    const tab = searchParams.get('tab') as AdminTab | null
+    if (tab && ['overview', 'passes', 'users', 'payments', 'generations', 'leads', 'credits', 'audit', 'settings', 'blogs'].includes(tab)) {
+      setActiveTabState(tab)
+    }
+  }, [searchParams])
 
   const [loading, setLoading] = useState(true)
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null)
@@ -165,6 +188,8 @@ export default function AdminDashboardPage() {
     }
   }
 
+  const lastAdminFetchRef = useRef(0)
+
   useEffect(() => {
     if (isLoading) return
     if (!isAuthenticated || user?.role !== 'ADMIN') {
@@ -175,6 +200,7 @@ export default function AdminDashboardPage() {
     const init = async () => {
       setLoading(true)
       await Promise.all([fetchOverviewAndLeads(), fetchUsers(1, '')])
+      lastAdminFetchRef.current = Date.now()
       setLoading(false)
     }
     init()
@@ -194,6 +220,8 @@ export default function AdminDashboardPage() {
     if (!isAuthenticated || user?.role !== 'ADMIN') return
 
     const handleFocus = () => {
+      if (Date.now() - lastAdminFetchRef.current < 15000) return
+      lastAdminFetchRef.current = Date.now()
       fetchOverviewAndLeads().catch(() => null)
       if (activeTab === 'users' || activeTab === 'passes') {
         fetchUsers(userPage, userSearch).catch(() => null)
@@ -308,41 +336,26 @@ export default function AdminDashboardPage() {
   if (!isAuthenticated || user?.role !== 'ADMIN') {
     return (
       <div className="min-h-screen bg-[#FDFCF9] flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-lg border border-[#E7E0D7] p-6 text-center space-y-4">
-          <div className="w-12 h-12 rounded-md bg-[#FFF6E8] text-[#C94F36] flex items-center justify-center mx-auto border border-[#E7E0D7]">
-            <Icons.Shield size={24} />
-          </div>
-          <h2 className="text-lg font-bold text-[#292826]">Administrator Access Required</h2>
-          <p className="text-xs text-[#74706A] leading-relaxed">
-            This area is restricted to the platform administrator. Please sign in with administrator credentials.
-          </p>
-          <div className="pt-2 flex flex-col gap-2">
-            <Link
-              to="/login"
-              className="w-full py-2.5 px-4 rounded-md bg-[#292826] hover:bg-black text-white text-xs font-semibold transition"
-            >
-              Sign In as Administrator
-            </Link>
-            <Link
-              to="/"
-              className="w-full py-2.5 px-4 rounded-md border border-[#E7E0D7] text-[#74706A] hover:text-[#292826] text-xs font-medium transition"
-            >
-              Return to Homepage
-            </Link>
-          </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-6 h-6 border-2 border-[#C94F36] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-[#74706A]">Verifying administrator credentials...</span>
         </div>
       </div>
     )
   }
 
-  const activePassUsers = users.filter(
+  // Filter out system administrator accounts so they are never listed or counted as customer pass holders
+  const customerUsers = users.filter(
+    (u) => u.role !== 'ADMIN' && u.email?.toLowerCase() !== 'admin@ihm.com'
+  )
+  const activePassUsers = customerUsers.filter(
     (u) =>
       u.activePass?.status === 'ACTIVE' &&
       (!u.activePass.expiresAt || new Date(u.activePass.expiresAt) > new Date())
   )
-  const inactivePassUsers = users.filter((u) => !activePassUsers.some((active) => active.id === u.id))
+  const inactivePassUsers = customerUsers.filter((u) => !activePassUsers.some((active) => active.id === u.id))
   const activeSubscribedCount = activePassUsers.length
-  const totalUsersCount = users.length
+  const totalUsersCount = customerUsers.length
   const inactiveSubscribedCount = inactivePassUsers.length
 
   const sidebarItems = [
@@ -365,7 +378,7 @@ export default function AdminDashboardPage() {
       id: 'users',
       label: 'Users',
       icon: <Icons.Users size={16} />,
-      badge: userTotal || metrics?.totalUsers || 0,
+      badge: customerUsers.length,
       onClick: () => setActiveTab('users'),
       active: activeTab === 'users',
     },
@@ -420,12 +433,35 @@ export default function AdminDashboardPage() {
       onClick: () => setActiveTab('settings'),
       active: activeTab === 'settings',
     },
+    {
+      id: 'profile',
+      label: 'Admin Profile',
+      icon: <Icons.User size={16} />,
+      onClick: () => setActiveTab('profile'),
+      active: activeTab === 'profile',
+    },
   ]
+
+  const adminSidebarFooter = (
+    <div className="space-y-2 text-xs">
+      <div className="text-[11px] font-semibold text-[#74706A] uppercase tracking-wider">Quick Actions</div>
+      <button
+        type="button"
+        onClick={() => fetchOverviewAndLeads()}
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-md bg-[#FFF6E8] text-[#C94F36] hover:bg-[#ffeecf] font-semibold transition text-left border border-[#E7E0D7] cursor-pointer"
+      >
+        <Icons.RefreshCw size={14} />
+        <span>Refresh Metrics</span>
+      </button>
+    </div>
+  )
 
   return (
     <DashboardLayout
-      title="Indore House Makers — Admin"
+      title="Indore House Makers"
       sidebarItems={sidebarItems}
+      sidebarFooter={adminSidebarFooter}
+      onProfileClick={() => setActiveTab('profile')}
     >
       {actionMessage && (
         <div
@@ -464,9 +500,9 @@ export default function AdminDashboardPage() {
           {/* Primary 4 Business Metrics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
-              label="Registered Users"
-              value={metrics?.totalUsers ?? users.length}
-              subtext="Platform accounts"
+              label="Registered Customers"
+              value={metrics?.totalCustomers ?? customerUsers.length}
+              subtext="Customer accounts"
               icon={<Icons.Users size={18} />}
             />
             <MetricCard
@@ -632,7 +668,7 @@ export default function AdminDashboardPage() {
             />
             <MetricCard
               label="3D Credits in Circulation"
-              value={`${users.reduce((acc, u) => acc + (u.creditBalance || 0), 0)} Credits`}
+              value={`${customerUsers.reduce((acc, u) => acc + (u.creditBalance || 0), 0)} Credits`}
               subtext="Available member 3D balances"
               icon={<Icons.Coins size={18} />}
             />
@@ -644,7 +680,7 @@ export default function AdminDashboardPage() {
                 ? activePassUsers
                 : passFilter === 'inactive'
                 ? inactivePassUsers
-                : users
+                : customerUsers
             }
             keyExtractor={(u) => u.id}
             columns={[
@@ -741,7 +777,7 @@ export default function AdminDashboardPage() {
         <div className="space-y-6">
           <PageHeader
             title="User Directory"
-            subtitle={`Total ${userTotal} registered users in PostgreSQL database.`}
+            subtitle={`Total ${userTotal || customerUsers.length} registered customers in database.`}
             actions={
               <div className="w-64">
                 <input
@@ -756,7 +792,7 @@ export default function AdminDashboardPage() {
           />
 
           <DataTable<AdminUserItem>
-            data={users}
+            data={customerUsers}
             keyExtractor={(u) => u.id}
             columns={[
               {
@@ -1506,6 +1542,90 @@ export default function AdminDashboardPage() {
                 <div className="flex justify-between py-1">
                   <span className="text-[#74706A]">Auto-Grant Credits:</span>
                   <span className="font-semibold text-[#C94F36]">5 AI 3D Credits on Checkout</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 11: ADMINISTRATOR PROFILE */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'profile' && (
+        <div className="space-y-6">
+          <PageHeader
+            title="Administrator Profile"
+            subtitle="Manage your system administrator credentials, security access, and contact details."
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Admin Profile Card */}
+            <div className="bg-white rounded-2xl border border-[#E7E0D7] p-6 shadow-xs">
+              <div className="flex items-center gap-3.5 pb-4 mb-4 border-b border-[#EEE9E3]">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E76F2E] to-[#C94F36] text-white flex items-center justify-center text-lg font-black shrink-0 shadow-sm">
+                  {user?.name?.[0]?.toUpperCase() || 'A'}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-black text-[#292826] truncate">{user?.name || 'IHM Administrator'}</h3>
+                  <p className="text-xs text-[#74706A] truncate">{user?.email || 'admin@ihm.com'}</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-200">
+                    SYSTEM ADMINISTRATOR
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#292826] mb-1">Administrator Name</label>
+                  <input
+                    type="text"
+                    value={user?.name || 'IHM Administrator'}
+                    disabled
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] text-[#292826] font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#292826] mb-1">Admin Email Address</label>
+                  <input
+                    type="email"
+                    value={user?.email || 'admin@ihm.com'}
+                    disabled
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] text-[#74706A] cursor-not-allowed"
+                  />
+                  <p className="text-[10px] text-[#74706A] mt-1">Primary root system administrator email.</p>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#292826] mb-1">Portal Isolation Status</label>
+                  <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-medium">
+                    <Icons.Shield size={16} className="text-emerald-700 shrink-0" />
+                    <span>Protected: Admin portal is isolated to /admin. Direct client logins are rejected.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Security & Governance Card */}
+            <div className="bg-white rounded-2xl border border-[#E7E0D7] p-6 shadow-xs space-y-4">
+              <h3 className="text-sm font-black text-[#292826] pb-3 border-b border-[#EEE9E3]">
+                Authentication &amp; Permissions
+              </h3>
+              <div className="space-y-3 text-xs">
+                <div className="flex justify-between py-2 border-b border-[#F0EBE6]">
+                  <span className="text-[#74706A]">Role Level:</span>
+                  <span className="font-bold text-rose-700">SUPER ADMIN</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-[#F0EBE6]">
+                  <span className="text-[#74706A]">Database Access:</span>
+                  <span className="font-semibold text-[#292826]">PostgreSQL Direct Read / Write</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-[#F0EBE6]">
+                  <span className="text-[#74706A]">Credit Ledger Authority:</span>
+                  <span className="font-semibold text-emerald-700">Can Issue &amp; Revoke Credits</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-[#74706A]">Design Pass Authority:</span>
+                  <span className="font-semibold text-emerald-700">Can Activate &amp; Cancel Customer Passes</span>
                 </div>
               </div>
             </div>

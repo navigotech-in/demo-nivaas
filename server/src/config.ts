@@ -1,5 +1,14 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+// Automatically load .env if available
+try {
+  const envPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.env')
+  if (fs.existsSync(envPath) && typeof process.loadEnvFile === 'function') {
+    process.loadEnvFile(envPath)
+  }
+} catch {}
 
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -35,6 +44,22 @@ export const config = {
   cors: {
     origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : true,
     credentials: true,
+  },
+
+  // OTP & Communications Configuration
+  otp: {
+    twilio: {
+      accountSid: process.env.TWILIO_ACCOUNT_SID || '',
+      authToken: process.env.TWILIO_AUTH_TOKEN || '',
+      phoneNumber: process.env.TWILIO_PHONE_NUMBER || '',
+      verifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID || '',
+    },
+    email: {
+      user: process.env.EMAIL_USER || '',
+      pass: process.env.NODEPASS || '',
+    },
+    expiryMinutes: 5,
+    cooldownSeconds: 60,
   },
 
   // Client Assets Path

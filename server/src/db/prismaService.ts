@@ -662,53 +662,58 @@ export class PrismaDatabaseService {
   }
 
   public async getUserProjects(userId: string) {
-    const rawJobs = await prisma.generationJob.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    })
+    try {
+      const rawJobs = await prisma.generationJob.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      })
 
-    // Group jobs by Project Title so that 2D floor plan and 3D elevation belong to the SAME project
-    const projectMap = new Map<string, typeof rawJobs[0]>()
+      // Group jobs by Project Title so that 2D floor plan and 3D elevation belong to the SAME project
+      const projectMap = new Map<string, typeof rawJobs[0]>()
 
-    for (const job of rawJobs) {
-      const payload: any = job.inputPayload || {}
-      const resPayload: any = job.resultPayload || {}
-      const title = payload.title || resPayload.title || `Custom Project ${job.id}`
+      for (const job of rawJobs) {
+        const payload: any = job.inputPayload || {}
+        const resPayload: any = job.resultPayload || {}
+        const title = payload.title || resPayload.title || `Custom Project ${job.id}`
 
-      if (!projectMap.has(title)) {
-        projectMap.set(title, { ...job })
-      } else {
-        const existing = projectMap.get(title)!
-        const existingPayload: any = existing.inputPayload || {}
+        if (!projectMap.has(title)) {
+          projectMap.set(title, { ...job })
+        } else {
+          const existing = projectMap.get(title)!
+          const existingPayload: any = existing.inputPayload || {}
 
-        // Merge payloads so 2D layout + 3D elevation reside in 1 single project
-        const mergedPayload = {
-          ...existingPayload,
-          ...payload,
-          is3DUnlocked: Boolean(existingPayload.is3DUnlocked || payload.is3DUnlocked || job.jobType === 'THREE_D_GENERATION'),
-          has3D: Boolean(existingPayload.has3D || payload.has3D || existingPayload.image || payload.image || job.jobType === 'THREE_D_GENERATION'),
-          image: payload.image || existingPayload.image,
+          // Merge payloads so 2D layout + 3D elevation reside in 1 single project
+          const mergedPayload = {
+            ...existingPayload,
+            ...payload,
+            is3DUnlocked: Boolean(existingPayload.is3DUnlocked || payload.is3DUnlocked || job.jobType === 'THREE_D_GENERATION'),
+            has3D: Boolean(existingPayload.has3D || payload.has3D || existingPayload.image || payload.image || job.jobType === 'THREE_D_GENERATION'),
+            image: payload.image || existingPayload.image,
+          }
+
+          const isFullPackage =
+            existing.jobType === 'THREE_D_GENERATION' ||
+            job.jobType === 'THREE_D_GENERATION' ||
+            existing.jobType === 'FULL_2D_3D_PLAN' ||
+            mergedPayload.has3D
+
+          projectMap.set(title, {
+            ...existing,
+            jobType: isFullPackage ? 'FULL_2D_3D_PLAN' : existing.jobType,
+            inputPayload: mergedPayload,
+            resultPayload: {
+              ...((existing.resultPayload as any) || {}),
+              ...(resPayload || {}),
+            },
+          })
         }
-
-        const isFullPackage =
-          existing.jobType === 'THREE_D_GENERATION' ||
-          job.jobType === 'THREE_D_GENERATION' ||
-          existing.jobType === 'FULL_2D_3D_PLAN' ||
-          mergedPayload.has3D
-
-        projectMap.set(title, {
-          ...existing,
-          jobType: isFullPackage ? 'FULL_2D_3D_PLAN' : existing.jobType,
-          inputPayload: mergedPayload,
-          resultPayload: {
-            ...((existing.resultPayload as any) || {}),
-            ...(resPayload || {}),
-          },
-        })
       }
-    }
 
-    return Array.from(projectMap.values())
+      return Array.from(projectMap.values())
+    } catch {
+      // In-memory fallback
+      return Array.from(db.generationJobs.values()).filter((j) => j.userId === userId)
+    }
   }
 
   public async createUserProject(userId: string, data: {
@@ -717,65 +722,86 @@ export class PrismaDatabaseService {
   }) {
     const title = (data.inputPayload.title as string) || 'Custom Floor Plan'
 
-    // Look for existing project with same title to merge 2D & 3D into 1 single project
-    const allUserJobs = await prisma.generationJob.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    })
+    try {
+      // Look for existing project with same title to merge 2D & 3D into 1 single project
+      const allUserJobs = await prisma.generationJob.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      })
 
-    const existing = allUserJobs.find((j) => {
-      const p: any = j.inputPayload || {}
-      const r: any = j.resultPayload || {}
-      return p.title === title || r.title === title
-    })
+      const existing = allUserJobs.find((j) => {
+        const p: any = j.inputPayload || {}
+        const r: any = j.resultPayload || {}
+        return p.title === title || r.title === title
+      })
 
-    if (existing) {
-      const existingPayload: any = existing.inputPayload || {}
-      const is3D =
-        data.jobType === 'THREE_D_GENERATION' ||
-        Boolean(data.inputPayload.is3DUnlocked) ||
-        Boolean(data.inputPayload.image)
+      if (existing) {
+        const existingPayload: any = existing.inputPayload || {}
+        const is3D =
+          data.jobType === 'THREE_D_GENERATION' ||
+          Boolean(data.inputPayload.is3DUnlocked) ||
+          Boolean(data.inputPayload.image)
 
-      const mergedPayload = {
-        ...existingPayload,
-        ...data.inputPayload,
-        is3DUnlocked: Boolean(existingPayload.is3DUnlocked || is3D),
-        has3D: Boolean(existingPayload.has3D || is3D),
-        image: data.inputPayload.image || existingPayload.image,
+        const mergedPayload = {
+          ...existingPayload,
+          ...data.inputPayload,
+          is3DUnlocked: Boolean(existingPayload.is3DUnlocked || is3D),
+          has3D: Boolean(existingPayload.has3D || is3D),
+          image: data.inputPayload.image || existingPayload.image,
+        }
+
+        return await prisma.generationJob.update({
+          where: { id: existing.id },
+          data: {
+            jobType: is3D || existing.jobType === 'THREE_D_GENERATION' ? 'FULL_2D_3D_PLAN' : existing.jobType,
+            status: 'COMPLETED',
+            inputPayload: JSON.parse(JSON.stringify(mergedPayload)),
+            resultPayload: {
+              ...((existing.resultPayload as any) || {}),
+              title,
+              plotSize: (data.inputPayload.plotSize as string) || existingPayload.plotSize || '30x50 ft',
+              facing: (data.inputPayload.facing as string) || existingPayload.facing || 'East',
+              bhk: (data.inputPayload.bhk as string) || existingPayload.bhk || '3 BHK',
+            },
+          },
+        })
       }
 
-      return await prisma.generationJob.update({
-        where: { id: existing.id },
+      return await prisma.generationJob.create({
         data: {
-          jobType: is3D || existing.jobType === 'THREE_D_GENERATION' ? 'FULL_2D_3D_PLAN' : existing.jobType,
+          id: 'job_' + crypto.randomBytes(8).toString('hex'),
+          userId,
+          jobType: data.jobType || '2D_FLOOR_PLAN',
           status: 'COMPLETED',
-          inputPayload: JSON.parse(JSON.stringify(mergedPayload)),
+          inputPayload: JSON.parse(JSON.stringify(data.inputPayload)),
           resultPayload: {
-            ...((existing.resultPayload as any) || {}),
             title,
-            plotSize: (data.inputPayload.plotSize as string) || existingPayload.plotSize || '30x50 ft',
-            facing: (data.inputPayload.facing as string) || existingPayload.facing || 'East',
-            bhk: (data.inputPayload.bhk as string) || existingPayload.bhk || '3 BHK',
+            plotSize: (data.inputPayload.plotSize as string) || '30x50 ft',
+            facing: (data.inputPayload.facing as string) || 'East',
+            bhk: (data.inputPayload.bhk as string) || '3 BHK',
           },
         },
       })
-    }
-
-    return await prisma.generationJob.create({
-      data: {
+    } catch {
+      // In-memory fallback
+      const inMemJob: any = {
         id: 'job_' + crypto.randomBytes(8).toString('hex'),
         userId,
         jobType: data.jobType || '2D_FLOOR_PLAN',
         status: 'COMPLETED',
-        inputPayload: JSON.parse(JSON.stringify(data.inputPayload)),
+        inputPayload: data.inputPayload,
         resultPayload: {
           title,
           plotSize: (data.inputPayload.plotSize as string) || '30x50 ft',
           facing: (data.inputPayload.facing as string) || 'East',
           bhk: (data.inputPayload.bhk as string) || '3 BHK',
         },
-      },
-    })
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      db.generationJobs.set(inMemJob.id, inMemJob)
+      return inMemJob
+    }
   }
 
   public async getUserSessions(userId: string) {

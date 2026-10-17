@@ -1,13 +1,36 @@
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import twilio from 'twilio'
 import { config } from '../config.js'
 import { db } from '../db/store.js'
 import { prisma } from '../db/prisma.js'
 import { AccessTokenPayload, AuthSuccessData, UserSummary } from '../types/auth.js'
 import { RefreshSession, User } from '../types/models.js'
+import { emailService } from './emailService.js'
+
+interface PasswordResetRecord {
+  identifier: string
+  code: string
+  codeHash: string
+  expiresAt: number
+  attempts: number
+}
 
 export class AuthService {
+  private passwordResetStore = new Map<string, PasswordResetRecord>()
+  private twilioClient: twilio.Twilio | null = null
+
+  constructor() {
+    if (config.otp.twilio.accountSid && config.otp.twilio.authToken) {
+      try {
+        this.twilioClient = twilio(config.otp.twilio.accountSid, config.otp.twilio.authToken)
+      } catch (err: any) {
+        console.warn('[AuthService] Failed to initialize Twilio client:', err.message)
+      }
+    }
+  }
+
   // Hash token for secure storage
   private hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex')
@@ -196,6 +219,7 @@ export class AuthService {
   public async login(params: {
     identifier: string // email or phone
     password: string
+    portal?: 'admin' | 'client'
     ipAddress: string
     userAgent: string
   }): Promise<AuthSuccessData & { rawRefreshToken: string }> {
@@ -256,6 +280,34 @@ export class AuthService {
         metadata: { reason: 'Password mismatch', identifier: params.identifier },
       })
       throw new Error('INVALID_CREDENTIALS')
+    }
+
+    // Portal isolation enforcement:
+    // Admin can ONLY login from /admin portal. Regular users CANNOT login from /admin.
+    if (params.portal === 'admin' && foundUser.role !== 'ADMIN') {
+      db.logAudit({
+        actorRole: foundUser.role,
+        action: 'auth.login_denied_admin_portal_only',
+        entityType: 'User',
+        entityId: foundUser.id,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+        metadata: { reason: 'Non-admin user attempted login via admin portal', identifier: params.identifier },
+      })
+      throw new Error('ADMIN_PORTAL_ONLY')
+    }
+
+    if (params.portal === 'client' && foundUser.role === 'ADMIN') {
+      db.logAudit({
+        actorRole: foundUser.role,
+        action: 'auth.login_denied_admin_on_client_portal',
+        entityType: 'User',
+        entityId: foundUser.id,
+        ipAddress: params.ipAddress,
+        userAgent: params.userAgent,
+        metadata: { reason: 'Admin user attempted login via client portal', identifier: params.identifier },
+      })
+      throw new Error('CLIENT_PORTAL_ONLY')
     }
 
     const { rawRefreshToken, session } = await this.createSession(
@@ -545,6 +597,245 @@ export class AuthService {
       throw new Error('USER_NOT_FOUND')
     }
     return db.getUserSummary(user)
+  }
+
+  // Request Password Reset (Dispatches 6-digit code via SMS and/or Email)
+  public async requestPasswordReset(rawIdentifier: string): Promise<{
+    channel: 'email' | 'sms'
+    destination: string
+    message: string
+    devCode?: string
+  }> {
+    const trimmed = rawIdentifier.trim()
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)
+    const digits = trimmed.replace(/\D/g, '')
+    const normalized = isEmail
+      ? trimmed.toLowerCase()
+      : digits.length === 10
+      ? `+91${digits}`
+      : digits.length === 12 && digits.startsWith('91')
+      ? `+${digits}`
+      : trimmed.startsWith('+')
+      ? trimmed
+      : `+91${digits}`
+
+    // 1. Identify destination email and phone
+    let targetEmail: string | null = isEmail ? normalized : null
+    let targetPhone: string | null = !isEmail ? normalized : null
+
+    // Check DB / Prisma
+    try {
+      const pUser = await prisma.user.findFirst({
+        where: isEmail
+          ? { email: normalized }
+          : { OR: [{ phone: normalized }, { phone: digits.length === 10 ? digits : undefined }].filter(Boolean) as any },
+      })
+      if (pUser) {
+        if (pUser.email) targetEmail = pUser.email
+        if (pUser.phone) {
+          const pDigits = pUser.phone.replace(/\D/g, '')
+          targetPhone = pUser.phone.startsWith('+') ? pUser.phone : `+91${pDigits.slice(-10)}`
+        }
+      }
+    } catch {}
+
+    // Check Memory Store
+    if (!targetEmail || !targetPhone) {
+      const memUser = isEmail
+        ? db.findUserByEmail(normalized)
+        : db.findUserByPhone(normalized) || (digits.length === 10 ? db.findUserByPhone(digits) : undefined)
+      if (memUser) {
+        if (memUser.email) targetEmail = memUser.email
+        if (memUser.phone) {
+          const mDigits = memUser.phone.replace(/\D/g, '')
+          targetPhone = memUser.phone.startsWith('+') ? memUser.phone : `+91${mDigits.slice(-10)}`
+        }
+      }
+    }
+
+    // 2. Generate secure 6-digit reset code
+    const resetCode = String(crypto.randomInt(100000, 999999))
+    const codeHash = crypto.createHash('sha256').update(`${resetCode}_ihm_reset_salt_2026`).digest('hex')
+    const expiresAt = Date.now() + 10 * 60 * 1000 // 10 minutes
+
+    const resetRecord: PasswordResetRecord = {
+      identifier: normalized,
+      code: resetCode,
+      codeHash,
+      expiresAt,
+      attempts: 0,
+    }
+
+    // Store under all relevant identifiers
+    this.passwordResetStore.set(normalized, resetRecord)
+    if (targetEmail && targetEmail !== normalized) {
+      this.passwordResetStore.set(targetEmail, resetRecord)
+    }
+    if (targetPhone && targetPhone !== normalized) {
+      this.passwordResetStore.set(targetPhone, resetRecord)
+    }
+
+    // 3. Dispatch Email if email is available
+    if (targetEmail) {
+      try {
+        await emailService.sendPasswordResetEmail(targetEmail, resetCode)
+        console.log(`[AuthService] Password reset email successfully dispatched to ${targetEmail}`)
+      } catch (err: any) {
+        console.error(`[AuthService] Failed to send password reset email to ${targetEmail}:`, err.message)
+      }
+    }
+
+    // 4. Dispatch SMS via Twilio Verify if phone is available
+    if (targetPhone && this.twilioClient && config.otp.twilio.verifyServiceSid) {
+      try {
+        await this.twilioClient.verify.v2
+          .services(config.otp.twilio.verifyServiceSid)
+          .verifications.create({ to: targetPhone, channel: 'sms' })
+        console.log(`[AuthService] Twilio Verify SMS dispatched successfully to ${targetPhone}`)
+      } catch (verifyErr: any) {
+        console.warn(`[AuthService] Twilio Verify dispatch failed: ${verifyErr.message}`)
+      }
+    }
+
+    console.log(`\n======================================================`)
+    console.log(`🔐 [PASSWORD RESET CODE] ${normalized} | Code: ${resetCode} | Email: ${targetEmail || 'N/A'} | Phone: ${targetPhone || 'N/A'}`)
+    console.log(`======================================================\n`)
+
+    const maskedDestination = isEmail
+      ? normalized.replace(/^(.{2})(.*)(@.*)$/, (_m, a, b, c) => `${a}${'*'.repeat(Math.max(2, b.length))}${c}`)
+      : normalized.replace(/(\+\d{2})(\d{2})\d{4}(\d{4})/, '$1 $2****$3')
+
+    return {
+      channel: isEmail ? 'email' : 'sms',
+      destination: maskedDestination,
+      message: `A 6-digit password reset code has been sent to ${maskedDestination}.`,
+      devCode: !config.isProduction ? resetCode : undefined,
+    }
+  }
+
+  // Reset Password with Verified Code
+  public async resetPassword(params: {
+    identifier: string
+    code: string
+    newPassword: string
+  }): Promise<{ message: string }> {
+    const trimmed = params.identifier.trim()
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)
+    const digits = trimmed.replace(/\D/g, '')
+    const normalized = isEmail
+      ? trimmed.toLowerCase()
+      : digits.length === 10
+      ? `+91${digits}`
+      : digits.length === 12 && digits.startsWith('91')
+      ? `+${digits}`
+      : trimmed.startsWith('+')
+      ? trimmed
+      : `+91${digits}`
+
+    const cleanCode = params.code.trim().replace(/\D/g, '')
+    let isApproved = false
+
+    // 1. Try Twilio Verify check for phone number
+    if (!isEmail && this.twilioClient && config.otp.twilio.verifyServiceSid) {
+      try {
+        const check = await this.twilioClient.verify.v2
+          .services(config.otp.twilio.verifyServiceSid)
+          .verificationChecks.create({ to: normalized, code: cleanCode })
+
+        if (check.status === 'approved') {
+          isApproved = true
+          this.passwordResetStore.delete(normalized)
+        }
+      } catch (err: any) {
+        console.warn(`[AuthService] Twilio Verify check error: ${err.message}`)
+      }
+    }
+
+    // 2. Check local memory reset store
+    const record = this.passwordResetStore.get(normalized)
+    if (!isApproved) {
+      if (!record) {
+        throw new Error('No active password reset request found. Please request a new reset code.')
+      }
+
+      if (Date.now() > record.expiresAt) {
+        this.passwordResetStore.delete(normalized)
+        throw new Error('Password reset code has expired. Please request a fresh code.')
+      }
+
+      if (record.attempts >= 4) {
+        this.passwordResetStore.delete(normalized)
+        throw new Error('Too many incorrect attempts. Please request a fresh reset code.')
+      }
+
+      const inputHash = crypto.createHash('sha256').update(`${cleanCode}_ihm_reset_salt_2026`).digest('hex')
+      if (inputHash === record.codeHash || cleanCode === record.code) {
+        isApproved = true
+        this.passwordResetStore.delete(normalized)
+      } else {
+        record.attempts += 1
+        const remaining = 4 - record.attempts
+        throw new Error(`Invalid reset code. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`)
+      }
+    }
+
+    if (params.newPassword.length < 6) {
+      throw new Error('New password must be at least 6 characters long.')
+    }
+
+    // Hash new password
+    const newHash = await bcrypt.hash(params.newPassword, 10)
+
+    // Update in Prisma
+    let targetUserId: string | null = null
+    try {
+      const pUser = await prisma.user.findFirst({
+        where: isEmail
+          ? { email: normalized }
+          : { OR: [{ phone: normalized }, { phone: digits.length === 10 ? digits : undefined }].filter(Boolean) as any },
+      })
+      if (pUser) {
+        targetUserId = pUser.id
+        await prisma.user.update({
+          where: { id: pUser.id },
+          data: { passwordHash: newHash },
+        })
+
+        // Revoke all existing sessions for security
+        await prisma.refreshSession.updateMany({
+          where: { userId: pUser.id },
+          data: { isRevoked: true },
+        })
+      }
+    } catch (dbErr: any) {
+      console.warn('[AuthService] Prisma update failed during reset:', dbErr.message)
+    }
+
+    // Update in memory store if present
+    const memUser = isEmail
+      ? db.findUserByEmail(normalized)
+      : db.findUserByPhone(normalized) || (digits.length === 10 ? db.findUserByPhone(digits) : undefined)
+    if (memUser) {
+      targetUserId = memUser.id
+      memUser.passwordHash = newHash
+      db.users.set(memUser.id, memUser)
+    }
+
+    // Clear reset record
+    this.passwordResetStore.delete(normalized)
+
+    if (targetUserId) {
+      db.logAudit({
+        actorId: targetUserId,
+        action: 'auth.password_reset',
+        entityType: 'User',
+        entityId: targetUserId,
+      })
+    }
+
+    return {
+      message: 'Password reset successfully! You can now log in with your new password.',
+    }
   }
 }
 

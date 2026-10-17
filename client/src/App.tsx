@@ -66,6 +66,13 @@ function App() {
     return subscribeOpenLogin(() => setLoginOpen(true))
   }, [])
 
+  // Public routes present the visitor experience: a login popup left over from a
+  // protected route (e.g. expired session on /admin) must close on an actual
+  // pathname change — never merely because the modal itself is open.
+  useEffect(() => {
+    if (!isPortalRoute) setLoginOpen(false)
+  }, [location.pathname, isPortalRoute])
+
   const handleOpenConsult = (details?: string) => {
     setSelectedRequirement(undefined)
     setSelectedPlanDetails(details)
@@ -95,7 +102,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-base text-ink font-body selection:bg-[#292826] selection:text-white overflow-x-hidden w-full relative flex flex-col justify-between">
+    <div className="min-h-screen bg-page-base text-ink font-body selection:bg-[#292826] selection:text-white overflow-x-hidden w-full relative flex flex-col justify-between">
       {/* Scroll restoration helper */}
       <ScrollToTop />
 
@@ -214,8 +221,8 @@ function App() {
         />
       )}
 
-      {/* Responsive Bottom Navigation (Hidden on Portal / Dashboard routes) */}
-      {!isPortalRoute && (
+      {/* Responsive Bottom Navigation (Public routes + User Dashboard mobile view; hidden on Admin routes) */}
+      {!isAdminRoute && (
         <ResponsiveBottomNav
           onOpenConsult={handleOpenConsult}
           onOpenAiStudio={(mode = 'chat') => handleOpenAiStudio(mode)}

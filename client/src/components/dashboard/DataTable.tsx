@@ -48,7 +48,7 @@ export function DataTable<T>({
   return (
     <div className={`bg-white rounded-lg border border-[#E7E0D7] overflow-hidden ${className}`}>
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full min-w-[640px] text-left border-collapse">
           <thead>
             <tr className="bg-[#FAF8F5] border-b border-[#E7E0D7]">
               {columns.map((col, idx) => (

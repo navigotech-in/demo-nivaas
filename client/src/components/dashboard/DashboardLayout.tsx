@@ -5,16 +5,22 @@ import { Sidebar, type SidebarItem } from './Sidebar'
 interface DashboardLayoutProps {
   title?: string
   badgeText?: string
+  showVisitWebsite?: boolean
+  withBottomNav?: boolean
   sidebarItems: SidebarItem[]
   sidebarFooter?: React.ReactNode
+  onProfileClick?: () => void
   children: React.ReactNode
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
-  title = 'Indore House Makers — Admin',
+  title = 'Indore House Makers',
   badgeText,
+  showVisitWebsite = false,
+  withBottomNav = false,
   sidebarItems,
   sidebarFooter,
+  onProfileClick,
   children,
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -24,6 +30,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <Topbar
         title={title}
         badgeText={badgeText}
+        showVisitWebsite={showVisitWebsite}
+        onProfileClick={onProfileClick}
         onMenuToggle={() => setIsSidebarOpen((prev) => !prev)}
       />
 
@@ -35,7 +43,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           footer={sidebarFooter}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl w-full mx-auto space-y-6">
+        <main className={`flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl w-full mx-auto space-y-6 ${withBottomNav ? 'pb-20 sm:pb-20 md:pb-28' : ''}`}>
           {children}
         </main>
       </div>

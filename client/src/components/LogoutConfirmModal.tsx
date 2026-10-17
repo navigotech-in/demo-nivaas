@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { Icons } from './Icons'
 
 interface LogoutConfirmModalProps {
@@ -14,8 +15,13 @@ export default function LogoutConfirmModal({
   isLoggingOut = false,
 }: LogoutConfirmModalProps) {
   if (!isOpen) return null
+  if (typeof document === 'undefined') return null
 
-  return (
+  // Rendered via portal at document.body: the modal lives inside the Topbar
+  // (sticky + z-30 stacking context), so without a portal its overlay cannot
+  // cover siblings above z-30 such as the dashboard Sidebar (z-50) or the
+  // mobile bottom navigation (z-99980).
+  return createPortal(
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-[#1A1815]/75 p-4 backdrop-blur-xs">
       <div className="relative w-full max-w-sm overflow-hidden rounded-2xl bg-white p-6 shadow-2xl border border-[#E7E0D7] text-[#292826] text-center space-y-4">
         <div className="w-12 h-12 rounded-full bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
@@ -55,6 +61,7 @@ export default function LogoutConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

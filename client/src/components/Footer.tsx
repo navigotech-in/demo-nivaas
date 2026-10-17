@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { site } from '../lib/data'
 import { Icons } from './Icons'
+import { usePublicAuth } from '../lib/publicAuth'
 
 const AI_PROMPT = `Using the official Indore House Makers website at https://indorehousemakers.in and its verified services, explain its house plans, 3D elevations, interior-design services, construction-cost estimator, 3D walkthroughs and consultation options. Summarise the services and tell me how to get started. Use only information available on the official website.`
 
@@ -127,6 +128,7 @@ interface FooterProps {
 }
 
 export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: FooterProps) {
+  const { isAuthenticated } = usePublicAuth()
   const [copiedStatus, setCopiedStatus] = useState<string | null>(null)
 
   const handleAiClick = async (platform: AiPlatform) => {
@@ -236,15 +238,25 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
                   <span>Book Free Consultation</span>
                 </button>
 
-                {onOpenLogin && (
-                  <button
-                    type="button"
-                    onClick={onOpenLogin}
+                {isAuthenticated ? (
+                  <Link
+                    to="/dashboard"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white text-[11px] font-semibold hover:bg-white/20 transition cursor-pointer border border-white/15 active:scale-[0.98]"
                   >
                     <Icons.User size={12} className="text-[#FF8A50]" />
-                    <span>Profile (Login / Sign Up)</span>
-                  </button>
+                    <span>My Dashboard</span>
+                  </Link>
+                ) : (
+                  onOpenLogin && (
+                    <button
+                      type="button"
+                      onClick={onOpenLogin}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white text-[11px] font-semibold hover:bg-white/20 transition cursor-pointer border border-white/15 active:scale-[0.98]"
+                    >
+                      <Icons.User size={12} className="text-[#FF8A50]" />
+                      <span>Profile (Login / Sign Up)</span>
+                    </button>
+                  )
                 )}
 
                 {onOpenAiStudio && (
@@ -285,17 +297,29 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
                 <Link to="/faq" className="hover:text-[#FF8A50] transition">FAQs</Link>
                 <span className="text-white/50">·</span>
                 <Link to="/contact" className="hover:text-[#FF8A50] transition">Contact</Link>
-                {onOpenLogin && (
+                {isAuthenticated ? (
                   <>
                     <span className="text-white/50">·</span>
-                    <button
-                      type="button"
-                      onClick={onOpenLogin}
-                      className="hover:text-[#FF8A50] transition cursor-pointer font-semibold"
+                    <Link
+                      to="/dashboard"
+                      className="hover:text-[#FF8A50] transition font-semibold"
                     >
-                      Login / Sign Up
-                    </button>
+                      My Dashboard
+                    </Link>
                   </>
+                ) : (
+                  onOpenLogin && (
+                    <>
+                      <span className="text-white/50">·</span>
+                      <button
+                        type="button"
+                        onClick={onOpenLogin}
+                        className="hover:text-[#FF8A50] transition cursor-pointer font-semibold"
+                      >
+                        Login / Sign Up
+                      </button>
+                    </>
+                  )
                 )}
               </div>
             </div>
@@ -404,24 +428,43 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
               </Link>
 
               {/* 07 User Account & Login */}
-              {onOpenLogin && (
-                <button
-                  type="button"
-                  onClick={onOpenLogin}
+              {isAuthenticated ? (
+                <Link
+                  to="/dashboard"
                   className="w-full flex items-center justify-between py-4 px-2 text-sm sm:text-base font-bold text-white hover:text-[#FF8A50] hover:bg-white/[0.02] transition group text-left cursor-pointer"
                 >
                   <span className="flex items-center gap-3.5">
                     <span className="font-mono text-xs font-semibold text-[#FF8A50] w-6">07</span>
                     <span className="flex items-center gap-2">
                       <Icons.User size={16} className="text-[#FF8A50]" />
-                      <span>User Account (Login / Sign Up)</span>
+                      <span>My Dashboard</span>
                     </span>
                   </span>
                   <span className="flex items-center gap-1.5 text-xs text-white/75 group-hover:text-[#FF8A50] group-hover:translate-x-1 transition-all">
                     <span>Access Plans &amp; Dashboard</span>
                     <span>→</span>
                   </span>
-                </button>
+                </Link>
+              ) : (
+                onOpenLogin && (
+                  <button
+                    type="button"
+                    onClick={onOpenLogin}
+                    className="w-full flex items-center justify-between py-4 px-2 text-sm sm:text-base font-bold text-white hover:text-[#FF8A50] hover:bg-white/[0.02] transition group text-left cursor-pointer"
+                  >
+                    <span className="flex items-center gap-3.5">
+                      <span className="font-mono text-xs font-semibold text-[#FF8A50] w-6">07</span>
+                      <span className="flex items-center gap-2">
+                        <Icons.User size={16} className="text-[#FF8A50]" />
+                        <span>User Account (Login / Sign Up)</span>
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1.5 text-xs text-white/75 group-hover:text-[#FF8A50] group-hover:translate-x-1 transition-all">
+                      <span>Access Plans &amp; Dashboard</span>
+                      <span>→</span>
+                    </span>
+                  </button>
+                )
               )}
             </div>
           </div>

@@ -40,8 +40,9 @@ export default function ConsultModal({
   const isAdmin = user?.role === 'ADMIN'
 
   const [form, setForm] = useState({
-    name: '',
-    phone: '',
+    name: user?.name || '',
+    phone: user?.phone?.replace(/\D/g, '').slice(-10) || '',
+    email: user?.email || '',
     city: '',
     state: 'Madhya Pradesh',
     requirement: initialRequirement || defaultRequirements[0],
@@ -67,6 +68,7 @@ export default function ConsultModal({
       await submitLead({
         name: finalName,
         phone: form.phone || (isAdmin ? '9999999999' : ''),
+        email: form.email.trim() || user?.email,
         city: `${form.city || 'Indore'}, ${form.state}`,
         requirement: form.requirement,
         message: finalMessage,
@@ -199,6 +201,24 @@ export default function ConsultModal({
                     placeholder="10-digit mobile number"
                     className="w-full min-w-0 flex-1 px-3 py-2.5 text-xs sm:text-sm text-black font-medium outline-none bg-transparent box-border"
                   />
+                </div>
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[#1F2937]">
+                  Email Address <span className="text-gray-400 font-normal lowercase">(for estimate & blueprint copies)</span>
+                </label>
+                <div className="relative w-full">
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="e.g. yourname@gmail.com"
+                    className="w-full box-border rounded-lg border border-[#D1C9BE] bg-white pl-10 pr-3 py-2.5 text-xs sm:text-sm text-black font-medium outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/20"
+                  />
+                  <div className="absolute left-3.5 top-3 text-[#1F2937] pointer-events-none">
+                    <Icons.Mail size={15} />
+                  </div>
                 </div>
               </div>
 

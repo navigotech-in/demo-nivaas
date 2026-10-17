@@ -11,15 +11,32 @@ export class GenerationService {
     userId: string
     wizardSessionId: string
     idempotencyKey?: string
+    wizardData?: Record<string, unknown>
   }): Promise<{
     jobId: string
     status: string
     creditsRemaining: number
     message: string
   }> {
-    const { userId, wizardSessionId, idempotencyKey } = params
+    const { userId, wizardSessionId, idempotencyKey, wizardData } = params
     const jobId = 'job_3d_' + crypto.randomBytes(8).toString('hex')
     const key = idempotencyKey || `job_3d_${userId}_${wizardSessionId}_${Date.now()}`
+
+    // 0. Idempotency guard: reuse an existing job for the same key (prevents double-charge / duplicate projects)
+    try {
+      const existing = await prisma.generationJob.findUnique({ where: { idempotencyKey: key } })
+      if (existing && existing.userId === userId) {
+        const balance = await prismaDb
+          .calculateCreditBalance(userId)
+          .catch(() => creditLedger.calculateBalance(userId))
+        return {
+          jobId: existing.id,
+          status: existing.status,
+          creditsRemaining: balance,
+          message: 'Existing generation job reused (idempotent request).',
+        }
+      }
+    } catch {}
 
     // 1. Verify User has Active Pass & Balance >= 1
     let currentBalance = 0
@@ -96,14 +113,17 @@ export class GenerationService {
 
     // 4. Create Job in DB with QUEUED status
     let validWizardSessionId: string | undefined = undefined
+    let sessionWizardData: Record<string, unknown> = {}
     if (wizardSessionId) {
       try {
         const ws = await prisma.wizardSession.findUnique({ where: { id: wizardSessionId } })
         if (ws) {
           validWizardSessionId = ws.id
+          sessionWizardData = ((ws.confirmedSnapshot as any) || (ws.wizardData as any) || {}) as Record<string, unknown>
         }
       } catch {}
     }
+    const mergedWizardData = { ...sessionWizardData, ...(wizardData || {}) }
 
     try {
       await prisma.generationJob.create({
@@ -121,10 +141,42 @@ export class GenerationService {
           progressStage: 'CORE_2D',
           creditCost: 1,
           idempotencyKey: key,
-          inputPayload: { wizardSessionId, triggeredAt: new Date().toISOString() },
+          inputPayload: { ...mergedWizardData, wizardSessionId, triggeredAt: new Date().toISOString() },
         },
       })
     } catch {
+      // Unique idempotency collision (concurrent duplicate) — reuse the winner if it is ours
+      try {
+        const existing = await prisma.generationJob.findUnique({ where: { idempotencyKey: key } })
+        if (existing && existing.userId === userId) {
+          try {
+            await prismaDb.releaseReservation({
+              userId,
+              reservationId: reservation.reservationId!,
+              jobId,
+              reason: 'Duplicate idempotent 3D generation request refunded.',
+            })
+          } catch {}
+          try {
+            creditLedger.releaseReservation({
+              userId,
+              reservationId: reservation.reservationId!,
+              jobId,
+              reason: 'Duplicate idempotent 3D generation request refunded.',
+            })
+          } catch {}
+          const balance = await prismaDb
+            .calculateCreditBalance(userId)
+            .catch(() => creditLedger.calculateBalance(userId))
+          return {
+            jobId: existing.id,
+            status: existing.status,
+            creditsRemaining: balance,
+            message: 'Existing generation job reused (concurrent duplicate request).',
+          }
+        }
+      } catch {}
+
       // In-memory fallback
       db.generationJobs.set(jobId, {
         id: jobId,
@@ -134,7 +186,7 @@ export class GenerationService {
         status: 'QUEUED',
         attemptCount: 0,
         maxAttempts: 3,
-        inputPayload: { wizardSessionId },
+        inputPayload: { ...mergedWizardData, wizardSessionId },
         creditCost: 1,
         idempotencyKey: key,
         createdAt: new Date().toISOString(),

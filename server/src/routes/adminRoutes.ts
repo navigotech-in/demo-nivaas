@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express'
+import { Prisma, UserRole } from '@prisma/client'
 import { db } from '../db/store.js'
 import { prisma } from '../db/prisma.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
@@ -129,15 +130,21 @@ router.get('/users', async (req: Request, res: Response, next: NextFunction): Pr
     const skip = (page - 1) * pageSize
 
     try {
-      const whereClause = search
+      const roleQuery = req.query.role === 'ADMIN' ? UserRole.ADMIN : req.query.role === 'USER' ? UserRole.USER : undefined
+      const baseFilter: Prisma.UserWhereInput = roleQuery
+        ? { role: roleQuery }
+        : { role: { not: UserRole.ADMIN }, email: { not: 'admin@ihm.com' } }
+
+      const whereClause: Prisma.UserWhereInput = search
         ? {
+            ...baseFilter,
             OR: [
-              { name: { contains: search, mode: 'insensitive' as const } },
-              { email: { contains: search, mode: 'insensitive' as const } },
+              { name: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
               { phone: { contains: search } },
             ],
           }
-        : {}
+        : baseFilter
 
       const [total, users] = await Promise.all([
         prisma.user.count({ where: whereClause }),
@@ -212,7 +219,9 @@ router.get('/users', async (req: Request, res: Response, next: NextFunction): Pr
       return
     } catch {
       // In-memory fallback for unit testing
-      let allUsers = Array.from(db.users.values()).map((u) => {
+      let allUsers = Array.from(db.users.values())
+        .filter((u) => (req.query.role ? u.role === req.query.role : u.role !== 'ADMIN' && u.email !== 'admin@ihm.com'))
+        .map((u) => {
         const balance = db.calculateUserBalance(u.id)
         const userPasses = Array.from(db.accessPasses.values()).filter(
           (p) => p.userId === u.id && p.status === 'ACTIVE' && new Date(p.expiresAt) > new Date()

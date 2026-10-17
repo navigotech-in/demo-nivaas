@@ -10,13 +10,13 @@ const router = Router()
 router.post('/razorpay/orders', requireAuth, async (req, res, next) => {
   try {
     const userId = req.user!.sub
-    const { forceRenewal } = req.body || {}
+    const { forceRenewal, isCreditTopup } = req.body || {}
 
     // 1. Authoritative Backend Check: Does user have active pass with unused credits?
     const activePass = await prismaDb.getActivePass(userId)
     const remainingCredits = await prismaDb.calculateCreditBalance(userId)
 
-    if (activePass && remainingCredits > 0 && !forceRenewal) {
+    if (activePass && remainingCredits > 0 && !forceRenewal && !isCreditTopup) {
       res.status(409).json({
         success: false,
         error: {

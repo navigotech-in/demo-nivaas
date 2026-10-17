@@ -55,30 +55,30 @@ export default function EstimateModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 backdrop-blur-md p-4 animate-fadeIn">
-      <div className="relative w-full max-w-xl overflow-hidden rounded-3xl bg-white/90 backdrop-blur-3xl shadow-[0_30px_70px_rgba(0,0,0,0.45),inset_0_1.5px_2px_rgba(255,255,255,0.9),0_0_0_1px_rgba(255,255,255,0.4)] border border-white/60 animate-scaleUp text-[#292826]">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/50 bg-gradient-to-r from-[#FFF6E8]/90 via-white/80 to-[#FFF6E8]/90 backdrop-blur-xl px-6 py-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 backdrop-blur-md p-3 sm:p-4 animate-fadeIn">
+      <div className="relative w-full max-w-xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl bg-white/90 backdrop-blur-3xl shadow-[0_30px_70px_rgba(0,0,0,0.45),inset_0_1.5px_2px_rgba(255,255,255,0.9),0_0_0_1px_rgba(255,255,255,0.4)] border border-white/60 animate-scaleUp text-[#292826] my-auto">
+        {/* Header - Pinned */}
+        <div className="flex items-center justify-between border-b border-white/50 bg-gradient-to-r from-[#FFF6E8]/90 via-white/80 to-[#FFF6E8]/90 backdrop-blur-xl px-4 sm:px-6 py-3 sm:py-4 shrink-0">
           <div>
             <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#E76F2E] bg-white/80 border border-white/60 px-2.5 py-0.5 rounded-lg shadow-sm">
               <Icons.Calculator size={12} /> Instant Architectural Estimate
             </span>
-            <h3 className="mt-1 font-display text-xl font-bold text-[#292826]">
+            <h3 className="mt-1 font-display text-lg sm:text-xl font-bold text-[#292826]">
               {data.serviceType} Package Breakdown
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#54504A] hover:bg-white/80 hover:text-[#292826] transition shadow-sm border border-transparent hover:border-white/50"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[#54504A] hover:bg-white/80 hover:text-[#292826] transition shadow-sm border border-transparent hover:border-white/50 cursor-pointer shrink-0"
             aria-label="Close estimate breakdown modal"
           >
             <Icons.Close size={18} />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-4 bg-white/40 backdrop-blur-md">
+        {/* Content - Scrollable */}
+        <div className="p-4 sm:p-6 pb-6 space-y-4 bg-white/40 backdrop-blur-md overflow-y-auto overscroll-contain flex-1">
           {/* Summary badges */}
           <div className="grid grid-cols-3 gap-2.5 rounded-2xl bg-white/75 backdrop-blur-xl p-3.5 text-center border border-white/60 shadow-sm">
             <div>

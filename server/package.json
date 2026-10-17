@@ -10,16 +10,20 @@
     "build": "tsc --noEmit",
     "test": "vitest run --fileParallelism=false --testTimeout=25000 --hookTimeout=25000",
     "bootstrap:admin": "tsx src/scripts/bootstrapAdmin.ts",
+    "email:test": "tsx src/scripts/testEmail.ts",
     "db:seed": "tsx src/scripts/seedDev.ts",
     "prisma:generate": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "6.4.1",
+    "@types/nodemailer": "^8.0.2",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^10.1.1",
+    "twilio": "^6.2.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {

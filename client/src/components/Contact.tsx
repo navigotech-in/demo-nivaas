@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { submitLead } from '../lib/api'
 import { site } from '../lib/data'
 import { Icons } from './Icons'
+import CustomSelect from './CustomSelect'
 
 const requirements = [
   '2D House Plan & Layout',
@@ -21,6 +22,7 @@ export default function Contact() {
   const [form, setForm] = useState({
     name: '',
     phone: '',
+    email: '',
     city: '',
     requirement: requirements[0],
     message: '',
@@ -92,7 +94,7 @@ export default function Contact() {
         </div>
 
         {/* Contact Form Card */}
-        <div className="rounded-lg border border-[#E7E0D7] bg-white p-5 sm:p-[34px] shadow-sm">
+        <div className="rounded-lg border border-[#E7E0D7] bg-white p-4 sm:p-[34px] shadow-sm min-w-0 max-w-full">
           {status === 'done' ? (
             <div className="flex h-full flex-col items-center justify-center py-12 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F1ECE5] text-[#E76F2E] text-2xl font-bold shadow-sm">
@@ -112,13 +114,13 @@ export default function Contact() {
               </button>
             </div>
           ) : (
-            <form onSubmit={submit} className="space-y-[14px]">
+            <form onSubmit={submit} className="space-y-[14px] min-w-0 w-full">
 <h3 className="font-display text-xl font-bold text-[#292826] mb-2">
               Book Architect Consultation
             </h3>
 
-              <div className="grid gap-[14px] sm:grid-cols-2">
-                <div>
+              <div className="grid gap-[14px] sm:grid-cols-2 min-w-0">
+                <div className="min-w-0 w-full">
                   <label htmlFor="c-name" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                     Your Name *
                   </label>
@@ -131,7 +133,7 @@ export default function Contact() {
                     className={inputClass}
                   />
                 </div>
-                <div>
+                <div className="min-w-0 w-full">
                   <label htmlFor="c-phone" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                     Phone Number *
                   </label>
@@ -149,8 +151,21 @@ export default function Contact() {
                 </div>
               </div>
 
-              <div className="grid gap-[14px] sm:grid-cols-2">
-                <div>
+              <div className="grid gap-[14px] sm:grid-cols-2 min-w-0">
+                <div className="min-w-0 w-full">
+                  <label htmlFor="c-email" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
+                    Email Address (Optional)
+                  </label>
+                  <input
+                    id="c-email"
+                    type="email"
+                    value={form.email}
+                    onChange={set('email')}
+                    placeholder="name@example.com"
+                    className={`${inputClass} box-border min-w-0 max-w-full`}
+                  />
+                </div>
+                <div className="min-w-0 w-full">
                   <label htmlFor="c-city" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
                     City / Location
                   </label>
@@ -159,21 +174,22 @@ export default function Contact() {
                     value={form.city}
                     onChange={set('city')}
                     placeholder="e.g. Hyderabad"
-                    className={inputClass}
+                    className={`${inputClass} box-border min-w-0 max-w-full`}
                   />
                 </div>
-                <div>
-                  <label htmlFor="c-req" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
-                    Service Needed
-                  </label>
-                  <select id="c-req" value={form.requirement} onChange={set('requirement')} className={inputClass}>
-                    {requirements.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              </div>
+
+              <div>
+                <label htmlFor="c-req" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#54504A]">
+                  Service Needed
+                </label>
+                <CustomSelect
+                  id="c-req"
+                  value={form.requirement}
+                  options={requirements}
+                  onChange={(v) => setForm((f) => ({ ...f, requirement: v }))}
+                  placeholder="Select Service Needed"
+                />
               </div>
 
               <div>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Icons } from './Icons'
 import { createRazorpayOrder, verifyRazorpayPayment } from '../lib/api'
 import { notifyDataChanged } from '../lib/syncEvents'
+import { useAuth } from '../lib/authContext'
 
 interface DesignPassModalProps {
   open: boolean
@@ -15,6 +16,7 @@ interface DesignPassModalProps {
   } | null
   onSuccess: (creditsGranted: number, totalCredits: number) => void
   onRequireAuth?: () => void
+  mode?: 'pass' | 'credits'
 }
 
 let razorpayScriptLoadedPromise: Promise<boolean> | null = null
@@ -50,7 +52,9 @@ export default function DesignPassModal({
   activePassInfo,
   onSuccess,
   onRequireAuth,
+  mode = 'pass',
 }: DesignPassModalProps) {
+  const { refreshAuth, getAuthHeaders } = useAuth()
   const [loading, setLoading] = useState(false)
   const [loadingStage, setLoadingStage] = useState('Creating secure payment order...')
   const [paymentState, setPaymentState] = useState<'IDLE' | 'RAZORPAY_TEST_MODAL' | 'PROCESSING' | 'SUCCESS' | 'FAILED'>('IDLE')
@@ -64,45 +68,43 @@ export default function DesignPassModal({
     creditsGranted: number
     expiresAt: string
   } | null>(null)
-  const [existingPassWarning, setExistingPassWarning] = useState<{
-    remainingCredits: number
-    expiresAt?: string | null
-  } | null>(() => {
-    if (activePassInfo?.active && activePassInfo.remainingCredits > 0) {
-      return {
-        remainingCredits: activePassInfo.remainingCredits,
-        expiresAt: activePassInfo.expiresAt,
-      }
-    }
-    return null
-  })
 
   if (!open) return null
 
-  const handleInitiateCheckout = async (forceRenewal = false) => {
+  // Runs an authenticated payment call; on 401 it refreshes the session once
+  // and retries with the fresh token so a paid checkout is never lost.
+  const withAuthRetry = async <T,>(fn: (headers: Record<string, string>) => Promise<T>): Promise<T> => {
+    try {
+      return await fn(token ? { Authorization: `Bearer ${token}` } : getAuthHeaders())
+    } catch (err: any) {
+      if (err?.status === 401) {
+        const refreshed = await refreshAuth().catch(() => false)
+        if (refreshed) return fn(getAuthHeaders())
+      }
+      throw err
+    }
+  }
+
+  const handleInitiateCheckout = async (forceRenewalParam = false, isTopupParam = false) => {
     if (!token) {
       onClose()
       onRequireAuth?.()
       return
     }
 
-    // If user has an active pass with credits and hasn't explicitly confirmed forceRenewal, show warning first
-    if (!forceRenewal && activePassInfo?.active && activePassInfo.remainingCredits > 0) {
-      setExistingPassWarning({
-        remainingCredits: activePassInfo.remainingCredits,
-        expiresAt: activePassInfo.expiresAt,
-      })
-      return
-    }
+    const hasActive = Boolean(activePassInfo?.active && (activePassInfo.remainingCredits || 0) > 0)
+    const isTopup = isTopupParam || hasActive || mode === 'credits'
+    const forceRenewal = forceRenewalParam || isTopup
 
     setLoading(true)
     setLoadingStage('Creating secure payment order...')
     setErrorMsg('')
-    setExistingPassWarning(null)
 
     try {
-      // 1. Create order in PostgreSQL backend
-      const order = await createRazorpayOrder({ Authorization: `Bearer ${token}` }, { forceRenewal })
+      // 1. Create order in PostgreSQL backend with credit top-up / renewal flags
+      const order = await withAuthRetry((headers) =>
+        createRazorpayOrder(headers, { forceRenewal, isCreditTopup: isTopup })
+      )
       setActiveOrderId(order.orderId)
 
       const razorpayKey = order.keyId || 'rzp_test_indore_house_makers'
@@ -161,13 +163,6 @@ export default function DesignPassModal({
       setPaymentState('RAZORPAY_TEST_MODAL')
     } catch (err: any) {
       setLoading(false)
-      if (err.code === 'ACTIVE_PASS_EXISTS' && !forceRenewal) {
-        setExistingPassWarning({
-          remainingCredits: err.activePass?.remainingCredits || 0,
-          expiresAt: err.activePass?.expiresAt,
-        })
-        return
-      }
       setPaymentState('FAILED')
       setErrorMsg(err.message || 'Could not initiate payment order.')
     }
@@ -189,9 +184,8 @@ export default function DesignPassModal({
 
       // Verify against backend. Errors are surfaced (never silently swallowed) so we
       // never show a fake success or grant credits that were not persisted.
-      const verifyRes = await verifyRazorpayPayment(
-        { orderId: effectiveOrderId, paymentId, signature },
-        { Authorization: `Bearer ${token}` }
+      const verifyRes = await withAuthRetry((headers) =>
+        verifyRazorpayPayment({ orderId: effectiveOrderId, paymentId, signature }, headers)
       )
 
       if (!verifyRes?.success || !verifyRes?.pass) {
@@ -286,43 +280,31 @@ export default function DesignPassModal({
             </div>
           )}
 
-          {/* Already-Subscribed Active Pass Warning Dialogue */}
-          {existingPassWarning && (
-            <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-950 space-y-3 animate-fadeIn shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">⚠️</span>
-                <div>
-                  <h4 className="font-display font-black text-sm text-amber-950">
-                    You have subscribed previously
-                  </h4>
-                  <p className="text-xs text-amber-800 font-medium mt-0.5">
-                    You currently have <strong>{existingPassWarning.remainingCredits} credits remaining</strong>
-                    {existingPassWarning.expiresAt && (
-                      <> valid until <strong>{new Date(existingPassWarning.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</strong></>
-                    )}.
-                  </p>
+          {/* Active Pass Status & Top-Up Information */}
+          {activePassInfo?.active && activePassInfo.remainingCredits > 0 && (
+            <div className="p-4 rounded-2xl bg-emerald-50/80 border-2 border-emerald-300 text-emerald-950 space-y-2 animate-fadeIn shadow-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">✨</span>
+                  <div>
+                    <h4 className="font-display font-black text-sm text-emerald-950">
+                      Active Design Pass ({activePassInfo.remainingCredits} Credits Available)
+                    </h4>
+                    <p className="text-xs text-emerald-800 font-medium mt-0.5">
+                      {activePassInfo.expiresAt && (
+                        <>Valid until <strong>{new Date(activePassInfo.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</strong> · </>
+                      )}
+                      You can generate 3D models right away or top up below.
+                    </p>
+                  </div>
                 </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-200 text-emerald-900 text-[11px] font-extrabold uppercase">
+                  Active
+                </span>
               </div>
-              <p className="text-xs text-amber-900 leading-relaxed font-semibold">
-                Do you want to purchase another Design Pass (+5 Credits)?
+              <p className="text-[11.5px] text-emerald-900 leading-relaxed font-semibold pt-1 border-t border-emerald-200/60">
+                Need more generations? Recharge anytime: ₹299 instantly adds <strong>+5 3D Generation Credits</strong> and extends validity by 30 days!
               </p>
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setExistingPassWarning(null)}
-                  className="flex-1 py-2.5 px-3 rounded-xl bg-white border border-amber-300 text-amber-900 text-xs font-bold hover:bg-amber-100 transition cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => handleInitiateCheckout(true)}
-                  className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white text-xs font-bold shadow transition cursor-pointer disabled:opacity-50"
-                >
-                  {loading ? 'Processing...' : 'Purchase Again (₹299)'}
-                </button>
-              </div>
             </div>
           )}
 
@@ -646,45 +628,67 @@ export default function DesignPassModal({
 
         {paymentState === 'IDLE' && (
           <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-sm p-4 sm:p-5 border-t border-[#EEE9E3] shrink-0 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-3 px-4 rounded-xl border border-[#D1C9BE] text-xs font-bold text-[#4B5563] hover:bg-gray-50 transition cursor-pointer"
-            >
-              {activePassInfo?.active && activePassInfo.remainingCredits > 0 ? 'Close' : 'Continue With 2D Only'}
-            </button>
-            {activePassInfo?.active && activePassInfo.remainingCredits > 0 && !existingPassWarning ? (
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-3 px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Continue to 3D Studio ({activePassInfo.remainingCredits} Credits)</span>
-              </button>
+            {activePassInfo?.active && activePassInfo.remainingCredits > 0 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 py-3 px-3.5 rounded-xl border border-[#D1C9BE] text-xs font-bold text-[#4B5563] hover:bg-gray-50 transition cursor-pointer text-center"
+                >
+                  Continue to Studio ({activePassInfo.remainingCredits} Left)
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleInitiateCheckout(true, true)}
+                  className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {loading ? (
+                    <>
+                      <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Add 5 Credits (₹299)</span>
+                      <Icons.ChevronRight size={14} />
+                    </>
+                  )}
+                </button>
+              </>
             ) : (
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => handleInitiateCheckout(false)}
-                className="flex-1 py-3 px-5 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {loading ? (
-                  <>
-                    <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                    <span>Processing...</span>
-                  </>
-                ) : !token ? (
-                  <>
-                    <span>Login &amp; Pay ₹299</span>
-                    <Icons.ChevronRight size={14} />
-                  </>
-                ) : (
-                  <>
-                    <span>Pay ₹299</span>
-                    <Icons.ChevronRight size={14} />
-                  </>
-                )}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 py-3 px-4 rounded-xl border border-[#D1C9BE] text-xs font-bold text-[#4B5563] hover:bg-gray-50 transition cursor-pointer text-center"
+                >
+                  Continue With 2D Only
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleInitiateCheckout(false, false)}
+                  className="flex-1 py-3 px-5 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {loading ? (
+                    <>
+                      <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : !token ? (
+                    <>
+                      <span>Login &amp; Pay ₹299</span>
+                      <Icons.ChevronRight size={14} />
+                    </>
+                  ) : (
+                    <>
+                      <span>Pay ₹299 (Get Pass)</span>
+                      <Icons.ChevronRight size={14} />
+                    </>
+                  )}
+                </button>
+              </>
             )}
           </div>
         )}

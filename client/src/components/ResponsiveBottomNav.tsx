@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Icons } from './Icons'
+import { usePublicAuth } from '../lib/publicAuth'
 
 export interface ResponsiveBottomNavProps {
   onOpenConsult: (req?: string) => void
@@ -21,6 +22,7 @@ export default function ResponsiveBottomNav({
 }: ResponsiveBottomNavProps) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user, isAuthenticated } = usePublicAuth()
   const [activeTab, setActiveTab] = useState<NavTab>('home')
   const [exploreSheetOpen, setExploreSheetOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
@@ -96,8 +98,12 @@ export default function ResponsiveBottomNav({
     }
   }
 
+  const dashboardLink = user?.role === 'ADMIN'
+    ? { label: 'Admin Command Center', href: '/admin', icon: Icons.Shield }
+    : { label: 'My Dashboard & Credits', href: '/dashboard', icon: Icons.LayoutGrid }
+
   const sheetLinks = [
-    { label: 'My Dashboard & Credits', href: '/dashboard', icon: Icons.User },
+    dashboardLink,
     { label: 'Architecture & House Plans', href: '/house-plans', icon: Icons.Blueprint },
     { label: 'Interiors Studio', href: '/interiors', icon: Icons.Sofa },
     { label: '3D Elevation & Designs', href: '/designs', icon: Icons.Sparkles },
@@ -116,6 +122,10 @@ export default function ResponsiveBottomNav({
     { id: 'ai' as NavTab, label: 'AI', icon: Icons.Sparkles, ariaLabel: 'Open Indore House Makers AI assistant' },
     { id: 'menu' as NavTab, label: 'Menu', icon: Icons.Menu, ariaLabel: 'Open Explore menu' },
   ]
+
+  if (aiStudioOpen) {
+    return null
+  }
 
   return (
     <>
@@ -200,37 +210,9 @@ export default function ResponsiveBottomNav({
               </Link>
             )
           })}
-
-          {/* User Account Login & Register Link */}
-          {onOpenLogin && (
-            <button
-              type="button"
-              onClick={() => {
-                setExploreSheetOpen(false)
-                onOpenLogin()
-              }}
-              className="w-full flex items-center justify-between py-3 px-2 rounded-xl text-xs sm:text-sm font-bold text-[#292826] hover:bg-[#FFF6E8] hover:text-[#E76F2E] transition group text-left cursor-pointer"
-            >
-              <span className="flex items-center gap-3">
-                <span className="h-8 w-8 rounded-lg bg-[#FFF6E8] text-[#E76F2E] flex items-center justify-center shrink-0 border border-[#E7E0D7]/60">
-                  <Icons.User size={16} />
-                </span>
-                <span className="flex items-center gap-2">
-                  <span>User Login / Register</span>
-                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-[#FFF6E8] text-[#E76F2E] border border-[#E76F2E]/30">
-                    Account
-                  </span>
-                </span>
-              </span>
-              <Icons.ChevronRight
-                size={15}
-                className="text-[#74706A] group-hover:text-[#E76F2E] group-hover:translate-x-0.5 transition-transform"
-              />
-            </button>
-          )}
         </div>
 
-        {/* Bottom Primary Actions Card (Ask AI, Consult, Login) */}
+        {/* Bottom Primary Actions Card (Ask AI, Consult, User Profile) */}
         <div className="p-3.5 border-t border-[#EEE9E3] bg-[#FAF8F5] shrink-0 space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -258,18 +240,34 @@ export default function ResponsiveBottomNav({
             </button>
           </div>
 
-          {onOpenLogin && (
+          {isAuthenticated ? (
             <button
               type="button"
               onClick={() => {
                 setExploreSheetOpen(false)
-                onOpenLogin()
+                onOpenLogin?.()
               }}
-              className="w-full py-2 rounded-xl border border-[#E7E0D7] bg-white text-[#54504A] hover:text-[#292826] font-semibold text-xs text-center hover:bg-[#FFF6E8] transition cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 rounded-xl border border-[#E7E0D7] bg-white text-[#292826] hover:text-[#E76F2E] font-bold text-xs text-center hover:bg-[#FFF6E8] hover:border-[#E76F2E] transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
             >
-              <Icons.User size={13} className="text-[#E76F2E]" />
-              <span>User Profile (Login / Sign Up)</span>
+              <div className="h-5 w-5 rounded-full bg-[#E76F2E] text-white flex items-center justify-center text-[10px] font-bold">
+                {user?.name?.[0]?.toUpperCase() || 'U'}
+              </div>
+              <span>User Profile ({user?.name?.split(' ')[0] || 'Account'})</span>
             </button>
+          ) : (
+            onOpenLogin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setExploreSheetOpen(false)
+                  onOpenLogin()
+                }}
+                className="w-full py-2.5 rounded-xl border border-[#E7E0D7] bg-white text-[#54504A] hover:text-[#292826] font-bold text-xs text-center hover:bg-[#FFF6E8] hover:border-[#E76F2E] transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+              >
+                <Icons.User size={14} className="text-[#E76F2E]" />
+                <span>User Profile (Login / Sign Up)</span>
+              </button>
+            )
           )}
         </div>
       </div>

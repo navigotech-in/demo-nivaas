@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        base: '#FDFCF9', // Soft White/Cream
+        'page-base': '#FDFCF9', // Soft White/Cream
         'base-soft': '#FFF6E8', // Warm Cream
         surface: '#FFFFFF', // Pure White
         'surface-grey': '#E7E0D7', // Warm Taupe Border

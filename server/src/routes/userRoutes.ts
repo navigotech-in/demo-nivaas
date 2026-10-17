@@ -86,6 +86,7 @@ router.get('/me/pass', async (req: Request, res: Response, next: NextFunction): 
   try {
     const userId = req.user!.sub
     const activePass = await prismaDb.getActivePass(userId)
+    const creditsRemaining = await prismaDb.calculateCreditBalance(userId)
 
     let daysRemaining = 0
     if (activePass) {
@@ -93,7 +94,8 @@ router.get('/me/pass', async (req: Request, res: Response, next: NextFunction): 
       daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
     }
 
-    const hasActivePass = !!activePass && (activePass.status === 'ACTIVE' || (activePass.status as any) === 'ACTIVE') && daysRemaining > 0
+    // Pass is only "active" while it has both validity left AND unused credits
+    const hasActivePass = !!activePass && daysRemaining > 0 && creditsRemaining > 0
 
     const passPayload = activePass
       ? {
@@ -103,6 +105,7 @@ router.get('/me/pass', async (req: Request, res: Response, next: NextFunction): 
           startsAt: activePass.startsAt ? new Date(activePass.startsAt).toISOString() : new Date().toISOString(),
           expiresAt: activePass.expiresAt ? new Date(activePass.expiresAt).toISOString() : new Date().toISOString(),
           creditsGranted: activePass.creditsGranted,
+          creditsRemaining,
           daysRemaining,
         }
       : null
@@ -113,6 +116,8 @@ router.get('/me/pass', async (req: Request, res: Response, next: NextFunction): 
         hasActivePass,
         activePass: passPayload,
         pass: passPayload,
+        creditsRemaining,
+        creditsExhausted: !!activePass && creditsRemaining <= 0,
         daysRemaining,
       },
     })
@@ -148,7 +153,9 @@ router.get('/me/entitlements', async (req: Request, res: Response, next: NextFun
       daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
     }
 
-    const hasActivePass = !!activePass && (activePass.status === 'ACTIVE' || activePass.status === ('ACTIVE' as any)) && daysRemaining > 0
+    // A pass is only "active" while it is unexpired AND has unused credits left
+    const creditsExhausted = !!activePass && paidCreditsRemaining <= 0
+    const hasActivePass = !!activePass && daysRemaining > 0 && paidCreditsRemaining > 0
     const hasPaid3DCredits = paidCreditsRemaining > 0
     const canGenerate2D = dailyRemaining > 0 || isAdmin
     const canGenerate3D = (hasActivePass && hasPaid3DCredits) || isAdmin
@@ -179,6 +186,7 @@ router.get('/me/entitlements', async (req: Request, res: Response, next: NextFun
           creditsTotal: passCreditsTotal,
           creditsUsed: passCreditsUsed,
           creditsRemaining: paidCreditsRemaining,
+          creditsExhausted,
         },
         // Backward compatibility
         freeEntitlement: {

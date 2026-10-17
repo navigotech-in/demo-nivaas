@@ -24,6 +24,7 @@ function apiError(res: Response, json: any, fallback: string): Error {
 export interface LeadPayload {
   name: string
   phone: string
+  email?: string
   city: string
   requirement: string
   message: string
@@ -101,6 +102,7 @@ export async function submitLead(payload: LeadPayload): Promise<void> {
       type: 'SERVICE_ENQUIRY',
       name: payload.name,
       phone: payload.phone,
+      email: payload.email,
       city: payload.city,
       requirement: payload.requirement,
       message: payload.message,

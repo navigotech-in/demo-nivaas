@@ -43,7 +43,7 @@ export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false, moda
       >
         {/* Chat Popover Window */}
         {openChat && (
-          <div className="w-[300px] sm:w-[360px] rounded-2xl bg-white shadow-2xl border border-[#E7E0D7] overflow-hidden animate-fadeIn text-[#292826] mb-1">
+          <div className="w-[calc(100vw-24px)] sm:w-[360px] max-w-[360px] rounded-2xl bg-white shadow-2xl border border-[#E7E0D7] overflow-hidden animate-fadeIn text-[#292826] mb-1">
             {/* Header */}
             <div className="bg-[#25D366] p-3.5 text-white flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-2.5">
