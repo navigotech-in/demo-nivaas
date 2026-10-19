@@ -1239,7 +1239,11 @@ export default function DashboardPage({
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-black text-[#292826] truncate">{user?.name || 'User'}</h3>
-                  <p className="text-xs text-[#74706A] truncate">{user?.email}</p>
+                  <p className="text-xs text-[#74706A] truncate">
+                    {user?.email && !user.email.endsWith('@phone.indorehousemakers.com')
+                      ? user.email
+                      : 'No email linked'}
+                  </p>
                   <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">
                     {user?.role || 'CLIENT'}
                   </span>

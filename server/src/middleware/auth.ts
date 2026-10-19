@@ -55,7 +55,7 @@ function sendSessionRejected(res: Response): void {
   })
 }
 
-export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.status(401).json({
@@ -95,21 +95,50 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
 
   const session = db.findSessionById(decoded.sessionId)
-  if (session && !session.isRevoked) {
-    req.user = decoded
-    next()
+  let sessionValid = Boolean(session && !session.isRevoked)
+  if (!sessionValid) {
+    sessionValid = await rehydrateSessionFromDb(decoded.sessionId)
+  }
+
+  if (!sessionValid) {
+    sendSessionRejected(res)
     return
   }
 
-  // Session missing from memory (restart) or revoked: check the persistent store.
-  void rehydrateSessionFromDb(decoded.sessionId).then((ok) => {
-    if (!ok) {
-      sendSessionRejected(res)
-      return
+  // Verify that the user account still exists in store or database
+  let userExists = Boolean(db.findUserById(decoded.sub))
+  if (!userExists) {
+    try {
+      const pUser = await prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: { id: true },
+      })
+      userExists = Boolean(pUser)
+    } catch {
+      userExists = false
     }
-    req.user = decoded
-    next()
-  })
+  }
+
+  if (!userExists) {
+    db.revokeSession(decoded.sessionId)
+    try {
+      await prisma.refreshSession.update({
+        where: { id: decoded.sessionId },
+        data: { isRevoked: true },
+      })
+    } catch {}
+    res.status(401).json({
+      success: false,
+      error: {
+        code: ErrorCode.SESSION_REVOKED,
+        message: 'Account not found or has been deleted. Session terminated.',
+      },
+    })
+    return
+  }
+
+  req.user = decoded
+  next()
 }
 
 export function requireRole(requiredRole: UserRole) {

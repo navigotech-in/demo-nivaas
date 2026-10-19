@@ -37,7 +37,7 @@ function clearRefreshTokenCookie(res: Response) {
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
   email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters').max(100),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(100),
   phone: z.string().min(10, 'Mobile number must be at least 10 digits').max(15, 'Mobile number must not exceed 15 digits'),
 })
 
@@ -262,7 +262,7 @@ const forgotPasswordSchema = z
 const resetPasswordSchema = z.object({
   identifier: z.string().min(3, 'Email or phone number is required'),
   code: z.string().min(4, 'Code must be at least 4 digits').max(10),
-  newPassword: z.string().min(6, 'Password must be at least 6 characters'),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters').max(100),
 })
 
 router.post(
@@ -502,7 +502,7 @@ const verifyOtpSchema = z.object({
   code: z.string().min(6, 'Verification code must be 6 digits').max(6),
   name: z.string().optional(),
   email: z.string().email('Invalid email address').optional(),
-  password: z.string().min(6, 'Password must be at least 6 characters').optional(),
+  password: z.string().min(8, 'Password must be at least 8 characters').optional(),
 })
 
 router.post(

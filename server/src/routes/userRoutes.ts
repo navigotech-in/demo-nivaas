@@ -1,5 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
+import { config } from '../config.js'
+import { db } from '../db/store.js'
+import { prisma } from '../db/prisma.js'
 import { requireAuth } from '../middleware/auth.js'
 import { prismaDb } from '../db/prismaService.js'
 
@@ -358,6 +361,51 @@ router.post('/me/change-password', async (req: Request, res: Response, next: Nex
       })
       return
     }
+    next(err)
+  }
+})
+
+// 11. Delete Account (Revokes all sessions, wipes account, clears cookies, logs out)
+router.delete('/me', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.user!.sub
+
+    // 1. Immediately revoke and delete in-memory sessions
+    db.sessions.forEach((s, key) => {
+      if (s.userId === userId) {
+        db.sessions.delete(key)
+      }
+    })
+
+    // 2. Cascade delete from PostgreSQL
+    try {
+      await prisma.refreshSession.deleteMany({ where: { userId } })
+      await prisma.creditTransaction.deleteMany({ where: { userId } })
+      await prisma.accessPass.deleteMany({ where: { userId } })
+      await prisma.generationJob.deleteMany({ where: { userId } })
+      await prisma.lead.deleteMany({ where: { userId } })
+      await prisma.user.delete({ where: { id: userId } })
+    } catch (err: any) {
+      console.warn('[UserRoutes] Prisma delete account error:', err.message)
+    }
+
+    db.users.delete(userId)
+
+    // 3. Clear refresh token cookie
+    res.clearCookie(config.cookie.name, {
+      httpOnly: config.cookie.httpOnly,
+      secure: config.cookie.secure,
+      sameSite: config.cookie.sameSite,
+      path: config.cookie.path,
+    })
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Your account has been deleted permanently and your session has ended.',
+      },
+    })
+  } catch (err) {
     next(err)
   }
 })

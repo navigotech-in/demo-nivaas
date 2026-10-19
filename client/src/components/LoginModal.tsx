@@ -243,13 +243,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       return
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.')
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.')
       return
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match. Please re-enter.')
+      setError('Passwords do not match. Please ensure both passwords are identical.')
       return
     }
 
@@ -311,13 +311,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       return
     }
 
-    if (newPassword.length < 6) {
-      setError('New password must be at least 6 characters long.')
+    if (newPassword.length < 8) {
+      setError('New password must be at least 8 characters long.')
       return
     }
 
     if (newPassword !== confirmNewPassword) {
-      setError('New passwords do not match. Please re-enter.')
+      setError('New passwords do not match. Please ensure both passwords are identical.')
       return
     }
 
@@ -407,7 +407,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
         {/* Scrollable Content Body - Smooth scrolling on any screen height */}
         <div className="overflow-y-auto flex-1 p-4 sm:p-6 pb-6 overscroll-contain min-w-0">
-          {successMsg && (
+          {successMsg && mode !== 'RESET_PASSWORD' && !otpSent && (
             <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs sm:text-sm font-medium text-emerald-800 leading-relaxed">
               {successMsg}
             </div>
@@ -466,15 +466,20 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <form onSubmit={handleVerifyOtp} className="space-y-5">
               <div className="flex items-center justify-between text-xs sm:text-sm text-[#4B5563] bg-[#F9FAFB] rounded-2xl p-4 border border-[#E5E7EB]">
                 <div>
-                  <div className="font-semibold text-[#111827]">Verification Code Dispatched</div>
-                  <div className="text-xs text-[#6B7280] mt-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-[#111827]">Verification Code Dispatched</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      ⏱️ Code valid for 5 min
+                    </span>
+                  </div>
+                  <div className="text-xs text-[#6B7280] mt-1">
                     Sent to <strong>{otpDestination || identifier || signupTargetPhone}</strong>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={handleResetOtp}
-                  className="text-[#B84718] text-xs font-bold hover:underline cursor-pointer ml-3 px-2 py-1 rounded hover:bg-[#FFF6E8]"
+                  className="text-[#B84718] text-xs font-bold hover:underline cursor-pointer ml-3 px-2 py-1 rounded hover:bg-[#FFF6E8] shrink-0"
                 >
                   Change
                 </button>
@@ -502,16 +507,27 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 />
               </div>
 
-              <div className="flex items-center justify-between text-xs sm:text-sm px-1 text-[#6B7280]">
-                <span>{cooldown > 0 ? `Resend code in ${cooldown}s` : 'Didn’t get code?'}</span>
-                <button
-                  type="button"
-                  disabled={cooldown > 0 || loading}
-                  onClick={() => handleSendOtp()}
-                  className="font-bold text-[#B84718] hover:underline disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-                >
-                  Resend OTP
-                </button>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs sm:text-sm px-1 text-[#6B7280]">
+                  <span>
+                    {cooldown > 0 ? (
+                      <span className="text-amber-800 font-medium">⏳ Request new code in {cooldown}s</span>
+                    ) : (
+                      'Didn’t receive code?'
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={cooldown > 0 || loading}
+                    onClick={() => handleSendOtp()}
+                    className="font-bold text-[#B84718] hover:underline disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    Resend OTP
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#9CA3AF] px-1">
+                  Your OTP remains valid for 5 minutes. You can request a fresh code once the cooldown ends.
+                </p>
               </div>
 
               <button
@@ -743,8 +759,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
               <div className="flex items-center justify-between text-xs sm:text-sm text-[#4B5563] bg-[#F9FAFB] rounded-2xl p-4 border border-[#E5E7EB]">
                 <div>
-                  <div className="font-semibold text-[#111827]">Reset Code Sent</div>
-                  <div className="text-xs text-[#6B7280] mt-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-[#111827]">Reset Code Sent</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      ⏱️ Code valid for 10 min
+                    </span>
+                  </div>
+                  <div className="text-xs text-[#6B7280] mt-1">
                     Sent to <strong>{resetDestination || identifier}</strong>
                   </div>
                 </div>
@@ -755,7 +776,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     setError(null)
                     setSuccessMsg(null)
                   }}
-                  className="text-[#B84718] text-xs font-bold hover:underline cursor-pointer ml-3 px-2 py-1 rounded hover:bg-[#FFF6E8]"
+                  className="text-[#B84718] text-xs font-bold hover:underline cursor-pointer ml-3 px-2 py-1 rounded hover:bg-[#FFF6E8] shrink-0"
                 >
                   Change
                 </button>
@@ -783,34 +804,45 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 />
               </div>
 
-              <div className="flex items-center justify-between text-xs sm:text-sm px-1 text-[#6B7280]">
-                <span>{cooldown > 0 ? `Resend code in ${cooldown}s` : 'Didn’t get the code?'}</span>
-                <button
-                  type="button"
-                  disabled={cooldown > 0 || loading}
-                  onClick={async () => {
-                    setError(null)
-                    setSuccessMsg(null)
-                    setLoading(true)
-                    try {
-                      const res = await forgotPassword(resetIdentifier || identifier.trim())
-                      setCooldown(60)
-                      setSuccessMsg(res.message || 'A fresh reset code has been sent.')
-                    } catch (err: any) {
-                      setError(err.message || 'Failed to resend code.')
-                    } finally {
-                      setLoading(false)
-                    }
-                  }}
-                  className="font-bold text-[#B84718] hover:underline disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-                >
-                  Resend Code
-                </button>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs sm:text-sm px-1 text-[#6B7280]">
+                  <span>
+                    {cooldown > 0 ? (
+                      <span className="text-amber-800 font-medium">⏳ Request new code in {cooldown}s</span>
+                    ) : (
+                      'Didn’t receive the code?'
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={cooldown > 0 || loading}
+                    onClick={async () => {
+                      setError(null)
+                      setSuccessMsg(null)
+                      setLoading(true)
+                      try {
+                        const res = await forgotPassword(resetIdentifier || identifier.trim())
+                        setCooldown(60)
+                        setSuccessMsg(res.message || 'A fresh reset code has been sent.')
+                      } catch (err: any) {
+                        setError(err.message || 'Failed to resend code.')
+                      } finally {
+                        setLoading(false)
+                      }
+                    }}
+                    className="font-bold text-[#B84718] hover:underline disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    Resend Code
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#9CA3AF] px-1">
+                  Your reset code remains valid for 10 minutes.
+                </p>
               </div>
 
               <div>
                 <label className="block text-xs sm:text-sm font-bold text-[#374151] mb-1.5">
-                  New Password (min 6 characters)
+                  New Password (minimum 8 characters)
                 </label>
                 <div className="relative">
                   <input
@@ -821,7 +853,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       setNewPassword(e.target.value)
                       if (error) setError(null)
                     }}
-                    placeholder="Enter new password"
+                    placeholder="Min 8 characters (letters, numbers)"
                     className="w-full rounded-xl border border-[#D1D5DB] px-4 py-3 pr-11 text-xs sm:text-sm text-[#111827] outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/10 transition"
                   />
                   <button
@@ -862,11 +894,25 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     {showConfirmNewPassword ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
                   </button>
                 </div>
+                {confirmNewPassword && (
+                  <p
+                    className={`text-[10px] font-bold mt-1.5 ${
+                      newPassword === confirmNewPassword ? 'text-emerald-600' : 'text-red-500'
+                    }`}
+                  >
+                    {newPassword === confirmNewPassword ? '✓ Passwords match' : 'Passwords do not match'}
+                  </p>
+                )}
               </div>
 
               <button
                 type="submit"
-                disabled={loading || resetCode.length !== 6 || newPassword.length < 6}
+                disabled={
+                  loading ||
+                  resetCode.length !== 6 ||
+                  newPassword.length < 8 ||
+                  newPassword !== confirmNewPassword
+                }
                 className="w-full rounded-xl bg-[#B84718] hover:bg-[#9E3A10] py-3.5 text-sm font-bold text-white transition disabled:opacity-50 cursor-pointer shadow-sm"
               >
                 {loading ? 'Updating Password...' : 'Reset Password & Sign In'}
@@ -999,7 +1045,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 min-w-0 w-full">
                 <div className="min-w-0 w-full">
                   <label className="block text-xs sm:text-sm font-bold text-[#374151] mb-1">
-                    Create Password <span className="text-red-500">*</span>
+                    Create Password (min 8 chars) <span className="text-red-500">*</span>
                   </label>
                   <div className="relative w-full min-w-0 max-w-full">
                     <input
@@ -1010,7 +1056,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                         setPassword(e.target.value)
                         if (error) setError(null)
                       }}
-                      placeholder="Min 6 characters"
+                      placeholder="Min 8 characters"
                       className="w-full min-w-0 max-w-full box-border rounded-xl border border-[#D1D5DB] px-3.5 py-2.5 pr-10 text-xs sm:text-sm text-[#111827] outline-none focus:border-[#E76F2E] focus:ring-2 focus:ring-[#E76F2E]/10 transition"
                     />
                     <button
@@ -1051,6 +1097,15 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       {showConfirmPassword ? <Icons.EyeOff size={16} /> : <Icons.Eye size={16} />}
                     </button>
                   </div>
+                  {confirmPassword && (
+                    <p
+                      className={`text-[10px] font-bold mt-1 ${
+                        password === confirmPassword ? 'text-emerald-600' : 'text-red-500'
+                      }`}
+                    >
+                      {password === confirmPassword ? '✓ Passwords match' : 'Passwords do not match'}
+                    </p>
+                  )}
                 </div>
               </div>
 

@@ -569,3 +569,23 @@ export async function verifyOtp(identifier: string, code: string, name?: string)
   if (!res.ok || !json.success) throw apiError(res, json, 'Invalid or expired OTP')
   return json.data
 }
+
+export async function deleteUserAccount(authHeaders: Record<string, string>): Promise<void> {
+  const res = await fetch(`${BASE}/users/me`, {
+    method: 'DELETE',
+    headers: { ...authHeaders },
+    credentials: 'include',
+  })
+  const json = await res.json().catch(() => null)
+  if (!res.ok || !json?.success) throw apiError(res, json, 'Failed to delete account')
+}
+
+export async function adminDeleteUser(userId: string, authHeaders: Record<string, string>): Promise<void> {
+  const res = await fetch(`${BASE}/admin/users/${userId}`, {
+    method: 'DELETE',
+    headers: { ...authHeaders },
+    credentials: 'include',
+  })
+  const json = await res.json().catch(() => null)
+  if (!res.ok || !json?.success) throw apiError(res, json, 'Failed to delete user account')
+}

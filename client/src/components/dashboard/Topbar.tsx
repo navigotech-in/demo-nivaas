@@ -25,7 +25,12 @@ export const Topbar: React.FC<TopbarProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const displayName = user?.name || (user?.role === 'ADMIN' ? 'IHM Administrator' : 'User')
-  const displayEmail = user?.email || (user?.role === 'ADMIN' ? 'admin@ihm.com' : 'user@ihm.com')
+  const displayEmail =
+    user?.email && !user.email.endsWith('@phone.indorehousemakers.com')
+      ? user.email
+      : user?.role === 'ADMIN'
+      ? 'admin@ihm.com'
+      : 'No email linked'
   const shortName = user?.role === 'ADMIN' ? 'Admin' : (user?.name?.split(' ')[0] || 'User')
   const initial = displayName.charAt(0).toUpperCase() || (user?.role === 'ADMIN' ? 'I' : 'U')
 

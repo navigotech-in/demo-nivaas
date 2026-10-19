@@ -596,6 +596,60 @@ router.post('/users/:id/credits', async (req: Request, res: Response, next: Next
   }
 })
 
+// Delete User (Admin action: revokes all user sessions and removes user record)
+router.delete('/users/:id', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id: targetUserId } = req.params
+    const adminId = req.user!.sub
+
+    if (targetUserId === adminId) {
+      res.status(400).json({
+        success: false,
+        error: 'CANNOT_DELETE_SELF',
+        message: 'You cannot delete your own admin account.',
+      })
+      return
+    }
+
+    // 1. Immediately revoke all active in-memory sessions so in-flight requests get rejected with 401
+    db.sessions.forEach((s, key) => {
+      if (s.userId === targetUserId) {
+        db.sessions.delete(key)
+      }
+    })
+
+    // 2. Cascade delete records in PostgreSQL
+    try {
+      await prisma.refreshSession.deleteMany({ where: { userId: targetUserId } })
+      await prisma.creditTransaction.deleteMany({ where: { userId: targetUserId } })
+      await prisma.accessPass.deleteMany({ where: { userId: targetUserId } })
+      await prisma.generationJob.deleteMany({ where: { userId: targetUserId } })
+      await prisma.lead.deleteMany({ where: { userId: targetUserId } })
+      await prisma.user.delete({ where: { id: targetUserId } })
+    } catch (err: any) {
+      console.warn('[AdminRoutes] Prisma delete user error:', err.message)
+    }
+
+    db.users.delete(targetUserId)
+
+    db.logAudit({
+      actorId: adminId,
+      actorRole: 'ADMIN',
+      action: 'admin.user_delete',
+      entityType: 'User',
+      entityId: targetUserId,
+      metadata: { deletedAt: new Date().toISOString() },
+    })
+
+    res.json({
+      success: true,
+      message: 'User account and all active sessions permanently deleted.',
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
 // 4. Leads & Consultations Management
 router.get('/leads', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

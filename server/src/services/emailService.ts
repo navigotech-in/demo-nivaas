@@ -165,6 +165,70 @@ class EmailService {
   }
 
   /**
+   * Send Welcome onboarding email to newly registered customer
+   */
+  public async sendWelcomeEmail(toEmail: string, userName: string): Promise<boolean> {
+    const user = config.otp.email.user
+    if (!this.transporter || !user) {
+      console.warn('[EmailService] Transporter not ready for welcome email.')
+      return false
+    }
+
+    if (!toEmail || toEmail.endsWith('@phone.indorehousemakers.com')) {
+      return false
+    }
+
+    const cleanName = userName && userName !== 'Client User' ? userName : 'Valued Customer'
+    const mailHtml = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; background: #FAF8F5; border-radius: 16px; overflow: hidden; border: 1px solid #E7E0D7;">
+        <div style="background: linear-gradient(135deg, #292826 0%, #1A1918 100%); padding: 28px 24px; text-align: center; color: #ffffff;">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.5px; color: #ffffff;">Indore House Makers</h1>
+          <p style="margin: 6px 0 0 0; font-size: 11px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1.5px; color: #E76F2E; font-weight: 700;">AI Architecture & Modern Construction</p>
+        </div>
+        <div style="padding: 32px 28px; background: #ffffff;">
+          <h2 style="font-size: 18px; color: #292826; margin: 0 0 12px 0;">Welcome, ${cleanName}!</h2>
+          <p style="font-size: 13px; color: #54504A; line-height: 1.6; margin: 0 0 20px 0;">
+            Thank you for registering with <strong>Indore House Makers</strong>. Your account has been successfully created and your workspace is ready.
+          </p>
+          <div style="background: #FFF6E8; border-left: 4px solid #E76F2E; padding: 14px 16px; border-radius: 8px; margin: 0 0 24px 0;">
+            <p style="margin: 0; font-size: 13px; color: #9E3A10; font-weight: 700;">🎉 100 AI Studio Credits Added</p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #54504A; line-height: 1.5;">
+              You can instantly generate customized 2D floor plans, 3D modern elevations, and Vastu-compliant layouts.
+            </p>
+          </div>
+          <div style="text-align: center; margin: 28px 0;">
+            <a href="http://localhost:5173/dashboard" style="display: inline-block; padding: 14px 28px; background: #B84718; color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 14px; font-weight: 800; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(184, 71, 24, 0.25);">
+              Go to My Dashboard →
+            </a>
+          </div>
+          <p style="font-size: 12px; color: #74706A; margin: 24px 0 0 0; line-height: 1.5; border-top: 1px solid #F3F4F6; padding-top: 16px;">
+            Need help or custom municipal structural drawings? Reply to this email or contact our Indore architecture desk directly.
+          </p>
+        </div>
+        <div style="padding: 16px 24px; background: #FAF8F5; text-align: center; border-top: 1px solid #E7E0D7; font-size: 11px; color: #74706A;">
+          © 2026 Indore House Makers · Indore, Madhya Pradesh
+        </div>
+      </div>
+    `
+
+    try {
+      await this.transporter.sendMail({
+        from: `"Indore House Makers" <${user}>`,
+        replyTo: user,
+        to: toEmail,
+        subject: `Welcome to Indore House Makers, ${cleanName}! 🏡`,
+        text: `Welcome to Indore House Makers, ${cleanName}!\n\nYour account has been successfully created with 100 AI credits.\n\nAccess your dashboard: http://localhost:5173/dashboard\n\nIndore House Makers Team`,
+        html: mailHtml,
+      })
+      console.log(`[EmailService] Welcome email successfully sent to ${toEmail}`)
+      return true
+    } catch (err: any) {
+      console.error(`[EmailService] Failed to send welcome email to ${toEmail}:`, err.message)
+      return false
+    }
+  }
+
+  /**
    * Send notification to admin and customer when a new lead / contact enquiry is submitted
    */
   public async sendLeadNotification(lead: Lead): Promise<boolean> {

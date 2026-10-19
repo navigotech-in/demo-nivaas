@@ -143,6 +143,10 @@ export class AuthService {
       }
     }
 
+    if (params.password.length < 8) {
+      throw new Error('Password must be at least 8 characters long.')
+    }
+
     const saltRounds = 10
     const passwordHash = await bcrypt.hash(params.password, saltRounds)
     const userId = 'usr_' + crypto.randomBytes(8).toString('hex')
@@ -207,6 +211,11 @@ export class AuthService {
     )
     const accessToken = this.generateAccessToken(newUser, session.id)
     const userSummary = db.getUserSummary(newUser)
+
+    // Dispatch welcome email if user registered with a valid non-synthetic email
+    if (newUser.email && !newUser.email.endsWith('@phone.indorehousemakers.com')) {
+      void emailService.sendWelcomeEmail(newUser.email, newUser.name).catch(() => null)
+    }
 
     return {
       user: userSummary,
@@ -886,8 +895,8 @@ export class AuthService {
       }
     }
 
-    if (params.newPassword.length < 6) {
-      throw new Error('New password must be at least 6 characters long.')
+    if (params.newPassword.length < 8) {
+      throw new Error('New password must be at least 8 characters long.')
     }
 
     // Hash new password

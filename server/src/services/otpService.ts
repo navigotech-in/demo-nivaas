@@ -200,6 +200,10 @@ class OtpService {
       throw new Error('Please enter a valid 6-digit verification code.')
     }
 
+    if (params.password && params.password.trim().length < 8) {
+      throw new Error('Password must be at least 8 characters long.')
+    }
+
     let isApproved = false
     let twilioNetworkError: string | null = null
 
@@ -465,6 +469,13 @@ class OtpService {
       userAgent: params.userAgent,
       metadata: { channel: type, identifier: normalized },
     })
+
+    // Dispatch welcome email if user registered with a real non-synthetic email
+    if (isNewUser && targetUser.email && !targetUser.email.endsWith('@phone.indorehousemakers.com')) {
+      void emailService.sendWelcomeEmail(targetUser.email, targetUser.name).catch((err) => {
+        console.warn(`[OtpService] Welcome email delivery error:`, err.message)
+      })
+    }
 
     return {
       user: userSummary,

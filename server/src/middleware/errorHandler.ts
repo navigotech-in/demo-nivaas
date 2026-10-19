@@ -62,9 +62,9 @@ export function errorHandler(
       message: 'Session has expired. Please sign in again.',
     },
     USER_NOT_FOUND: {
-      status: 404,
-      code: ErrorCode.NOT_FOUND,
-      message: 'User account not found.',
+      status: 401,
+      code: ErrorCode.UNAUTHORIZED,
+      message: 'User account not found or has been deleted. Session terminated.',
     },
     PHONE_EXISTS: {
       status: 409,
