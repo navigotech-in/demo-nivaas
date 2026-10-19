@@ -47,7 +47,7 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
           </div>
           <a
             href="#plans"
-            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-[#E76F2E] text-white hover:bg-[#C65320] transition shadow-sm group/link"
+            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-[#B84718] text-white hover:bg-[#9E3A10] transition shadow-sm group/link cursor-pointer"
           >
             <Icons.Grid size={15} />
             <span>Explore Full Catalog</span>
@@ -67,7 +67,7 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
               onClick={() => selectTab(tab.id)}
               className={`pb-2.5 -mb-px whitespace-nowrap transition border-b-2 ${
                 activeTab === tab.id
-                  ? 'border-[#E76F2E] text-[#E76F2E]'
+                  ? 'border-[#B84718] text-[#B84718]'
                   : 'border-transparent text-[#54504A] hover:text-[#292826]'
               }`}
             >
@@ -97,13 +97,13 @@ export default function TrendingPlans({ onOpenConsult }: TrendingPlansProps) {
                 >
                   <span
                     className={`text-xs font-bold tracking-[0.2em] transition ${
-                      isActive ? 'text-[#E76F2E]' : 'text-[#54504A] group-hover:text-[#C65320]'
+                      isActive ? 'text-[#B84718]' : 'text-[#54504A] group-hover:text-[#B84718]'
                     }`}
                   >
                     {pad(idx)}
                   </span>
                   <span className="flex-1">
-                    <span className="block font-display text-lg font-bold text-[#E76F2E] leading-snug">
+                    <span className="block font-display text-lg font-bold text-[#292826] group-hover:text-[#B84718] leading-snug transition-colors">
                       {item.label}
                     </span>
                     <span className="mt-0.5 block text-xs font-semibold text-[#54504A]">

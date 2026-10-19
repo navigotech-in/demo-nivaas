@@ -10,14 +10,14 @@ export default function AboutNivaas() {
         <div className="relative">
           <div className="overflow-hidden rounded-3xl border border-slate-300 shadow-card">
             <Img
-              src="https://images.pexels.com/photos/37129015/pexels-photo-37129015.jpeg?auto=compress&cs=tinysrgb&w=480&h=360&fit=crop"
+              src="https://images.pexels.com/photos/37129015/pexels-photo-37129015.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop"
               alt="Indore House Makers designed modern Indian duplex"
-              width={480}
-              height={360}
+              width={400}
+              height={300}
               className="aspect-[4/3] w-full object-cover"
             />
           </div>
-          <div className="absolute -bottom-5 -right-3 sm:right-4 rounded-2xl bg-[#E76F2E] px-5 py-4 text-white shadow-lg border border-[#C65320]">
+          <div className="absolute -bottom-5 -right-3 sm:right-4 rounded-2xl bg-[#B84718] px-5 py-4 text-white shadow-lg border border-[#9E3A10]">
             <div className="font-display text-2xl font-extrabold text-white">14+</div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-white">Years of Design</div>
           </div>
@@ -56,7 +56,7 @@ export default function AboutNivaas() {
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <Link
               to="/house-plans"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#E76F2E] px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#C65320] transition"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#B84718] px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#9E3A10] transition"
             >
               <span>Browse House Plans</span>
               <Icons.ChevronRight size={14} />

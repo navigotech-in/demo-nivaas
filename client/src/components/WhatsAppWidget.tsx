@@ -122,9 +122,9 @@ export default function WhatsAppWidget({ onOpenAiStudio, sheetOpen = false, moda
           <button
             type="button"
             onClick={() => onOpenAiStudio?.()}
-            className="hidden sm:inline-flex items-center gap-1.5 bg-white text-[#E76F2E] border border-[#E7E0D7] px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-[#FFF6E8] transition shadow-md"
+            className="hidden sm:inline-flex items-center gap-1.5 bg-white text-[#B84718] border border-[#E7E0D7] px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-[#FFF6E8] transition shadow-md cursor-pointer"
           >
-            <Icons.Sparkles size={13} className="text-[#E76F2E]" />
+            <Icons.Sparkles size={13} className="text-[#B84718]" />
             <span>Ask AI Studio</span>
           </button>
           <button

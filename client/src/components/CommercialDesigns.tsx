@@ -34,7 +34,7 @@ export default function CommercialDesigns({ onOpenConsult }: CommercialDesignsPr
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold transition shrink-0 whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'bg-[#E76F2E] text-white shadow-sm'
+                    ? 'bg-[#B84718] text-white shadow-sm'
                     : 'bg-[#FFF6E8] text-[#54504A] hover:bg-[#F1ECE5]'
                 }`}
               >
@@ -57,7 +57,7 @@ export default function CommercialDesigns({ onOpenConsult }: CommercialDesignsPr
 
           <div className="relative min-h-[360px] sm:min-h-[408px] flex flex-col justify-end p-6 sm:p-10">
             <div className="max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#E76F2E] ring-1 ring-[#E7E0D7]">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#B84718] ring-1 ring-[#E7E0D7]">
                 {active.label}
               </span>
               <h3 className="mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">
@@ -78,7 +78,7 @@ export default function CommercialDesigns({ onOpenConsult }: CommercialDesignsPr
                 <button
                   type="button"
                   onClick={() => onOpenConsult(`${active.label} Commercial Design`)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-xs font-bold text-[#E76F2E] shadow-sm hover:bg-[#F1ECE5] transition"
+                  className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-xs font-bold text-[#B84718] shadow-sm hover:bg-[#F1ECE5] transition"
                 >
                   <span>Request a Quote</span>
                   <Icons.ChevronRight size={14} />

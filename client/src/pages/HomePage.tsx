@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import Hero from '../components/Hero'
 import { useSeoMeta } from '../components/useSeoMeta'
 
@@ -34,7 +34,9 @@ interface HomePageProps {
 }
 
 export default function HomePage({ onCalculateEstimate, onOpenConsult }: HomePageProps) {
-  const [loadBelowFold, setLoadBelowFold] = useState(false)
+  const [loadNearFold, setLoadNearFold] = useState(false)
+  const [loadDeepFold, setLoadDeepFold] = useState(false)
+  const deepSentinelRef = useRef<HTMLDivElement>(null)
 
   useSeoMeta({
     title: 'House Plans, 3D Front Elevations & Interior Designs for Indian Homes | Indore House Makers',
@@ -43,28 +45,69 @@ export default function HomePage({ onCalculateEstimate, onOpenConsult }: HomePag
     canonicalUrl: 'https://indorehousemakers.in/',
   })
 
-  // Defer heavy below-the-fold component streaming until browser main-thread is idle
+  // Phase 1 -> Phase 2: Load near-fold components after initial render settles or on user interaction
   useEffect(() => {
+    let idleHandle: any = null
+    let timer: any = null
+
+    const activateNearFold = () => setLoadNearFold(true)
+
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      const handle = (window as any).requestIdleCallback(
-        () => setLoadBelowFold(true),
-        { timeout: 600 }
-      )
-      return () => (window as any).cancelIdleCallback(handle)
+      idleHandle = (window as any).requestIdleCallback(activateNearFold, { timeout: 1200 })
     } else {
-      const timer = setTimeout(() => setLoadBelowFold(true), 150)
-      return () => clearTimeout(timer)
+      timer = setTimeout(activateNearFold, 500)
+    }
+
+    const onUserInteract = () => {
+      setLoadNearFold(true)
+      window.removeEventListener('scroll', onUserInteract)
+      window.removeEventListener('touchstart', onUserInteract)
+    }
+    window.addEventListener('scroll', onUserInteract, { passive: true, once: true })
+    window.addEventListener('touchstart', onUserInteract, { passive: true, once: true })
+
+    return () => {
+      if (idleHandle && 'cancelIdleCallback' in window) (window as any).cancelIdleCallback(idleHandle)
+      if (timer) clearTimeout(timer)
+      window.removeEventListener('scroll', onUserInteract)
+      window.removeEventListener('touchstart', onUserInteract)
     }
   }, [])
+
+  // Phase 2 -> Phase 3: Load deep below-the-fold components when approaching middle of page or after delay
+  useEffect(() => {
+    if (!loadNearFold) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setLoadDeepFold(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '600px 0px' }
+    )
+
+    if (deepSentinelRef.current) {
+      observer.observe(deepSentinelRef.current)
+    }
+
+    const fallbackTimer = setTimeout(() => setLoadDeepFold(true), 3000)
+
+    return () => {
+      observer.disconnect()
+      clearTimeout(fallbackTimer)
+    }
+  }, [loadNearFold])
 
   return (
     <main>
       {/* 1. Critical Above-the-Fold Hero Section (Instant FCP & LCP) */}
       <Hero onCalculate={onCalculateEstimate} />
 
-      {/* 2. Below-The-Fold Lazy Loaded Stream with Automatic Layout Containment */}
-      {loadBelowFold && (
-        <Suspense fallback={<div className="min-h-[200px] bg-transparent" />}>
+      {/* 2. Near-Fold Components (Media Spotlight, Counter, About, Design Studio, Services) */}
+      {loadNearFold && (
+        <Suspense fallback={<div className="min-h-[160px] bg-transparent" />}>
           <div className="content-auto">
             {/* 2. Media Coverage & Credibility Spotlight */}
             <MediaSpotlight />
@@ -88,12 +131,20 @@ export default function HomePage({ onCalculateEstimate, onOpenConsult }: HomePag
 
             {/* 8. Architectural, Structural, MEP & PMC Services */}
             <Services onOpenConsult={onOpenConsult} />
-
-            {/* 9. Interactive Detailed Cost Estimator */}
-            <CostCalculator onOpenConsult={onOpenConsult} />
           </div>
 
+          {/* Sentinel element to trigger deep fold loading 600px ahead */}
+          <div ref={deepSentinelRef} className="h-1 w-full" aria-hidden="true" />
+        </Suspense>
+      )}
+
+      {/* 3. Deep-Fold Components (Estimator, Contractors, Reviews, Blogs, FAQ, Contact) */}
+      {loadDeepFold && (
+        <Suspense fallback={<div className="min-h-[160px] bg-transparent" />}>
           <div className="content-auto">
+            {/* 9. Interactive Detailed Cost Estimator */}
+            <CostCalculator onOpenConsult={onOpenConsult} />
+
             {/* 10. One-Stop Turnkey Construction & Financial Ecosystem */}
             <OneStop onOpenConsult={onOpenConsult} />
 

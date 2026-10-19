@@ -68,7 +68,7 @@ export default function Interiors({ onOpenConsult }: InteriorsProps) {
             <button
               type="button"
               onClick={() => onOpenConsult('Complete Interior 3D Design')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-[#E76F2E] text-white hover:bg-[#C65320] transition shadow-sm active:scale-[0.98] group/link"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-[#B84718] text-white hover:bg-[#9E3A10] transition shadow-sm active:scale-[0.98] group/link cursor-pointer"
             >
               <span>Get 3D Interior Quotation</span>
               <Icons.ChevronRight

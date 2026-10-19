@@ -94,15 +94,15 @@ export default function Reviews() {
                   type="button"
                   onClick={() => setActiveIndex(idx)}
                   className={`relative flex flex-col items-center transition-all duration-300 group cursor-pointer shrink-0 ${
-                    isSelected ? 'scale-110' : 'opacity-60 hover:opacity-90'
+                    isSelected ? 'scale-110' : 'hover:scale-105'
                   }`}
                   aria-label={`View review from ${rev.name}`}
                 >
                   <div
                     className={`relative h-16 w-16 sm:h-20 sm:w-20 rounded-full p-1 transition-all ${
                       isSelected
-                        ? 'ring-4 ring-[#E76F2E] shadow-sm'
-                        : 'ring-2 ring-transparent'
+                        ? 'ring-4 ring-[#B84718] shadow-sm'
+                        : 'ring-2 ring-[#E7E0D7] opacity-80 group-hover:opacity-100'
                     }`}
                   >
                     <img
@@ -117,7 +117,7 @@ export default function Reviews() {
                   </div>
                   <span
                     className={`mt-2 text-[11px] font-semibold whitespace-nowrap ${
-                      isSelected ? 'text-[#292826] font-bold' : 'text-[#54504A]'
+                      isSelected ? 'text-[#292826] font-bold' : 'text-[#3D3A36]'
                     }`}
                   >
                     {displayName}
@@ -132,7 +132,7 @@ export default function Reviews() {
             <button
               type="button"
               onClick={handlePrev}
-              className="absolute -left-3 sm:-left-4 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-[#E7E0D7] text-[#292826] hover:bg-[#E76F2E] hover:text-white transition cursor-pointer"
+              className="absolute -left-3 sm:-left-4 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-[#E7E0D7] text-[#292826] hover:bg-[#B84718] hover:text-white transition cursor-pointer"
               aria-label="Previous review"
             >
               <Icons.ChevronLeft size={16} />
@@ -140,7 +140,7 @@ export default function Reviews() {
             <button
               type="button"
               onClick={handleNext}
-              className="absolute -right-3 sm:-right-4 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-[#E7E0D7] text-[#292826] hover:bg-[#E76F2E] hover:text-white transition cursor-pointer"
+              className="absolute -right-3 sm:-right-4 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-[#E7E0D7] text-[#292826] hover:bg-[#B84718] hover:text-white transition cursor-pointer"
               aria-label="Next review"
             >
               <Icons.ChevronRight size={16} />

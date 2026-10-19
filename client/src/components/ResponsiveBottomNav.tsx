@@ -221,7 +221,7 @@ export default function ResponsiveBottomNav({
                 setExploreSheetOpen(false)
                 onOpenAiStudio('chat')
               }}
-              className="py-2.5 px-3 rounded-xl border border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E] font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-[#E76F2E] hover:text-white transition shadow-xs cursor-pointer active:scale-[0.98]"
+              className="py-2.5 px-3 rounded-xl border border-[#B84718] bg-[#FFF6E8] text-[#B84718] font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-[#B84718] hover:text-white transition shadow-xs cursor-pointer active:scale-[0.98]"
             >
               <Icons.Sparkles size={13} />
               <span>Ask AI Studio</span>
@@ -249,7 +249,7 @@ export default function ResponsiveBottomNav({
               }}
               className="w-full py-2.5 rounded-xl border border-[#E7E0D7] bg-white text-[#292826] hover:text-[#E76F2E] font-bold text-xs text-center hover:bg-[#FFF6E8] hover:border-[#E76F2E] transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
             >
-              <div className="h-5 w-5 rounded-full bg-[#E76F2E] text-white flex items-center justify-center text-[10px] font-bold">
+              <div className="h-5 w-5 rounded-full bg-[#B84718] text-white flex items-center justify-center text-[10px] font-bold">
                 {user?.name?.[0]?.toUpperCase() || 'U'}
               </div>
               <span>User Profile ({user?.name?.split(' ')[0] || 'Account'})</span>
@@ -264,7 +264,7 @@ export default function ResponsiveBottomNav({
                 }}
                 className="w-full py-2.5 rounded-xl border border-[#E7E0D7] bg-white text-[#54504A] hover:text-[#292826] font-bold text-xs text-center hover:bg-[#FFF6E8] hover:border-[#E76F2E] transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
               >
-                <Icons.User size={14} className="text-[#E76F2E]" />
+                <Icons.User size={14} className="text-[#B84718]" />
                 <span>User Profile (Login / Sign Up)</span>
               </button>
             )

@@ -5,7 +5,7 @@ export default function AppCta() {
     <section className="py-16 bg-white border-t border-[#E7E0D7]">
       <div className="container-content flex flex-col lg:flex-row items-center justify-between gap-8">
         <div className="max-w-2xl text-center lg:text-left">
-          <span className="text-xs font-bold uppercase tracking-widest text-[#E76F2E] flex items-center justify-center lg:justify-start gap-1.5">
+          <span className="text-xs font-bold uppercase tracking-widest text-[#B84718] flex items-center justify-center lg:justify-start gap-1.5">
             <Icons.Sparkles size={14} /> Indore House Makers App
           </span>
           <h2 className="mt-2 font-display text-2xl sm:text-3xl font-extrabold text-[#292826]">

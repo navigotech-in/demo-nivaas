@@ -40,7 +40,7 @@ export default function DesignStudio({ onOpenConsult }: DesignStudioProps) {
       <div className="container-content">
         {/* Top Header */}
         <div className="text-center max-w-3xl mx-auto mb-8">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFF6E8] border border-[#E7E0D7] text-xs font-bold text-[#E76F2E] mb-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFF6E8] border border-[#E7E0D7] text-xs font-bold text-[#B84718] mb-3">
             <span className="text-base">✨</span>
             <span>Interactive Design Studio</span>
           </div>
@@ -78,7 +78,7 @@ export default function DesignStudio({ onOpenConsult }: DesignStudioProps) {
                   </div>
                 </div>
                 {isActive && (
-                  <span className="ml-1 flex h-2 w-2 rounded-full bg-[#E76F2E]" />
+                  <span className="ml-1 flex h-2 w-2 rounded-full bg-[#B84718]" />
                 )}
               </button>
             )

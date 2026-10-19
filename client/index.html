@@ -39,6 +39,10 @@
 
 
 
+  <!-- Preload Critical LCP Hero Background Images for instant discovery & sub-second LCP -->
+  <link rel="preload" as="image" type="image/webp" href="/assets/hero-bg-mobile.webp" media="(max-width: 768px)" fetchpriority="high" />
+  <link rel="preload" as="image" type="image/webp" href="/assets/hero-bg.webp" media="(min-width: 769px)" fetchpriority="high" />
+
   <!-- Preconnect to Font CDNs for Core Web Vitals (Est 190ms savings) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

@@ -54,7 +54,7 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
                 <div className={`p-4 sm:p-5 flex flex-col justify-center ${!isOpen ? 'min-h-[84px] sm:min-h-[88px]' : ''}`}>
                   <div className="flex w-full items-center justify-between text-left gap-3">
                     <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#C94F36] bg-[#FFF6E8] border border-[#E7E0D7] px-2.5 py-0.5 rounded-md shrink-0">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#B84718] bg-[#FFF6E8] border border-[#E7E0D7] px-2.5 py-0.5 rounded-md shrink-0">
                         {item.tag}
                       </span>
                       <span className={`font-display text-base sm:text-lg font-bold text-[#292826] ${!isOpen ? 'truncate' : ''}`}>
@@ -102,7 +102,7 @@ export default function FAQ({ onOpenConsult }: FAQProps) {
           <button
             type="button"
             onClick={onOpenConsult}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-7 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-[#C65320] transition active:scale-[0.98] cursor-pointer"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#B84718] px-7 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-[#9E3A10] transition active:scale-[0.98] cursor-pointer"
           >
             <Icons.Phone size={15} />
             <span>Talk to an Architect Now</span>

@@ -53,6 +53,8 @@ export default function Blogs({ onOpenConsult: _onOpenConsult }: BlogsProps) {
             >
               <Link
                 to={`/guides/${post.slug}`}
+                tabIndex={-1}
+                aria-hidden="true"
                 className="relative aspect-[16/10] overflow-hidden bg-[#F1ECE5] block"
               >
                 <Img
@@ -68,14 +70,11 @@ export default function Blogs({ onOpenConsult: _onOpenConsult }: BlogsProps) {
               <div className="p-5 flex flex-1 flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between text-xs text-[#1F2937] mb-2 font-semibold">
-                    <span className="text-[#E76F2E] font-bold">{post.tag}</span>
-                    <span className="flex items-center gap-1"><Icons.Clock size={12} className="text-[#E76F2E]" /> {post.readTime}</span>
+                    <span className="text-[#B84718] font-bold">{post.tag}</span>
+                    <span className="flex items-center gap-1"><Icons.Clock size={12} className="text-[#B84718]" /> {post.readTime}</span>
                   </div>
-                  <Link to={`/guides/${post.slug}`}>
-                    <h3
-                      style={{ color: '#E76F2E' }}
-                      className="font-display text-base font-bold leading-snug line-clamp-2 hover:underline hover:text-[#C65320] transition-colors"
-                    >
+                  <Link to={`/guides/${post.slug}`} aria-label={post.title} className="block py-0.5">
+                    <h3 className="font-display text-base font-bold leading-snug line-clamp-2 text-[#292826] hover:text-[#B84718] transition-colors">
                       {post.title}
                     </h3>
                   </Link>
@@ -87,7 +86,8 @@ export default function Blogs({ onOpenConsult: _onOpenConsult }: BlogsProps) {
                 <div className="mt-5 pt-3.5 border-t border-[#EEE9E3]">
                   <Link
                     to={`/guides/${post.slug}`}
-                    className="text-xs font-bold text-[#E76F2E] hover:text-[#C65320] flex items-center gap-1 cursor-pointer transition"
+                    aria-label={`Read full guide: ${post.title}`}
+                    className="inline-flex items-center gap-1 py-2 text-xs font-bold text-[#B84718] hover:text-[#9E3A10] cursor-pointer transition min-h-[44px]"
                   >
                     <span>Read Full Guide</span>
                     <Icons.ChevronRight

@@ -6,10 +6,10 @@ interface OneStopProps {
 }
 
 const serviceIcons: Record<string, React.ReactNode> = {
-  briefcase: <Icons.Briefcase size={26} className="text-[#E76F2E]" />,
-  building: <Icons.Building size={26} className="text-[#E76F2E]" />,
-  hardhat: <Icons.HardHat size={26} className="text-[#E76F2E]" />,
-  calculator: <Icons.Calculator size={26} className="text-[#E76F2E]" />,
+  briefcase: <Icons.Briefcase size={26} className="text-[#B84718]" />,
+  building: <Icons.Building size={26} className="text-[#B84718]" />,
+  hardhat: <Icons.HardHat size={26} className="text-[#B84718]" />,
+  calculator: <Icons.Calculator size={26} className="text-[#B84718]" />,
 }
 
 export default function OneStop({ onOpenConsult }: OneStopProps) {
@@ -44,7 +44,7 @@ export default function OneStop({ onOpenConsult }: OneStopProps) {
               <button
                 type="button"
                 onClick={() => onOpenConsult(svc.title)}
-                className="mt-5 inline-flex items-center gap-1.5 rounded-lg border border-[#E7E0D7] bg-[#F1ECE5] px-4 py-2 text-[11px] font-bold text-[#E76F2E] hover:bg-[#C65320] hover:text-white hover:border-[#C65320] transition self-start"
+                className="mt-5 inline-flex items-center gap-1.5 rounded-lg border border-[#E7E0D7] bg-[#F1ECE5] px-4 py-2 text-[11px] font-bold text-[#B84718] hover:bg-[#9E3A10] hover:text-white hover:border-[#9E3A10] transition self-start cursor-pointer"
               >
                 <span>{svc.cta}</span>
                 <Icons.ChevronRight size={13} />

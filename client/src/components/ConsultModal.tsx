@@ -134,7 +134,7 @@ export default function ConsultModal({
         <div className="p-3.5 sm:p-6 pb-6 bg-white/40 backdrop-blur-md overflow-y-auto overscroll-contain min-w-0 flex-1">
           {success ? (
             <div className="py-8 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F1ECE5] text-[#E76F2E] text-2xl font-bold shadow-sm">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F1ECE5] text-[#B84718] text-2xl font-bold shadow-sm">
                 <Icons.Check size={28} />
               </div>
               <h4 className="mt-4 font-display text-2xl font-bold text-[#292826]">
@@ -146,7 +146,7 @@ export default function ConsultModal({
               <button
                 type="button"
                 onClick={handleReset}
-                className="mt-6 inline-flex rounded-lg bg-[#E76F2E] px-7 py-2.5 text-xs font-bold text-white shadow hover:bg-[#C65320] cursor-pointer"
+                className="mt-6 inline-flex rounded-lg bg-[#B84718] px-7 py-2.5 text-xs font-bold text-white shadow hover:bg-[#9E3A10] cursor-pointer"
               >
                 Close &amp; Browse Plans
               </button>
@@ -161,7 +161,7 @@ export default function ConsultModal({
 
               {initialPlanDetails && (
                 <div className="rounded-xl bg-[#FFF6E8] p-3 text-xs text-[#1F2937] border border-[#E76F2E]/40 font-medium shadow-2xs break-words">
-                  <span className="font-extrabold text-[#E76F2E]">Selected Specs:</span> {initialPlanDetails}
+                  <span className="font-extrabold text-[#B84718]">Selected Specs:</span> {initialPlanDetails}
                 </div>
               )}
 
@@ -279,7 +279,7 @@ export default function ConsultModal({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-gradient-to-r from-[#E76F2E] via-[#F27E3D] to-[#E76F2E] py-3 sm:py-3.5 text-xs sm:text-sm font-bold text-white shadow-md transition hover:brightness-105 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full rounded-xl bg-gradient-to-r from-[#B84718] via-[#C94F36] to-[#B84718] py-3 sm:py-3.5 text-xs sm:text-sm font-bold text-white shadow-md transition hover:brightness-105 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {loading ? 'Submitting...' : 'Book Free Online Consultation →'}
               </button>

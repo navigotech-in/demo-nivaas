@@ -231,7 +231,7 @@ export default function ChatAi({
               onClose()
               onOpenGenerator?.()
             }}
-            className="px-2.5 py-1 bg-[#E76F2E] hover:bg-[#C65320] text-white text-[11px] font-bold rounded-lg shadow-xs transition cursor-pointer"
+            className="px-2.5 py-1 bg-[#B84718] hover:bg-[#9E3A10] text-white text-[11px] font-bold rounded-lg shadow-xs transition cursor-pointer"
           >
             Launch Studio
           </button>
@@ -247,7 +247,7 @@ export default function ChatAi({
               <div
                 className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-xs ${
                   m.from === 'user'
-                    ? 'bg-[#E76F2E] text-white font-medium rounded-tr-xs'
+                    ? 'bg-[#B84718] text-white font-medium rounded-tr-xs'
                     : 'bg-white text-[#1F2937] border border-[#E7E0D7] rounded-tl-xs whitespace-pre-line'
                 }`}
               >
@@ -297,7 +297,7 @@ export default function ChatAi({
                             setConsultSubmitted(true)
                             onOpenConsult?.('AI Chat Consultation Request')
                           }}
-                          className="w-full py-2 px-3 rounded-lg bg-[#E76F2E] text-white text-xs font-bold hover:bg-[#C65320] transition disabled:opacity-50 cursor-pointer"
+                          className="w-full py-2 px-3 rounded-lg bg-[#B84718] text-white text-xs font-bold hover:bg-[#9E3A10] transition disabled:opacity-50 cursor-pointer"
                         >
                           Confirm &amp; Book Architect Call
                         </button>
@@ -351,7 +351,7 @@ export default function ChatAi({
             type="button"
             disabled={!input.trim() || typing}
             onClick={() => handleSendMessage()}
-            className="h-10 px-4 rounded-xl bg-[#E76F2E] hover:bg-[#C65320] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs"
+            className="h-10 px-4 rounded-xl bg-[#B84718] hover:bg-[#9E3A10] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs"
           >
             <span>Send</span>
             <Icons.ChevronRight size={13} />

@@ -168,14 +168,14 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
               e.preventDefault()
               alert('Thank you for subscribing to Indore House Makers architectural updates!')
             }}
-            className="flex w-full lg:w-auto gap-2"
+            className="flex flex-col sm:flex-row w-full lg:w-auto gap-3 items-stretch"
           >
             <div className="relative w-full sm:w-80">
               <input
                 type="email"
                 required
                 placeholder="Enter your email address"
-                className="w-full rounded-lg border border-white/20 bg-white/10 pl-10 pr-4 py-3 text-xs text-white placeholder:text-white/70 outline-none focus:border-[#FF8A50] transition"
+                className="w-full h-12 rounded-lg border border-white/20 bg-white/10 pl-10 pr-4 py-3 text-xs text-white placeholder:text-white/70 outline-none focus:border-[#FF8A50] transition"
               />
               <div className="absolute left-3.5 top-3.5 text-[#FF8A50]">
                 <Icons.Mail size={15} />
@@ -183,7 +183,7 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
             </div>
             <button
               type="submit"
-              className="shrink-0 rounded-lg bg-[#C94F36] hover:bg-[#B33E26] px-6 py-3 text-xs font-bold text-white transition active:scale-[0.98] cursor-pointer shadow-xs"
+              className="shrink-0 rounded-lg bg-[#C94F36] hover:bg-[#B33E26] px-6 py-3 min-h-[48px] text-xs font-bold text-white transition active:scale-[0.98] cursor-pointer shadow-xs flex items-center justify-center"
             >
               Subscribe
             </button>
@@ -226,13 +226,13 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
               </div>
 
               {/* Quick Header Actions in Footer (Consult, Profile/Login, AI Studio, Cost Estimator) */}
-              <div className="pt-1.5 flex flex-wrap items-center gap-2">
+              <div className="pt-1.5 flex flex-wrap items-center gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     if (onOpenConsult) onOpenConsult('Footer Free Consultation')
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C94F36] text-white text-[11px] font-bold hover:bg-[#B33E26] transition cursor-pointer shadow-xs active:scale-[0.98]"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2.5 min-h-[42px] rounded-lg bg-[#C94F36] text-white text-[11px] font-bold hover:bg-[#B33E26] transition cursor-pointer shadow-xs active:scale-[0.98]"
                 >
                   <Icons.Sparkles size={12} />
                   <span>Book Free Consultation</span>
@@ -241,7 +241,7 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
                 {isAuthenticated ? (
                   <Link
                     to="/dashboard"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white text-[11px] font-semibold hover:bg-white/20 transition cursor-pointer border border-white/15 active:scale-[0.98]"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 min-h-[42px] rounded-lg bg-white/10 text-white text-[11px] font-semibold hover:bg-white/20 transition cursor-pointer border border-white/15 active:scale-[0.98]"
                   >
                     <Icons.User size={12} className="text-[#FF8A50]" />
                     <span>My Dashboard</span>
@@ -251,7 +251,7 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
                     <button
                       type="button"
                       onClick={onOpenLogin}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white text-[11px] font-semibold hover:bg-white/20 transition cursor-pointer border border-white/15 active:scale-[0.98]"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2.5 min-h-[42px] rounded-lg bg-white/10 text-white text-[11px] font-semibold hover:bg-white/20 transition cursor-pointer border border-white/15 active:scale-[0.98]"
                     >
                       <Icons.User size={12} className="text-[#FF8A50]" />
                       <span>Profile (Login / Sign Up)</span>
@@ -263,7 +263,7 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
                   <button
                     type="button"
                     onClick={onOpenAiStudio}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white text-[11px] font-semibold hover:bg-white/20 transition cursor-pointer border border-white/15 active:scale-[0.98]"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 min-h-[42px] rounded-lg bg-white/10 text-white text-[11px] font-semibold hover:bg-white/20 transition cursor-pointer border border-white/15 active:scale-[0.98]"
                   >
                     <Icons.Sparkles size={12} className="text-[#FFA366]" />
                     <span>AI Studio</span>
@@ -272,7 +272,7 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
 
                 <Link
                   to="/cost-estimator"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white text-[11px] font-medium hover:bg-white/15 transition cursor-pointer border border-white/15"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2.5 min-h-[42px] rounded-lg bg-white/10 text-white text-[11px] font-medium hover:bg-white/15 transition cursor-pointer border border-white/15"
                 >
                   <Icons.Calculator size={12} className="text-[#FF8A50]" />
                   <span>Cost Estimator</span>
@@ -285,18 +285,18 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
               <span className="text-[10.5px] font-bold uppercase tracking-widest text-[#FF8A50] block mb-2">
                 POPULAR LINKS
               </span>
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs text-white/85 font-medium">
-                <Link to="/house-plans" className="hover:text-[#FF8A50] transition">House Plans</Link>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-white/85 font-medium">
+                <Link to="/house-plans" className="py-1.5 px-1 hover:text-[#FF8A50] transition inline-block">House Plans</Link>
                 <span className="text-white/50">·</span>
-                <Link to="/cost-estimator" className="hover:text-[#FF8A50] transition">Cost Estimator</Link>
+                <Link to="/cost-estimator" className="py-1.5 px-1 hover:text-[#FF8A50] transition inline-block">Cost Estimator</Link>
                 <span className="text-white/50">·</span>
-                <Link to="/guides" className="hover:text-[#FF8A50] transition">Guides</Link>
+                <Link to="/guides" className="py-1.5 px-1 hover:text-[#FF8A50] transition inline-block">Guides</Link>
                 <span className="text-white/50">·</span>
-                <Link to="/about" className="hover:text-[#FF8A50] transition">About Us</Link>
+                <Link to="/about" className="py-1.5 px-1 hover:text-[#FF8A50] transition inline-block">About Us</Link>
                 <span className="text-white/50">·</span>
-                <Link to="/faq" className="hover:text-[#FF8A50] transition">FAQs</Link>
+                <Link to="/faq" className="py-1.5 px-1 hover:text-[#FF8A50] transition inline-block">FAQs</Link>
                 <span className="text-white/50">·</span>
-                <Link to="/contact" className="hover:text-[#FF8A50] transition">Contact</Link>
+                <Link to="/contact" className="py-1.5 px-1 hover:text-[#FF8A50] transition inline-block">Contact</Link>
                 {isAuthenticated ? (
                   <>
                     <span className="text-white/50">·</span>
@@ -486,7 +486,7 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
               </h4>
 
               {/* 6 AI Logo Buttons */}
-              <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center">
+              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-center">
                 {aiPlatforms.map((ai) => {
                   const IconComponent = Icons[ai.icon]
                   return (
@@ -494,7 +494,7 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
                       key={ai.name}
                       type="button"
                       onClick={() => handleAiClick(ai)}
-                      className="h-9 w-9 sm:h-10 sm:w-10 min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center rounded-lg hover:scale-105 transition-transform bg-transparent hover:bg-black/5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#B83E26]/30 group p-1.5"
+                      className="h-11 w-11 sm:h-12 sm:w-12 min-w-[44px] min-h-[44px] sm:min-w-[48px] sm:min-h-[48px] flex items-center justify-center rounded-xl hover:scale-105 transition-transform bg-transparent hover:bg-black/5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#B83E26]/30 group p-2"
                       title={`Ask ${ai.name} about Indore House Makers (Prompt copied automatically)`}
                       aria-label={`Ask ${ai.name} about Indore House Makers`}
                     >

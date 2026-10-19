@@ -99,7 +99,7 @@ function FilterDropdown({ placeholder, icon: Icon, value, options, isOpen, onTog
         onClick={handleToggle}
         className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-bold transition ${
           value
-            ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-sm'
+            ? 'border-[#B84718] bg-[#B84718] text-white shadow-sm'
             : 'border-[#E7E0D7] bg-white text-[#54504A] hover:border-[#C65320] hover:text-[#292826]'
         }`}
       >
@@ -332,7 +332,7 @@ function CityDropdown({
           onClick={handleToggle}
           className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-xs font-bold transition ${
             value
-              ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-sm'
+              ? 'border-[#B84718] bg-[#B84718] text-white shadow-sm'
               : 'border-[#E7E0D7] bg-white text-[#54504A] hover:border-[#C65320] hover:text-[#292826]'
           }`}
         >
@@ -609,7 +609,7 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
                   onClick={() => setBhk(tab.value)}
                   className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold whitespace-nowrap transition ${
                     isActive
-                      ? 'border-[#E76F2E] bg-[#E76F2E] text-white shadow-sm'
+                      ? 'border-[#B84718] bg-[#B84718] text-white shadow-sm'
                       : 'border-[#E7E0D7] bg-white text-[#54504A] hover:border-[#C65320] hover:text-[#292826]'
                   }`}
                 >
@@ -748,7 +748,7 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
             <button
               type="button"
               onClick={clearAll}
-              className="ml-1 inline-flex items-center gap-1.5 rounded-full border border-[#E76F2E] bg-[#FFF6E8] px-3.5 py-1.5 text-[11px] font-bold text-[#E76F2E] transition hover:bg-[#E76F2E] hover:text-white"
+              className="ml-1 inline-flex items-center gap-1.5 rounded-full border border-[#B84718] bg-[#FFF6E8] px-3.5 py-1.5 text-[11px] font-bold text-[#B84718] transition hover:bg-[#B84718] hover:text-white"
             >
               <Icons.Close size={11} />
               Clear Filters
@@ -760,7 +760,7 @@ export default function Projects({ onOpenConsult }: ProjectsProps) {
           <button
             type="button"
             onClick={() => onOpenConsult('Browse 12,000+ House Plans Catalog')}
-            className="inline-flex items-center gap-2 text-sm font-bold text-[#E76F2E] transition hover:text-[#292826] group/link underline underline-offset-4 decoration-[#E7E0D7] hover:decoration-[#E76F2E]"
+            className="inline-flex items-center gap-2 text-sm font-bold text-[#B84718] transition hover:text-[#292826] group/link underline underline-offset-4 decoration-[#E7E0D7] hover:decoration-[#B84718]"
           >
             <span>Browse All 12,000+ House Plans by Dimension</span>
             <Icons.ChevronRight

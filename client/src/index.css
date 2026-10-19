@@ -66,15 +66,15 @@
   }
 
   .btn-primary {
-    @apply btn bg-[#E76F2E] text-white hover:bg-[#C65320] shadow-sm hover:shadow active:scale-[0.98];
+    @apply btn bg-[#B84718] text-white hover:bg-[#9E3A10] shadow-sm hover:shadow active:scale-[0.98];
   }
 
   .btn-ghost {
-    @apply btn border border-[#B84718] bg-white text-[#B84718] hover:bg-[#FBE7D3] hover:text-[#C65320] shadow-sm;
+    @apply btn border border-[#B84718] bg-white text-[#B84718] hover:bg-[#FBE7D3] hover:text-[#9E3A10] shadow-sm;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-[#E7E0D7] bg-white px-3.5 py-1.5 text-xs font-medium text-[#54504A] transition-all hover:border-[#E76F2E] hover:text-[#E76F2E] shadow-sm;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-[#E7E0D7] bg-white px-3.5 py-1.5 text-xs font-medium text-[#54504A] transition-all hover:border-[#B84718] hover:text-[#B84718] shadow-sm;
   }
 }
 

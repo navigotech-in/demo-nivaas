@@ -430,7 +430,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <Link
                   to={isAdmin ? '/admin' : '/dashboard'}
                   onClick={handleClose}
-                  className="w-full text-center rounded-xl bg-[#E76F2E] py-3 text-sm font-bold text-white hover:bg-[#C65320] shadow-sm transition"
+                  className="w-full text-center rounded-xl bg-[#B84718] py-3 text-sm font-bold text-white hover:bg-[#9E3A10] shadow-sm transition cursor-pointer"
                 >
                   {isAdmin ? 'Go to Admin Command Center →' : 'Go to My Dashboard →'}
                 </Link>
@@ -463,7 +463,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <button
                   type="button"
                   onClick={handleResetOtp}
-                  className="text-[#E76F2E] text-xs font-bold hover:underline cursor-pointer ml-3 px-2 py-1 rounded hover:bg-[#FFF6E8]"
+                  className="text-[#B84718] text-xs font-bold hover:underline cursor-pointer ml-3 px-2 py-1 rounded hover:bg-[#FFF6E8]"
                 >
                   Change
                 </button>
@@ -497,7 +497,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   type="button"
                   disabled={cooldown > 0 || loading}
                   onClick={() => handleSendOtp()}
-                  className="font-bold text-[#E76F2E] hover:underline disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                  className="font-bold text-[#B84718] hover:underline disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
                 >
                   Resend OTP
                 </button>
@@ -506,7 +506,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="submit"
                 disabled={loading || otpCode.length !== 6}
-                className="w-full rounded-xl bg-[#E76F2E] hover:bg-[#C65320] py-3.5 text-sm font-bold text-white transition shadow-sm disabled:opacity-50 cursor-pointer"
+                className="w-full rounded-xl bg-[#B84718] hover:bg-[#9E3A10] py-3.5 text-sm font-bold text-white transition shadow-sm disabled:opacity-50 cursor-pointer"
               >
                 {loading ? 'Verifying...' : mode === 'SIGNUP' ? 'Verify & Complete Registration' : 'Verify & Sign In'}
               </button>
@@ -574,7 +574,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   <button
                     type="submit"
                     disabled={loading || !identifier.trim()}
-                    className="w-full rounded-xl bg-[#E76F2E] hover:bg-[#C65320] py-3.5 text-sm font-bold text-white transition disabled:opacity-50 cursor-pointer shadow-sm"
+                    className="w-full rounded-xl bg-[#B84718] hover:bg-[#9E3A10] py-3.5 text-sm font-bold text-white transition disabled:opacity-50 cursor-pointer shadow-sm"
                   >
                     {loading ? 'Sending Code...' : 'Send Verification OTP'}
                   </button>
@@ -589,7 +589,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       }}
                       className="text-xs sm:text-sm text-[#6B7280] hover:text-[#E76F2E] cursor-pointer"
                     >
-                      New to Indore House Makers? <span className="font-bold text-[#E76F2E]">Create an Account</span>
+                      New to Indore House Makers? <span className="font-bold text-[#B84718]">Create an Account</span>
                     </button>
                   </div>
                 </form>
@@ -657,7 +657,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full rounded-xl bg-[#E76F2E] hover:bg-[#C65320] py-3.5 text-sm font-bold text-white transition disabled:opacity-50 cursor-pointer shadow-sm"
+                    className="w-full rounded-xl bg-[#B84718] hover:bg-[#9E3A10] py-3.5 text-sm font-bold text-white transition disabled:opacity-50 cursor-pointer shadow-sm"
                   >
                     {loading ? 'Signing In...' : isAdminRoute ? 'Sign In as Administrator' : 'Sign In'}
                   </button>
@@ -673,7 +673,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                         }}
                         className="text-xs sm:text-sm text-[#6B7280] hover:text-[#E76F2E] cursor-pointer"
                       >
-                        New to Indore House Makers? <span className="font-bold text-[#E76F2E]">Create an Account</span>
+                        New to Indore House Makers? <span className="font-bold text-[#B84718]">Create an Account</span>
                       </button>
                     </div>
                   )}
@@ -708,7 +708,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="submit"
                 disabled={loading || !identifier.trim()}
-                className="w-full rounded-xl bg-[#E76F2E] hover:bg-[#C65320] py-3.5 text-sm font-bold text-white transition disabled:opacity-50 cursor-pointer shadow-sm"
+                className="w-full rounded-xl bg-[#B84718] hover:bg-[#9E3A10] py-3.5 text-sm font-bold text-white transition disabled:opacity-50 cursor-pointer shadow-sm"
               >
                 {loading ? 'Sending Code...' : 'Send Password Reset Code'}
               </button>
@@ -744,7 +744,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     setError(null)
                     setSuccessMsg(null)
                   }}
-                  className="text-[#E76F2E] text-xs font-bold hover:underline cursor-pointer ml-3 px-2 py-1 rounded hover:bg-[#FFF6E8]"
+                  className="text-[#B84718] text-xs font-bold hover:underline cursor-pointer ml-3 px-2 py-1 rounded hover:bg-[#FFF6E8]"
                 >
                   Change
                 </button>
@@ -791,7 +791,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       setLoading(false)
                     }
                   }}
-                  className="font-bold text-[#E76F2E] hover:underline disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                  className="font-bold text-[#B84718] hover:underline disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
                 >
                   Resend Code
                 </button>
@@ -856,7 +856,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="submit"
                 disabled={loading || resetCode.length !== 6 || newPassword.length < 6}
-                className="w-full rounded-xl bg-[#E76F2E] hover:bg-[#C65320] py-3.5 text-sm font-bold text-white transition disabled:opacity-50 cursor-pointer shadow-sm"
+                className="w-full rounded-xl bg-[#B84718] hover:bg-[#9E3A10] py-3.5 text-sm font-bold text-white transition disabled:opacity-50 cursor-pointer shadow-sm"
               >
                 {loading ? 'Updating Password...' : 'Reset Password & Sign In'}
               </button>
@@ -1047,7 +1047,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full min-w-0 max-w-full box-border rounded-xl bg-[#E76F2E] py-3.5 text-sm font-bold text-white transition hover:bg-[#C65320] shadow-sm disabled:opacity-50 cursor-pointer mt-2"
+                className="w-full min-w-0 max-w-full box-border rounded-xl bg-[#B84718] py-3.5 text-sm font-bold text-white transition hover:bg-[#9E3A10] shadow-sm disabled:opacity-50 cursor-pointer mt-2"
               >
                 {loading ? 'Sending OTP to Verify...' : 'Send OTP & Create Account'}
               </button>
@@ -1062,7 +1062,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   }}
                   className="text-xs sm:text-sm text-[#6B7280] hover:text-[#E76F2E] cursor-pointer"
                 >
-                  Already have an account? <span className="font-bold text-[#E76F2E]">Sign In</span>
+                  Already have an account? <span className="font-bold text-[#B84718]">Sign In</span>
                 </button>
               </div>
 

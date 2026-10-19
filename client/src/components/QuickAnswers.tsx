@@ -26,7 +26,7 @@ export default function QuickAnswers({ onOpenConsult }: QuickAnswersProps) {
           {quickAnswers.map((qa) => (
             <div key={qa.q} className="flex flex-col justify-between rounded-lg border border-[#E7E0D7] bg-white p-5 shadow-sm transition-all hover:shadow-card-hover hover:border-[#E7E0D7]">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#C94F36] bg-[#FFF6E8] px-2.5 py-0.5 rounded-lg inline-block border border-[#E7E0D7]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#B84718] bg-[#FFF6E8] px-2.5 py-0.5 rounded-lg inline-block border border-[#E7E0D7]">
                   {qa.tag}
                 </span>
                 <h3 className="mt-3 font-display text-sm font-bold text-[#292826] leading-snug">{qa.q}</h3>
@@ -34,7 +34,7 @@ export default function QuickAnswers({ onOpenConsult }: QuickAnswersProps) {
               </div>
               <Link
                 to="/faq"
-                className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-[#C94F36] hover:text-[#292826] transition"
+                className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-[#B84718] hover:text-[#292826] transition"
               >
                 <span>Read in FAQ</span>
                 <Icons.ChevronRight size={12} />
@@ -47,7 +47,7 @@ export default function QuickAnswers({ onOpenConsult }: QuickAnswersProps) {
           <button
             type="button"
             onClick={() => onOpenConsult('Quick Answer Enquiry')}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#E76F2E] px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#C65320] transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#B84718] px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#9E3A10] transition cursor-pointer"
           >
             <Icons.Sparkles size={14} />
             <span>Ask us anything</span>

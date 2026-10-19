@@ -460,7 +460,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                     setAiStudioOpen(true)
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg border border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E] hover:bg-[#E76F2E] hover:text-white transition shadow-xs whitespace-nowrap"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg border border-[#B84718] bg-[#FFF6E8] text-[#B84718] hover:bg-[#B84718] hover:text-white transition shadow-xs whitespace-nowrap"
               >
                 <Icons.Sparkles size={13} />
                 <span>Ask AI Studio</span>
@@ -470,7 +470,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
               <button
                 type="button"
                 onClick={() => onOpenConsult()}
-                className="px-3.5 py-2 rounded-lg text-xs font-bold border border-[#E76F2E] bg-[#E76F2E] text-white hover:bg-[#C65320] transition active:scale-[0.98] flex items-center gap-1.5 whitespace-nowrap shadow-xs"
+                className="px-3.5 py-2 rounded-lg text-xs font-bold border border-[#B84718] bg-[#B84718] text-white hover:bg-[#9E3A10] transition active:scale-[0.98] flex items-center gap-1.5 whitespace-nowrap shadow-xs"
               >
                 <Icons.Phone size={13} className="shrink-0" />
                 <span>Consult Online</span>
@@ -498,7 +498,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                       </span>
                     ) : (
                       user?.totalCredits !== undefined && user.totalCredits > 0 && (
-                        <span className="rounded-full bg-[#E76F2E] text-white px-1.5 py-0.5 text-[9px] font-black">
+                        <span className="rounded-full bg-[#B84718] text-white px-1.5 py-0.5 text-[9px] font-black">
                           {user.totalCredits}★
                         </span>
                       )
@@ -573,11 +573,11 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 <button
                   type="button"
                   onClick={onOpenLogin}
-                  className="flex items-center gap-1.5 h-9 rounded-lg border px-2.5 transition border-[#E7E0D7] bg-white text-[#E76F2E] hover:bg-[#FFF6E8]"
+                  className="flex items-center gap-1.5 h-9 rounded-lg border px-2.5 transition border-[#E7E0D7] bg-white text-[#B84718] hover:bg-[#FFF6E8]"
                   aria-label="User Account Login or Signup"
                   title="Login / Signup"
                 >
-                  <Icons.User size={16} className="text-[#E76F2E] shrink-0" />
+                  <Icons.User size={16} className="text-[#B84718] shrink-0" />
                   <span className="text-xs font-bold">Sign In</span>
                 </button>
               )}
@@ -678,7 +678,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                       setAiStudioOpen(true)
                     }
                   }}
-                  className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg border border-[#E76F2E] bg-[#FFF6E8] text-[#E76F2E] hover:bg-[#E76F2E] hover:text-white transition shadow-xs whitespace-nowrap"
+                  className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg border border-[#B84718] bg-[#FFF6E8] text-[#B84718] hover:bg-[#B84718] hover:text-white transition shadow-xs whitespace-nowrap"
                   title="Ask AI Studio"
                 >
                   <Icons.Sparkles size={12} className="shrink-0" />
@@ -689,7 +689,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 <button
                   type="button"
                   onClick={() => onOpenConsult()}
-                  className="px-2 sm:px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold border border-[#E76F2E] bg-[#E76F2E] text-white hover:bg-[#C65320] transition active:scale-[0.98] flex items-center gap-1 whitespace-nowrap shadow-xs"
+                  className="px-2 sm:px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold border border-[#B84718] bg-[#B84718] text-white hover:bg-[#9E3A10] transition active:scale-[0.98] flex items-center gap-1 whitespace-nowrap shadow-xs"
                   title="Consult Online"
                 >
                   <Icons.Phone size={12} className="shrink-0" />
@@ -738,7 +738,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 {/* Search Button */}
                 <button
                   type="submit"
-                  className="px-4 sm:px-5 py-2 bg-[#E76F2E] hover:bg-[#C94F36] text-white text-xs sm:text-sm font-bold rounded-xl transition shadow-xs flex items-center gap-1.5 shrink-0 active:scale-98 cursor-pointer"
+                  className="px-4 sm:px-5 py-2 bg-[#B84718] hover:bg-[#9E3A10] text-white text-xs sm:text-sm font-bold rounded-xl transition shadow-xs flex items-center gap-1.5 shrink-0 active:scale-98 cursor-pointer"
                 >
                   <span>Search</span>
                   <Icons.ChevronRight size={13} className="hidden sm:inline" />
@@ -1212,7 +1212,7 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
               setMobileMenuOpen(false)
               onOpenConsult()
             }}
-            className="w-full py-2.5 rounded-lg border border-[#E76F2E] bg-[#E76F2E] text-white font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#C65320] transition shadow-xs cursor-pointer active:scale-[0.98]"
+            className="w-full py-2.5 rounded-lg border border-[#B84718] bg-[#B84718] text-white font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#9E3A10] transition shadow-xs cursor-pointer active:scale-[0.98]"
           >
             <Icons.Phone size={13} />
             <span>Book Free Consultation</span>
@@ -1225,9 +1225,9 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                 setMobileMenuOpen(false)
                 onOpenLogin()
               }}
-              className="w-full py-2.5 rounded-lg border border-[#E7E0D7] bg-white text-[#292826] hover:text-[#E76F2E] font-bold text-xs text-center hover:bg-[#FFF6E8] hover:border-[#E76F2E] transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+              className="w-full py-2.5 rounded-lg border border-[#E7E0D7] bg-white text-[#292826] hover:text-[#B84718] font-bold text-xs text-center hover:bg-[#FFF6E8] hover:border-[#B84718] transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
             >
-              <div className="h-5 w-5 rounded-full bg-[#E76F2E] text-white flex items-center justify-center text-[10px] font-bold">
+              <div className="h-5 w-5 rounded-full bg-[#B84718] text-white flex items-center justify-center text-[10px] font-bold">
                 {user?.name?.[0]?.toUpperCase() || 'U'}
               </div>
               <span>User Profile ({user?.name?.split(' ')[0] || 'Account'})</span>

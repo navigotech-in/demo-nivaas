@@ -95,7 +95,7 @@ export function DesignImageCard({
         <button
           type="button"
           onClick={onAction}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#E76F2E] px-4 py-2 text-xs font-bold text-white shadow-md transition hover:bg-[#C65320] active:scale-[0.98] group/link"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#B84718] px-4 py-2 text-xs font-bold text-white shadow-md transition hover:bg-[#9E3A10] active:scale-[0.98] group/link"
         >
           {actionIcon}
           <span>{actionLabel}</span>
@@ -119,7 +119,7 @@ export function DesignEmptyState({ message, onClear }: DesignEmptyStateProps) {
       <button
         type="button"
         onClick={onClear}
-        className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#E76F2E] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#C65320]"
+        className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#B84718] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#9E3A10]"
       >
         <Icons.Close size={12} />
         Clear Filters
