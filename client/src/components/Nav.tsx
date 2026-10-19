@@ -487,10 +487,10 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                     title={`${user?.name} (${user?.role})`}
                   >
                     <div className="h-6 w-6 rounded-lg bg-[#292826] text-white flex items-center justify-center text-xs font-black shrink-0">
-                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                      {user?.name && user.name !== 'Client User' ? user.name.charAt(0).toUpperCase() : '👤'}
                     </div>
                     <span className="text-xs font-bold max-w-[90px] truncate">
-                      {user?.name.split(' ')[0]}
+                      {user?.name && user.name !== 'Client User' ? user.name.split(' ')[0] : (user?.phone ? user.phone.slice(-4) : 'Account')}
                     </span>
                     {user?.role === 'ADMIN' ? (
                       <span className="rounded-full bg-red-600 text-white px-1.5 py-0.5 text-[9px] font-black uppercase">
@@ -517,7 +517,9 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                       {/* User Info Header */}
                       <div className="p-2 border-b border-[#E7E0D7]/70 pb-3 mb-2">
                         <div className="flex items-center gap-2">
-                          <p className="text-xs font-black text-[#292826] truncate">{user?.name}</p>
+                          <p className="text-xs font-black text-[#292826] truncate">
+                            {user?.name && user.name !== 'Client User' ? user.name : 'Verified Client'}
+                          </p>
                           <span
                             className={`px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase ${
                               user?.role === 'ADMIN' ? 'bg-red-100 text-red-800' : 'bg-stone-100 text-stone-700'
@@ -526,7 +528,9 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
                             {user?.role}
                           </span>
                         </div>
-                        <p className="text-[11px] text-[#74706A] truncate">{user?.email}</p>
+                        {user?.email && !user.email.endsWith('@phone.indorehousemakers.com') ? (
+                          <p className="text-[11px] text-[#74706A] truncate">{user.email}</p>
+                        ) : null}
                         {user?.phone && (
                           <p className="text-[10px] text-[#74706A] font-mono mt-0.5">📞 {user.phone}</p>
                         )}

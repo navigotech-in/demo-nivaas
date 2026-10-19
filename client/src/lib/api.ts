@@ -278,7 +278,7 @@ export async function revokeAllOtherSessions(headers: Record<string, string>): P
 }
 
 export async function updateUserProfile(
-  payload: { name?: string; phone?: string },
+  payload: { name?: string; phone?: string; email?: string },
   headers: Record<string, string>
 ): Promise<any> {
   const res = await fetch(`${BASE}/users/me/profile`, {

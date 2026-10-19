@@ -260,14 +260,20 @@ class DatabaseStore {
     const activePass = this.getActivePass(user.id)
     // Pure calculation from immutable ledger transactions
     const totalCredits = this.calculateUserBalance(user.id)
+    const isSyntheticEmail = Boolean(user.email && user.email.endsWith('@phone.indorehousemakers.com'))
+    const cleanEmail = isSyntheticEmail ? '' : user.email
+    const cleanName =
+      user.name === 'Client User' && user.phone
+        ? `User (${user.phone.slice(-4)})`
+        : user.name
 
     return {
       id: user.id,
-      name: user.name,
-      email: user.email,
+      name: cleanName,
+      email: cleanEmail,
       phone: user.phone,
       role: user.role,
-      isEmailVerified: user.isEmailVerified,
+      isEmailVerified: user.isEmailVerified && !isSyntheticEmail,
       isPhoneVerified: user.isPhoneVerified,
       activePass,
       totalCredits: Math.max(0, totalCredits),

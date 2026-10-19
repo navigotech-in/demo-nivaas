@@ -31,7 +31,11 @@ interface AuthContextType {
   isAuthenticated: boolean
   isAdmin: boolean
   login: (identifier: string, password: string, portal?: 'admin' | 'client') => Promise<UserProfile>
-  loginWithOtp: (identifier: string, code: string, name?: string) => Promise<UserProfile>
+  loginWithOtp: (
+    identifier: string,
+    code: string,
+    extra?: { name?: string; email?: string; password?: string } | string
+  ) => Promise<UserProfile>
   sendOtp: (identifier: string, purpose?: 'LOGIN' | 'SIGNUP') => Promise<{ channel: 'sms' | 'email'; destination: string; message: string; cooldownSeconds: number }>
   signup: (params: { name: string; email: string; password: string; phone: string }) => Promise<UserProfile>
   forgotPassword: (identifier: string) => Promise<{ channel: 'email' | 'sms'; destination: string; message: string; devCode?: string }>
@@ -510,12 +514,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   // OTP: Verify 6-digit code and sign in / sign up
-  const loginWithOtp = async (identifier: string, code: string, name?: string): Promise<UserProfile> => {
+  const loginWithOtp = async (
+    identifier: string,
+    code: string,
+    extra?: { name?: string; email?: string; password?: string } | string
+  ): Promise<UserProfile> => {
+    const extraObj = typeof extra === 'string' ? { name: extra } : extra || {}
     const res = await fetch(`${BASE_URL}/auth/otp/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ identifier, code, name }),
+      body: JSON.stringify({
+        identifier,
+        code,
+        name: extraObj.name,
+        email: extraObj.email,
+        password: extraObj.password,
+      }),
     })
 
     const json = await res.json()

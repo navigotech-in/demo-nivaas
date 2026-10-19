@@ -296,9 +296,10 @@ router.delete('/me/sessions', async (req: Request, res: Response, next: NextFunc
   }
 })
 
-// 9. Profile Update (Name, Phone)
+// 9. Profile Update (Name, Phone, Email)
 const profileUpdateSchema = z.object({
   name: z.string().min(2).max(100).optional(),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
   phone: z.string().min(10).max(15).optional().or(z.literal('')),
 })
 

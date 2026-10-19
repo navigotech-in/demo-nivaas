@@ -90,7 +90,25 @@ export function errorHandler(
     return
   }
 
-  // Fallback 500
+  // Operational business errors with custom messages (e.g. OTP validation, reset code attempts)
+  if (
+    err.message &&
+    typeof err.message === 'string' &&
+    !err.message.includes('prisma') &&
+    !err.message.includes('ECONNREFUSED') &&
+    !err.message.includes('syntax error')
+  ) {
+    res.status(err.status || 400).json({
+      success: false,
+      error: {
+        code: err.code || ErrorCode.VALIDATION_ERROR,
+        message: err.message,
+      },
+    })
+    return
+  }
+
+  // Fallback 500 for unhandled system exceptions
   console.error('[Internal Server Error]', err)
   res.status(500).json({
     success: false,

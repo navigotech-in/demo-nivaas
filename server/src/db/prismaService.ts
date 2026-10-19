@@ -188,13 +188,20 @@ export class PrismaDatabaseService {
         }
       : null
 
+    const isSyntheticEmail = Boolean(user.email && user.email.endsWith('@phone.indorehousemakers.com'))
+    const cleanEmail = isSyntheticEmail ? '' : user.email
+    const cleanName =
+      user.name === 'Client User' && user.phone
+        ? `User (${user.phone.slice(-4)})`
+        : user.name
+
     return {
       id: user.id,
-      name: user.name,
-      email: user.email,
+      name: cleanName,
+      email: cleanEmail,
       phone: user.phone || undefined,
       role: user.role,
-      isEmailVerified: user.isEmailVerified,
+      isEmailVerified: user.isEmailVerified && !isSyntheticEmail,
       isPhoneVerified: user.isPhoneVerified,
       activePass,
       totalCredits,
@@ -840,8 +847,9 @@ export class PrismaDatabaseService {
     })
   }
 
-  public async updateUserProfile(userId: string, data: { name?: string; phone?: string }) {
+  public async updateUserProfile(userId: string, data: { name?: string; phone?: string; email?: string }) {
     const cleanPhone = data.phone !== undefined ? (data.phone ? data.phone.trim() : null) : undefined
+    const cleanEmail = data.email !== undefined ? (data.email ? data.email.trim().toLowerCase() : undefined) : undefined
 
     if (cleanPhone) {
       try {
@@ -859,11 +867,28 @@ export class PrismaDatabaseService {
       }
     }
 
+    if (cleanEmail) {
+      try {
+        const existingEmail = await prisma.user.findFirst({
+          where: {
+            email: cleanEmail,
+            id: { not: userId },
+          },
+        })
+        if (existingEmail) {
+          throw new Error('EMAIL_EXISTS')
+        }
+      } catch (err: any) {
+        if (err.message === 'EMAIL_EXISTS') throw err
+      }
+    }
+
     try {
       return await prisma.user.update({
         where: { id: userId },
         data: {
           name: data.name ? data.name.trim() : undefined,
+          email: cleanEmail,
           phone: cleanPhone,
           isPhoneVerified: cleanPhone !== undefined ? false : undefined,
         },
@@ -873,6 +898,7 @@ export class PrismaDatabaseService {
       const storeUser = db.findUserById(userId)
       if (storeUser) {
         if (data.name) storeUser.name = data.name.trim()
+        if (cleanEmail) storeUser.email = cleanEmail
         if (data.phone !== undefined) storeUser.phone = cleanPhone || undefined
         return storeUser as any
       }

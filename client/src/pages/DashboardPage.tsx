@@ -106,14 +106,20 @@ export default function DashboardPage({
   const [sessions, setSessions] = useState<UserSessionItem[]>([])
 
   // Profile & Password form states
-  const [profileName, setProfileName] = useState(user?.name || '')
+  const [profileName, setProfileName] = useState(
+    user?.name && user.name !== 'Client User' ? user.name : ''
+  )
+  const [profileEmail, setProfileEmail] = useState(
+    user?.email && !user.email.endsWith('@phone.indorehousemakers.com') ? user.email : ''
+  )
   const [profilePhone, setProfilePhone] = useState(user?.phone || '')
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileFeedback, setProfileFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
     if (user) {
-      if (user.name) setProfileName(user.name)
+      if (user.name && user.name !== 'Client User') setProfileName(user.name)
+      if (user.email && !user.email.endsWith('@phone.indorehousemakers.com')) setProfileEmail(user.email)
       if (user.phone) setProfilePhone(user.phone)
     }
   }, [user])
@@ -282,11 +288,16 @@ export default function DashboardPage({
     setProfileSaving(true)
     setProfileFeedback(null)
     try {
-      await updateUserProfile(
-        { name: profileName.trim(), phone: profilePhone.trim() },
-        getAuthHeaders()
-      )
+      const payload: { name: string; phone?: string; email?: string } = {
+        name: profileName.trim(),
+        phone: profilePhone.trim() || undefined,
+      }
+      if (profileEmail.trim()) {
+        payload.email = profileEmail.trim().toLowerCase()
+      }
+      await updateUserProfile(payload, getAuthHeaders())
       setProfileFeedback({ type: 'success', text: 'Profile updated successfully.' })
+      await refreshAuth()
     } catch (err: any) {
       setProfileFeedback({ type: 'error', text: err?.message || 'Failed to update profile.' })
     } finally {
@@ -1260,13 +1271,28 @@ export default function DashboardPage({
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-[#292826] mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] text-[#74706A] cursor-not-allowed"
-                  />
-                  <p className="text-[10px] text-[#74706A] mt-1">Email is verified and cannot be changed.</p>
+                  {user?.email && !user.email.endsWith('@phone.indorehousemakers.com') ? (
+                    <>
+                      <input
+                        type="email"
+                        value={user.email}
+                        disabled
+                        className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#E7E0D7] bg-[#FAF8F5] text-[#74706A] cursor-not-allowed"
+                      />
+                      <p className="text-[10px] text-[#74706A] mt-1">Email is verified and linked to your account.</p>
+                    </>
+                  ) : (
+                    <>
+                      <input
+                        type="email"
+                        value={profileEmail}
+                        onChange={(e) => setProfileEmail(e.target.value)}
+                        placeholder="e.g. yourname@example.com"
+                        className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#E7E0D7] bg-[#FDFCF9] focus:outline-none focus:border-[#C94F36] focus:ring-1 focus:ring-[#C94F36]"
+                      />
+                      <p className="text-[10px] text-[#B84718] mt-1">Link your email address to receive plan PDFs and updates.</p>
+                    </>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-[#292826] mb-1">Mobile Phone Number</label>
@@ -1392,12 +1418,22 @@ export default function DashboardPage({
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-[#74706A] mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="w-full px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] bg-[#FAF8F5] text-[#74706A] cursor-not-allowed"
-                  />
+                  {user?.email && !user.email.endsWith('@phone.indorehousemakers.com') ? (
+                    <input
+                      type="email"
+                      value={user.email}
+                      disabled
+                      className="w-full px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] bg-[#FAF8F5] text-[#74706A] cursor-not-allowed"
+                    />
+                  ) : (
+                    <input
+                      type="email"
+                      value={profileEmail}
+                      onChange={(e) => setProfileEmail(e.target.value)}
+                      placeholder="e.g. yourname@example.com"
+                      className="w-full px-3 py-1.5 text-xs rounded-md border border-[#E7E0D7] focus:outline-none focus:border-[#C94F36]"
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-[#74706A] mb-1">Mobile Number</label>

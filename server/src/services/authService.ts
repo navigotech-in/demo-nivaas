@@ -238,13 +238,34 @@ export class AuthService {
     } | null = null
 
     // 1. Primary Query to PostgreSQL
+    const rawTrimmed = params.identifier.trim()
+    const digits = rawTrimmed.replace(/\D/g, '')
+    const phoneCandidates = Array.from(
+      new Set(
+        [
+          rawTrimmed,
+          digits,
+          digits.length >= 10 ? digits.slice(-10) : null,
+          digits.length >= 10 ? `+91${digits.slice(-10)}` : null,
+          digits.length >= 10 ? `91${digits.slice(-10)}` : null,
+        ].filter(Boolean) as string[]
+      )
+    )
+
+    const orConditions: any[] = [{ email: normalized }]
+    for (const p of phoneCandidates) {
+      orConditions.push({ phone: p })
+    }
+    if (digits.length >= 10) {
+      const tenDigits = digits.slice(-10)
+      orConditions.push({ email: `${tenDigits}@phone.indorehousemakers.com` })
+      orConditions.push({ email: `91${tenDigits}@phone.indorehousemakers.com` })
+    }
+
     try {
       const pUser = await prisma.user.findFirst({
         where: {
-          OR: [
-            { email: normalized },
-            { phone: params.identifier.trim() },
-          ],
+          OR: orConditions,
         },
       })
       if (pUser) {
@@ -256,8 +277,14 @@ export class AuthService {
 
     if (!foundUser) {
       let storeUser = db.findUserByEmail(normalized)
-      if (!storeUser && /^\+?[0-9]{10,14}$/.test(params.identifier.trim())) {
-        storeUser = db.findUserByPhone(params.identifier.trim())
+      if (!storeUser && digits.length >= 10) {
+        storeUser =
+          db.findUserByPhone(digits.slice(-10)) ||
+          db.findUserByEmail(`91${digits.slice(-10)}@phone.indorehousemakers.com`) ||
+          db.findUserByEmail(`${digits.slice(-10)}@phone.indorehousemakers.com`)
+      }
+      if (!storeUser && rawTrimmed) {
+        storeUser = db.findUserByPhone(rawTrimmed)
       }
       if (storeUser) {
         foundUser = storeUser
@@ -609,6 +636,7 @@ export class AuthService {
     const trimmed = rawIdentifier.trim()
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)
     const digits = trimmed.replace(/\D/g, '')
+    const tenDigits = digits.length >= 10 ? digits.slice(-10) : ''
     const normalized = isEmail
       ? trimmed.toLowerCase()
       : digits.length === 10
@@ -623,15 +651,25 @@ export class AuthService {
     let targetEmail: string | null = isEmail ? normalized : null
     let targetPhone: string | null = !isEmail ? normalized : null
 
+    const lookupOrConditions: any[] = [{ email: normalized }]
+    if (tenDigits) {
+      lookupOrConditions.push({ phone: tenDigits })
+      lookupOrConditions.push({ phone: `+91${tenDigits}` })
+      lookupOrConditions.push({ phone: `91${tenDigits}` })
+      lookupOrConditions.push({ phone: trimmed })
+      lookupOrConditions.push({ email: `${tenDigits}@phone.indorehousemakers.com` })
+      lookupOrConditions.push({ email: `91${tenDigits}@phone.indorehousemakers.com` })
+    }
+
     // Check DB / Prisma
     try {
       const pUser = await prisma.user.findFirst({
-        where: isEmail
-          ? { email: normalized }
-          : { OR: [{ phone: normalized }, { phone: digits.length === 10 ? digits : undefined }].filter(Boolean) as any },
+        where: { OR: lookupOrConditions },
       })
       if (pUser) {
-        if (pUser.email) targetEmail = pUser.email
+        if (pUser.email && !pUser.email.endsWith('@phone.indorehousemakers.com')) {
+          targetEmail = pUser.email
+        }
         if (pUser.phone) {
           const pDigits = pUser.phone.replace(/\D/g, '')
           targetPhone = pUser.phone.startsWith('+') ? pUser.phone : `+91${pDigits.slice(-10)}`
@@ -641,11 +679,17 @@ export class AuthService {
 
     // Check Memory Store
     if (!targetEmail || !targetPhone) {
-      const memUser = isEmail
-        ? db.findUserByEmail(normalized)
-        : db.findUserByPhone(normalized) || (digits.length === 10 ? db.findUserByPhone(digits) : undefined)
+      let memUser = db.findUserByEmail(normalized)
+      if (!memUser && tenDigits) {
+        memUser =
+          db.findUserByPhone(tenDigits) ||
+          db.findUserByEmail(`91${tenDigits}@phone.indorehousemakers.com`) ||
+          db.findUserByEmail(`${tenDigits}@phone.indorehousemakers.com`)
+      }
       if (memUser) {
-        if (memUser.email) targetEmail = memUser.email
+        if (memUser.email && !memUser.email.endsWith('@phone.indorehousemakers.com')) {
+          targetEmail = memUser.email
+        }
         if (memUser.phone) {
           const mDigits = memUser.phone.replace(/\D/g, '')
           targetPhone = memUser.phone.startsWith('+') ? memUser.phone : `+91${mDigits.slice(-10)}`
@@ -668,6 +712,13 @@ export class AuthService {
 
     // Store under all relevant identifiers
     this.passwordResetStore.set(normalized, resetRecord)
+    if (trimmed !== normalized) {
+      this.passwordResetStore.set(trimmed, resetRecord)
+    }
+    if (tenDigits) {
+      this.passwordResetStore.set(tenDigits, resetRecord)
+      this.passwordResetStore.set(`+91${tenDigits}`, resetRecord)
+    }
     if (targetEmail && targetEmail !== normalized) {
       this.passwordResetStore.set(targetEmail, resetRecord)
     }
@@ -698,7 +749,12 @@ export class AuthService {
     }
 
     console.log(`\n======================================================`)
-    console.log(`🔐 [PASSWORD RESET CODE] ${normalized} | Code: ${resetCode} | Email: ${targetEmail || 'N/A'} | Phone: ${targetPhone || 'N/A'}`)
+    console.log(`🔐 [PASSWORD RESET CODE] ${normalized}`)
+    console.log(`   👉 Local Dev / Email Reset Code: ${resetCode}`)
+    if (targetPhone && this.twilioClient && config.otp.twilio.verifyServiceSid) {
+      console.log(`   📱 Twilio Verify SMS sent to: ${targetPhone}`)
+      console.log(`   💡 You can enter either the SMS code from your phone or the Dev Code (${resetCode})`)
+    }
     console.log(`======================================================\n`)
 
     const maskedDestination = isEmail
@@ -734,25 +790,57 @@ export class AuthService {
 
     const cleanCode = params.code.trim().replace(/\D/g, '')
     let isApproved = false
+    let twilioNetworkError: string | null = null
 
-    // 1. Try Twilio Verify check for phone number
+    // 1. Try Twilio Verify check for phone number (with automatic retry for transient DNS/network glitches)
     if (!isEmail && this.twilioClient && config.otp.twilio.verifyServiceSid) {
-      try {
-        const check = await this.twilioClient.verify.v2
-          .services(config.otp.twilio.verifyServiceSid)
-          .verificationChecks.create({ to: normalized, code: cleanCode })
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const check = await this.twilioClient.verify.v2
+            .services(config.otp.twilio.verifyServiceSid)
+            .verificationChecks.create({ to: normalized, code: cleanCode })
 
-        if (check.status === 'approved') {
-          isApproved = true
-          this.passwordResetStore.delete(normalized)
+          if (check.status === 'approved') {
+            isApproved = true
+            this.passwordResetStore.delete(normalized)
+            twilioNetworkError = null
+            break
+          } else {
+            twilioNetworkError = null
+            break
+          }
+        } catch (err: any) {
+          const isTransientNetwork =
+            err.code === 'EAI_AGAIN' ||
+            err.code === 'ETIMEDOUT' ||
+            err.code === 'ECONNRESET' ||
+            err.message?.includes('EAI_AGAIN') ||
+            err.message?.includes('ETIMEDOUT') ||
+            err.message?.includes('ECONNRESET')
+
+          if (isTransientNetwork && attempt === 1) {
+            console.warn(`[AuthService] Twilio Verify DNS/network retry (attempt 1/2): ${err.message}`)
+            await new Promise((resolve) => setTimeout(resolve, 600))
+            continue
+          }
+
+          if (isTransientNetwork) {
+            twilioNetworkError = err.message
+          }
+          console.warn(`[AuthService] Twilio Verify check error: ${err.message}`)
+          break
         }
-      } catch (err: any) {
-        console.warn(`[AuthService] Twilio Verify check error: ${err.message}`)
       }
     }
 
     // 2. Check local memory reset store
-    const record = this.passwordResetStore.get(normalized)
+    const tenDigits = digits.length >= 10 ? digits.slice(-10) : ''
+    const record =
+      this.passwordResetStore.get(normalized) ||
+      this.passwordResetStore.get(trimmed) ||
+      (tenDigits ? this.passwordResetStore.get(tenDigits) : undefined) ||
+      (tenDigits ? this.passwordResetStore.get(`+91${tenDigits}`) : undefined)
+
     if (!isApproved) {
       if (!record) {
         throw new Error('No active password reset request found. Please request a new reset code.')
@@ -760,11 +848,19 @@ export class AuthService {
 
       if (Date.now() > record.expiresAt) {
         this.passwordResetStore.delete(normalized)
+        if (tenDigits) {
+          this.passwordResetStore.delete(tenDigits)
+          this.passwordResetStore.delete(`+91${tenDigits}`)
+        }
         throw new Error('Password reset code has expired. Please request a fresh code.')
       }
 
       if (record.attempts >= 4) {
         this.passwordResetStore.delete(normalized)
+        if (tenDigits) {
+          this.passwordResetStore.delete(tenDigits)
+          this.passwordResetStore.delete(`+91${tenDigits}`)
+        }
         throw new Error('Too many incorrect attempts. Please request a fresh reset code.')
       }
 
@@ -772,7 +868,18 @@ export class AuthService {
       if (inputHash === record.codeHash || cleanCode === record.code) {
         isApproved = true
         this.passwordResetStore.delete(normalized)
+        if (tenDigits) {
+          this.passwordResetStore.delete(tenDigits)
+          this.passwordResetStore.delete(`+91${tenDigits}`)
+        }
       } else {
+        // If Twilio failed due to network/DNS timeout, inform the user instead of decrementing attempts
+        if (twilioNetworkError) {
+          throw new Error(
+            `SMS verification server connection timed out (${twilioNetworkError}). Please retry in a few seconds or enter the code from the server console.`
+          )
+        }
+
         record.attempts += 1
         const remaining = 4 - record.attempts
         throw new Error(`Invalid reset code. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`)
@@ -788,11 +895,19 @@ export class AuthService {
 
     // Update in Prisma
     let targetUserId: string | null = null
+    const userOrConditions: any[] = [{ email: normalized }]
+    if (tenDigits) {
+      userOrConditions.push({ phone: tenDigits })
+      userOrConditions.push({ phone: `+91${tenDigits}` })
+      userOrConditions.push({ phone: `91${tenDigits}` })
+      userOrConditions.push({ phone: trimmed })
+      userOrConditions.push({ email: `${tenDigits}@phone.indorehousemakers.com` })
+      userOrConditions.push({ email: `91${tenDigits}@phone.indorehousemakers.com` })
+    }
+
     try {
       const pUser = await prisma.user.findFirst({
-        where: isEmail
-          ? { email: normalized }
-          : { OR: [{ phone: normalized }, { phone: digits.length === 10 ? digits : undefined }].filter(Boolean) as any },
+        where: { OR: userOrConditions },
       })
       if (pUser) {
         targetUserId = pUser.id
@@ -812,26 +927,37 @@ export class AuthService {
     }
 
     // Update in memory store if present
-    const memUser = isEmail
-      ? db.findUserByEmail(normalized)
-      : db.findUserByPhone(normalized) || (digits.length === 10 ? db.findUserByPhone(digits) : undefined)
+    let memUser = db.findUserByEmail(normalized)
+    if (!memUser && tenDigits) {
+      memUser =
+        db.findUserByPhone(tenDigits) ||
+        db.findUserByEmail(`91${tenDigits}@phone.indorehousemakers.com`) ||
+        db.findUserByEmail(`${tenDigits}@phone.indorehousemakers.com`)
+    }
     if (memUser) {
-      targetUserId = memUser.id
+      targetUserId = targetUserId || memUser.id
       memUser.passwordHash = newHash
       db.users.set(memUser.id, memUser)
     }
 
-    // Clear reset record
+    // Clear reset records
     this.passwordResetStore.delete(normalized)
-
-    if (targetUserId) {
-      db.logAudit({
-        actorId: targetUserId,
-        action: 'auth.password_reset',
-        entityType: 'User',
-        entityId: targetUserId,
-      })
+    this.passwordResetStore.delete(trimmed)
+    if (tenDigits) {
+      this.passwordResetStore.delete(tenDigits)
+      this.passwordResetStore.delete(`+91${tenDigits}`)
     }
+
+    if (!targetUserId) {
+      throw new Error('User account not found to update password. Please check your registered mobile or email.')
+    }
+
+    db.logAudit({
+      actorId: targetUserId,
+      action: 'auth.password_reset',
+      entityType: 'User',
+      entityId: targetUserId,
+    })
 
     return {
       message: 'Password reset successfully! You can now log in with your new password.',

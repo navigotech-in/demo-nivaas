@@ -181,7 +181,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     try {
       const target = mode === 'SIGNUP' ? signupTargetPhone : identifier.trim()
       const userName = mode === 'SIGNUP' ? name.trim() : undefined
-      const loggedUser = await loginWithOtp(target, cleanCode, userName)
+      const userEmail = mode === 'SIGNUP' ? email.trim() : undefined
+      const userPassword = mode === 'SIGNUP' ? password : undefined
+
+      const loggedUser = await loginWithOtp(target, cleanCode, {
+        name: userName,
+        email: userEmail,
+        password: userPassword,
+      })
 
       if (isAdminRoute) {
         if (loggedUser.role !== 'ADMIN') {
@@ -417,12 +424,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <div className="space-y-5">
               <div className="rounded-2xl border border-[#E7E0D7] bg-[#FAFAFA] p-5 text-sm text-[#374151] space-y-2.5">
                 <div className="flex items-center justify-between font-bold text-base text-[#111827]">
-                  <span>{user.name}</span>
+                  <span>{user.name && user.name !== 'Client User' ? user.name : user.phone || 'My Account'}</span>
                   <span className="text-[11px] uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold">
                     {user.role}
                   </span>
                 </div>
-                <div><span className="font-semibold text-[#6B7280]">Email:</span> {user.email}</div>
+                {user.email && !user.email.endsWith('@phone.indorehousemakers.com') ? (
+                  <div><span className="font-semibold text-[#6B7280]">Email:</span> {user.email}</div>
+                ) : (
+                  <div><span className="font-semibold text-[#6B7280]">Email:</span> <span className="text-[#9CA3AF] italic">Not added yet</span></div>
+                )}
                 {user.phone && <div><span className="font-semibold text-[#6B7280]">Mobile:</span> {user.phone}</div>}
               </div>
 

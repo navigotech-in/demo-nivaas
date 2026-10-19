@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import twilio from 'twilio'
+import bcrypt from 'bcryptjs'
 import { config } from '../config.js'
 import { db } from '../db/store.js'
 import { prisma } from '../db/prisma.js'
@@ -187,6 +188,8 @@ class OtpService {
     identifier: string
     code: string
     name?: string
+    email?: string
+    password?: string
     ipAddress: string
     userAgent: string
   }): Promise<{ user: UserSummary; accessToken: string; rawRefreshToken: string; isNewUser: boolean }> {
@@ -198,20 +201,46 @@ class OtpService {
     }
 
     let isApproved = false
+    let twilioNetworkError: string | null = null
 
-    // 1. Try Twilio Verify verification for SMS
+    // 1. Try Twilio Verify verification for SMS (with retry for transient DNS/network glitches)
     if (type === 'phone' && this.twilioClient && config.otp.twilio.verifyServiceSid) {
-      try {
-        const check = await this.twilioClient.verify.v2
-          .services(config.otp.twilio.verifyServiceSid)
-          .verificationChecks.create({ to: normalized, code: cleanCode })
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const check = await this.twilioClient.verify.v2
+            .services(config.otp.twilio.verifyServiceSid)
+            .verificationChecks.create({ to: normalized, code: cleanCode })
 
-        if (check.status === 'approved') {
-          isApproved = true
-          this.memoryOtpStore.delete(normalized)
+          if (check.status === 'approved') {
+            isApproved = true
+            this.memoryOtpStore.delete(normalized)
+            twilioNetworkError = null
+            break
+          } else {
+            twilioNetworkError = null
+            break
+          }
+        } catch (err: any) {
+          const isTransientNetwork =
+            err.code === 'EAI_AGAIN' ||
+            err.code === 'ETIMEDOUT' ||
+            err.code === 'ECONNRESET' ||
+            err.message?.includes('EAI_AGAIN') ||
+            err.message?.includes('ETIMEDOUT') ||
+            err.message?.includes('ECONNRESET')
+
+          if (isTransientNetwork && attempt === 1) {
+            console.warn(`[OtpService] Twilio Verify retry (attempt 1/2): ${err.message}`)
+            await new Promise((resolve) => setTimeout(resolve, 600))
+            continue
+          }
+
+          if (isTransientNetwork) {
+            twilioNetworkError = err.message
+          }
+          console.warn(`[OtpService] Twilio verification check error: ${err.message}`)
+          break
         }
-      } catch (err: any) {
-        console.warn(`[OtpService] Twilio verification check: ${err.message}`)
       }
     }
 
@@ -239,6 +268,12 @@ class OtpService {
         isApproved = true
         this.memoryOtpStore.delete(normalized)
       } else {
+        if (twilioNetworkError) {
+          throw new Error(
+            `SMS verification server connection timed out (${twilioNetworkError}). Please retry in a few seconds or use the console OTP.`
+          )
+        }
+
         record.attempts += 1
         const remaining = 3 - record.attempts
         throw new Error(`Invalid verification code. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`)
@@ -249,10 +284,45 @@ class OtpService {
     let targetUser: User | null | undefined = null
     let isNewUser = false
 
+    const digits = normalized.replace(/\D/g, '')
+    const desiredEmail = params.email ? params.email.trim().toLowerCase() : undefined
+    const desiredPassword = params.password ? params.password.trim() : undefined
+    const desiredName = params.name?.trim()
+
+    const phoneCandidates =
+      type === 'phone'
+        ? Array.from(
+            new Set(
+              [
+                normalized,
+                digits,
+                digits.length >= 10 ? `+91${digits.slice(-10)}` : null,
+                digits.length >= 10 ? digits.slice(-10) : null,
+              ].filter(Boolean) as string[]
+            )
+          )
+        : []
+
     // Search by email or phone in DB
     try {
+      const orConditions: any[] = []
+      if (type === 'email') {
+        orConditions.push({ email: normalized })
+      } else {
+        for (const p of phoneCandidates) {
+          orConditions.push({ phone: p })
+        }
+        if (digits.length >= 10) {
+          orConditions.push({ email: `${digits.slice(-10)}@phone.indorehousemakers.com` })
+          orConditions.push({ email: `91${digits.slice(-10)}@phone.indorehousemakers.com` })
+        }
+        if (desiredEmail) {
+          orConditions.push({ email: desiredEmail })
+        }
+      }
+
       const pUser = await prisma.user.findFirst({
-        where: type === 'email' ? { email: normalized } : { phone: normalized },
+        where: { OR: orConditions },
       })
       if (pUser) {
         targetUser = {
@@ -271,24 +341,81 @@ class OtpService {
     } catch {}
 
     if (!targetUser) {
-      targetUser = type === 'email' ? db.findUserByEmail(normalized) : db.findUserByPhone(normalized)
+      if (type === 'email') {
+        targetUser = db.findUserByEmail(normalized)
+      } else {
+        targetUser =
+          db.findUserByPhone(normalized) ||
+          (digits.length >= 10 ? db.findUserByPhone(digits.slice(-10)) : undefined) ||
+          (desiredEmail ? db.findUserByEmail(desiredEmail) : undefined) ||
+          (digits.length >= 10
+            ? db.findUserByEmail(`91${digits.slice(-10)}@phone.indorehousemakers.com`) ||
+              db.findUserByEmail(`${digits.slice(-10)}@phone.indorehousemakers.com`)
+            : undefined)
+      }
     }
 
-    if (!targetUser) {
+    const finalPasswordHash = desiredPassword ? await bcrypt.hash(desiredPassword, 10) : null
+    const finalPhone =
+      type === 'phone'
+        ? normalized.startsWith('+')
+          ? normalized
+          : `+91${digits.slice(-10)}`
+        : targetUser?.phone
+    const finalName =
+      desiredName || targetUser?.name || (type === 'email' ? normalized.split('@')[0] : 'Client User')
+    const finalEmail =
+      desiredEmail ||
+      (targetUser && !targetUser.email.endsWith('@phone.indorehousemakers.com')
+        ? targetUser.email
+        : type === 'email'
+        ? normalized
+        : `${digits.slice(-10)}@phone.indorehousemakers.com`)
+
+    if (targetUser) {
+      // Update existing user with verified credentials
+      const updateData: any = {
+        name: finalName,
+        isPhoneVerified: type === 'phone' ? true : targetUser.isPhoneVerified,
+        isEmailVerified: type === 'email' ? true : targetUser.isEmailVerified,
+      }
+      if (desiredEmail && targetUser.email !== desiredEmail) {
+        updateData.email = desiredEmail
+        targetUser.email = desiredEmail
+      }
+      if (finalPasswordHash) {
+        updateData.passwordHash = finalPasswordHash
+        targetUser.passwordHash = finalPasswordHash
+      }
+      if (finalPhone && (!targetUser.phone || targetUser.phone !== finalPhone)) {
+        updateData.phone = finalPhone
+        targetUser.phone = finalPhone
+      }
+      targetUser.name = finalName
+
+      try {
+        await prisma.user.update({
+          where: { id: targetUser.id },
+          data: updateData,
+        })
+      } catch (err: any) {
+        console.warn('[OtpService] Prisma user update warning:', err.message)
+      }
+
+      db.updateUser(targetUser.id, targetUser)
+    } else {
       // Create new client user
       isNewUser = true
       const newUserId = 'usr_' + crypto.randomBytes(8).toString('hex')
-      const randomPasswordHash = await crypto.randomBytes(32).toString('hex')
-      const userName = params.name?.trim() || (type === 'email' ? normalized.split('@')[0] : 'Client User')
-      const userEmail = type === 'email' ? normalized : `${normalized.replace(/\D/g, '')}@phone.indorehousemakers.com`
-      const userPhone = type === 'phone' ? normalized : undefined
+      const initialPasswordHash =
+        finalPasswordHash || (await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10))
 
       const freshUser: User = {
         id: newUserId,
-        email: userEmail,
-        name: userName,
-        phone: userPhone,
-        passwordHash: randomPasswordHash,
+        email: finalEmail,
+        name: finalName,
+        phone: finalPhone,
+        passwordHash: initialPasswordHash,
         role: 'USER',
         isEmailVerified: type === 'email',
         isPhoneVerified: type === 'phone',
@@ -311,23 +438,11 @@ class OtpService {
             isPhoneVerified: freshUser.isPhoneVerified,
           },
         })
-      } catch {}
+      } catch (err: any) {
+        console.warn('[OtpService] Prisma user create warning:', err.message)
+      }
 
       targetUser = freshUser
-    } else {
-      // Mark verified
-      if (type === 'email') targetUser.isEmailVerified = true
-      if (type === 'phone') targetUser.isPhoneVerified = true
-
-      try {
-        await prisma.user.update({
-          where: { id: targetUser.id },
-          data: {
-            isEmailVerified: targetUser.isEmailVerified,
-            isPhoneVerified: targetUser.isPhoneVerified,
-          },
-        })
-      } catch {}
     }
 
     // 4. Create Session and JWT Tokens

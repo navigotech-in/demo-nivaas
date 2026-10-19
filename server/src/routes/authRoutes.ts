@@ -501,6 +501,8 @@ const verifyOtpSchema = z.object({
   identifier: z.string().min(3, 'Email or Phone is required'),
   code: z.string().min(6, 'Verification code must be 6 digits').max(6),
   name: z.string().optional(),
+  email: z.string().email('Invalid email address').optional(),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional(),
 })
 
 router.post(
@@ -508,7 +510,7 @@ router.post(
   authRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { identifier, code, name } = verifyOtpSchema.parse(req.body)
+      const { identifier, code, name, email, password } = verifyOtpSchema.parse(req.body)
       const ipAddress = req.ip || req.socket.remoteAddress || '127.0.0.1'
       const userAgent = (req.headers['user-agent'] as string) || 'Unknown'
 
@@ -516,6 +518,8 @@ router.post(
         identifier,
         code,
         name,
+        email,
+        password,
         ipAddress,
         userAgent,
       })
