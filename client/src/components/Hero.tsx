@@ -87,10 +87,10 @@ export default function Hero({ onCalculate }: HeroProps) {
 
         {/* Cost Estimator Box with Lightened Master Back Card */}
         <div className="relative max-w-[820px] mx-auto mt-4 sm:mt-6 md:mt-8">
-          {/* Master Lightened Smoked Glass Frame (Piche wala card - 10% more light) */}
+          {/* Master Lightened Smoked Glass Frame (Piche wala card - whiteness reduced by 5%) */}
           <form
             onSubmit={handleSubmit}
-            className="relative overflow-hidden w-full rounded-2xl sm:rounded-3xl border border-white/28 bg-white/[0.16] p-3.5 sm:p-5 shadow-[0_12px_36px_rgba(0,0,0,0.18)] transition-all group"
+            className="relative overflow-hidden w-full rounded-2xl sm:rounded-3xl border border-white/25 bg-white/[0.11] p-3.5 sm:p-5 shadow-[0_12px_36px_rgba(0,0,0,0.18)] transition-all group"
           >
             {/* Top Bar of Card */}
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-3 border-b border-white/15">
@@ -110,7 +110,7 @@ export default function Hero({ onCalculate }: HeroProps) {
               </div>
 
               {/* Cost Output Badge with Smoked Finish */}
-              <div className="flex items-center sm:flex-col sm:items-end justify-between bg-black/[0.18] px-3.5 py-1.5 sm:py-2 rounded-xl border border-white/18 shadow-sm">
+              <div className="flex items-center sm:flex-col sm:items-end justify-between bg-black/[0.27] px-3.5 py-1.5 sm:py-2 rounded-xl border border-white/18 shadow-sm">
                 <div className="text-[9px] font-bold uppercase tracking-wider text-[#FFA366] flex items-center gap-1.5 drop-shadow">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#E76F2E] animate-pulse" />
                   Est. Turnkey Cost
@@ -124,7 +124,7 @@ export default function Hero({ onCalculate }: HeroProps) {
             {/* 3 Smoked Glass Pods Grid: Area Slider | Quality | Floors */}
             <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-3 items-stretch">
               {/* Ground Area Slider Pod */}
-              <div className="bg-black/[0.15] hover:bg-black/[0.10] rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between">
+              <div className="bg-black/[0.27] hover:bg-black/[0.22] rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between">
                 <div>
                   <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-white mb-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
                     <span className="flex items-center gap-1.5">
@@ -154,7 +154,7 @@ export default function Hero({ onCalculate }: HeroProps) {
               </div>
 
               {/* Build Quality Package Pod */}
-              <div className="bg-black/[0.15] hover:bg-black/[0.10] rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between">
+              <div className="bg-black/[0.27] hover:bg-black/[0.22] rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between">
                 <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white mb-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
                   <Icons.Layers size={13} className="text-[#FFA366]" />
                   <span>Build Quality Package</span>
@@ -169,7 +169,7 @@ export default function Hero({ onCalculate }: HeroProps) {
                       className={`py-2 px-1 rounded-lg border text-[10px] font-extrabold text-center transition-all duration-150 ${
                         quality === key
                           ? 'border-white/60 bg-[#E76F2E] text-white shadow-md'
-                          : 'border-white/15 bg-black/[0.18] hover:bg-white/10 text-white drop-shadow active:scale-95'
+                          : 'border-white/15 bg-black/[0.29] hover:bg-white/10 text-white drop-shadow active:scale-95'
                       }`}
                     >
                       {key[0].toUpperCase() + key.slice(1)}
@@ -179,7 +179,7 @@ export default function Hero({ onCalculate }: HeroProps) {
               </div>
 
               {/* Floors Pod */}
-              <div className="bg-black/[0.15] hover:bg-black/[0.10] rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between">
+              <div className="bg-black/[0.27] hover:bg-black/[0.22] rounded-xl p-3 sm:p-3.5 border border-white/15 transition-all duration-200 flex flex-col justify-between">
                 <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white mb-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
                   <Icons.Building size={13} className="text-[#FFA366]" />
                   <span>Number of Floors</span>
@@ -199,7 +199,7 @@ export default function Hero({ onCalculate }: HeroProps) {
                       className={`py-2 px-0.5 rounded-lg border text-[10px] font-extrabold text-center transition-all duration-150 ${
                         floors === fl.val
                           ? 'border-white/60 bg-[#E76F2E] text-white shadow-md'
-                          : 'border-white/15 bg-black/[0.18] hover:bg-white/10 text-white drop-shadow active:scale-95'
+                          : 'border-white/15 bg-black/[0.29] hover:bg-white/10 text-white drop-shadow active:scale-95'
                       }`}
                     >
                       {fl.label}
