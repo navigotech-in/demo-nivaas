@@ -2,10 +2,11 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { subscribeOpenLogin } from './lib/uiEvents'
 import Nav from './components/Nav'
-import Footer from './components/Footer'
 import ResponsiveBottomNav from './components/ResponsiveBottomNav'
-import WhatsAppWidget from './components/WhatsAppWidget'
 import ScrollToTop from './components/ScrollToTop'
+
+const Footer = lazy(() => import('./components/Footer'))
+const WhatsAppWidget = lazy(() => import('./components/WhatsAppWidget'))
 
 // Pages
 import HomePage from './pages/HomePage'
@@ -214,11 +215,13 @@ function App() {
 
       {/* Global Footer (Hidden on Portal / Dashboard routes) */}
       {!isPortalRoute && (
-        <Footer
-          onOpenConsult={handleOpenConsult}
-          onOpenLogin={() => setLoginOpen(true)}
-          onOpenAiStudio={() => handleOpenAiStudio('generator')}
-        />
+        <Suspense fallback={null}>
+          <Footer
+            onOpenConsult={handleOpenConsult}
+            onOpenLogin={() => setLoginOpen(true)}
+            onOpenAiStudio={() => handleOpenAiStudio('generator')}
+          />
+        </Suspense>
       )}
 
       {/* Responsive Bottom Navigation (Public routes + User Dashboard mobile view; hidden on Admin routes) */}
@@ -234,12 +237,14 @@ function App() {
 
       {/* Floating Sticky Actions: AI Assistant + WhatsApp Support (Hidden on Portal / Dashboard routes) */}
       {!isPortalRoute && (
-        <WhatsAppWidget
-          onOpenConsult={handleOpenConsult}
-          onOpenAiStudio={() => handleOpenAiStudio('chat')}
-          sheetOpen={exploreSheetOpen}
-          modalOpen={consultOpen || loginOpen || estimateOpen || aiStudioOpen || exploreSheetOpen}
-        />
+        <Suspense fallback={null}>
+          <WhatsAppWidget
+            onOpenConsult={handleOpenConsult}
+            onOpenAiStudio={() => handleOpenAiStudio('chat')}
+            sheetOpen={exploreSheetOpen}
+            modalOpen={consultOpen || loginOpen || estimateOpen || aiStudioOpen || exploreSheetOpen}
+          />
+        </Suspense>
       )}
 
       {/* Login Modal (Globally available — including on /admin — so an expired admin

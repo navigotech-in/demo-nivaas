@@ -810,29 +810,27 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
       {/* ========================================================================= */}
       {/* MOBILE RIGHT-SIDE SLIDE-IN ACCORDION DRAWER & DARK BACKDROP OVERLAY       */}
       {/* ========================================================================= */}
-      {/* 1. Dark Transparent Overlay Backdrop */}
-      <div
-        className={`fixed inset-0 z-[99990] bg-black/60 backdrop-blur-[2px] transition-opacity duration-250 ease-out xl:hidden ${
-          mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={() => setMobileMenuOpen(false)}
-        aria-hidden="true"
-      />
+      {mobileMenuOpen && (
+        <>
+          {/* 1. Dark Transparent Overlay Backdrop */}
+          <div
+            className="fixed inset-0 z-[99990] bg-black/60 backdrop-blur-[2px] transition-opacity duration-250 ease-out xl:hidden opacity-100 pointer-events-auto"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
 
-      {/* 2. Slide Drawer from Right (Width: 88%, max 360px, Duration 200-250ms) */}
-      <aside
-        id="mobile-nav-drawer"
-        aria-label="Mobile Navigation Menu"
-        className={`fixed top-0 right-0 bottom-0 z-[99995] w-[88%] max-w-[360px] bg-white text-[#292826] shadow-2xl flex flex-col justify-between transition-transform duration-250 ease-out transform xl:hidden ${
-          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        {/* Top: Header & Search */}
-        <div className="shrink-0 bg-white border-b border-[#EEE9E3]">
-          {/* Drawer Brand Header */}
-          <div className="p-4 flex items-center justify-between">
-            <Link
-              to="/"
+          {/* 2. Slide Drawer from Right (Width: 88%, max 360px, Duration 200-250ms) */}
+          <aside
+            id="mobile-nav-drawer"
+            aria-label="Mobile Navigation Menu"
+            className="fixed top-0 right-0 bottom-0 z-[99995] w-[88%] max-w-[360px] bg-white text-[#292826] shadow-2xl flex flex-col justify-between transition-transform duration-250 ease-out transform xl:hidden translate-x-0"
+          >
+            {/* Top: Header & Search */}
+            <div className="shrink-0 bg-white border-b border-[#EEE9E3]">
+              {/* Drawer Brand Header */}
+              <div className="p-4 flex items-center justify-between">
+                <Link
+                  to="/"
               onClick={() => setMobileMenuOpen(false)}
               className="inline-flex items-center gap-2 min-w-0"
             >
@@ -1247,6 +1245,8 @@ export default function Nav({ onOpenConsult, onOpenLogin, onOpenAiStudio }: NavP
           )}
         </div>
       </aside>
+    </>
+  )}
 
       {/* News & Spotlight Modal */}
       {newsOpen && (

@@ -76,11 +76,10 @@ const initialDesignFilters: DesignFilterState = {
 }
 
 const catalogAreaRanges: Record<string, [number, number]> = {
-  'Under 1,000 sq.ft': [0, 999],
-  '1,000 - 1,500 sq.ft': [1000, 1500],
-  '1,500 - 2,000 sq.ft': [1501, 2000],
-  '2,000 - 3,000 sq.ft': [2001, 3000],
-  'Above 3,000 sq.ft': [3001, Number.POSITIVE_INFINITY],
+  'Under 1,500 sq.ft': [0, 1500],
+  '1,500 - 2,500 sq.ft': [1501, 2500],
+  '2,500 - 3,500 sq.ft': [2501, 3500],
+  'Above 3,500 sq.ft': [3501, Number.POSITIVE_INFINITY],
 }
 
 const catalogAreaMatches = (range: string, area: DesignFilterMetadata['builtUpAreaRange']) => {
@@ -101,7 +100,18 @@ export function useDesignCatalogFilters<T extends DesignFilterMetadata>(items: r
       if (selectedBhk !== null && !item.bhks.includes(selectedBhk)) return false
       if (filters.homeType && !item.homeTypes.includes(filters.homeType)) return false
       if (!catalogAreaMatches(filters.area, item.builtUpAreaRange)) return false
-      if (filters.direction && !item.vastuDirections.includes(filters.direction)) return false
+      if (filters.direction) {
+        const d = filters.direction.toLowerCase()
+        const matchesDirection = item.vastuDirections.some((vd) => {
+          const vdl = vd.toLowerCase()
+          if (d.includes('east') && vdl.includes('east')) return true
+          if (d.includes('north') && vdl.includes('north')) return true
+          if (d.includes('west') && vdl.includes('west')) return true
+          if (d.includes('south') && vdl.includes('south')) return true
+          return vdl === d
+        })
+        if (!matchesDirection) return false
+      }
       if (filters.city) {
         // Match specific city, alias, or general Pan-India design
         if (item.cities.length > 0 && !item.cities.includes(filters.city)) {

@@ -30,14 +30,11 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
+            if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) {
               return 'vendor-react'
             }
-            if (id.includes('@tanstack/react-query')) {
-              return 'vendor-query'
-            }
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons'
+            if (id.includes('react-router') || id.includes('@remix-run')) {
+              return 'vendor-router'
             }
             return 'vendor-libs'
           }

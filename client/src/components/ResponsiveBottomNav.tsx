@@ -133,36 +133,36 @@ export default function ResponsiveBottomNav({
       {/* 1. EXPLORE BOTTOM SHEET & BACKDROP (Mobile & Tablet)                       */}
       {/* ========================================================================= */}
       {exploreSheetOpen && (
-        <div
-          className="fixed inset-0 z-[99990] bg-black/60 backdrop-blur-[2px] transition-opacity duration-200 lg:hidden"
-          onClick={() => {
-            setExploreSheetOpen(false)
-            menuButtonRef.current?.focus()
-          }}
-          aria-hidden="true"
-        />
-      )}
+        <>
+          <div
+            className="fixed inset-0 z-[99990] bg-black/60 backdrop-blur-[2px] transition-opacity duration-200 lg:hidden"
+            onClick={() => {
+              setExploreSheetOpen(false)
+              menuButtonRef.current?.focus()
+            }}
+            aria-hidden="true"
+          />
 
-      {/* Bottom Sheet Drawer */}
-      <div
-        ref={sheetRef}
-        id="explore-ihm-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Explore Menu"
-        className={`fixed z-[99995] bg-[#FDFCF9] text-[#292826] transition-transform duration-250 ease-out lg:hidden flex flex-col shadow-2xl ${
-          // Mobile: Full width bottom sheet
-          'inset-x-0 bottom-0 w-full max-h-[88dvh] rounded-t-2xl border-t border-[#E7E0D7] ' +
-          // Tablet: Centered compact floating sheet
-          'md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:w-[92%] md:max-w-[620px] md:rounded-2xl md:border md:border-[#E7E0D7]'
-        } ${exploreSheetOpen ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-full opacity-0 pointer-events-none'}`}
-      >
-        {/* Drag Handle & Header */}
-        <div className="shrink-0 pt-2.5 px-4 pb-3 border-b border-[#EEE9E3] bg-white rounded-t-2xl">
-          <div className="w-10 h-1 bg-[#E7E0D7] rounded-full mx-auto mb-2" aria-hidden="true" />
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Icons.NivaasMark className="h-5.5 w-5.5 text-[#C94F36] shrink-0" />
+          {/* Bottom Sheet Drawer */}
+          <div
+            ref={sheetRef}
+            id="explore-ihm-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Explore Menu"
+            className={`fixed z-[99995] bg-[#FDFCF9] text-[#292826] transition-transform duration-250 ease-out lg:hidden flex flex-col shadow-2xl ${
+              // Mobile: Full width bottom sheet
+              'inset-x-0 bottom-0 w-full max-h-[88dvh] rounded-t-2xl border-t border-[#E7E0D7] ' +
+              // Tablet: Centered compact floating sheet
+              'md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:w-[92%] md:max-w-[620px] md:rounded-2xl md:border md:border-[#E7E0D7]'
+            } translate-y-0 opacity-100 pointer-events-auto`}
+          >
+            {/* Drag Handle & Header */}
+            <div className="shrink-0 pt-2.5 px-4 pb-3 border-b border-[#EEE9E3] bg-white rounded-t-2xl">
+              <div className="w-10 h-1 bg-[#E7E0D7] rounded-full mx-auto mb-2" aria-hidden="true" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Icons.NivaasMark className="h-5.5 w-5.5 text-[#C94F36] shrink-0" />
               <div className="flex flex-col">
                 <h3 className="font-display font-black text-sm sm:text-base text-[#292725] tracking-tight leading-tight">
                   Indore House Makers
@@ -271,6 +271,8 @@ export default function ResponsiveBottomNav({
           )}
         </div>
       </div>
+    </>
+  )}
 
       {/* ========================================================================= */}
       {/* 2. MOBILE BOTTOM NAVIGATION (0–767px: Full-Width Fixed)                   */}

@@ -57,7 +57,7 @@ export default function Hero({ onCalculate }: HeroProps) {
       {/* Hero Background Image with Atmospheric Lighting */}
       <div className="absolute inset-0">
         <picture>
-          <source media="(max-width: 768px)" srcSet={heroBgMobileWebp} type="image/webp" width="540" height="1167" />
+          <source media="(max-width: 768px)" srcSet={heroBgMobileWebp} type="image/webp" width="420" height="910" />
           <source srcSet={heroBgWebp} type="image/webp" width="1920" height="1072" />
           <img
             src={heroBgWebp}

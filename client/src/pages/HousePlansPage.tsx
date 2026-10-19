@@ -19,11 +19,10 @@ const bhkOptions = [
 
 const areaOptions = [
   'All Areas',
-  'Under 1,000 sq.ft',
-  '1,000 - 1,500 sq.ft',
-  '1,500 - 2,000 sq.ft',
-  '2,000 - 3,000 sq.ft',
-  'Above 3,000 sq.ft',
+  'Under 1,500 sq.ft',
+  '1,500 - 2,500 sq.ft',
+  '2,500 - 3,500 sq.ft',
+  'Above 3,500 sq.ft',
 ]
 
 const directionOptions = [
@@ -115,17 +114,20 @@ export default function HousePlansPage({ onOpenConsult }: HousePlansPageProps) {
       // Built-up Area filter
       if (selectedArea !== 'All Areas') {
         const sqft = parseBuiltUp(p.area)
-        if (selectedArea === 'Under 1,000 sq.ft' && sqft >= 1000) return false
-        if (selectedArea === '1,000 - 1,500 sq.ft' && (sqft < 1000 || sqft > 1500)) return false
-        if (selectedArea === '1,500 - 2,000 sq.ft' && (sqft < 1500 || sqft > 2000)) return false
-        if (selectedArea === '2,000 - 3,000 sq.ft' && (sqft < 2000 || sqft > 3000)) return false
-        if (selectedArea === 'Above 3,000 sq.ft' && sqft <= 3000) return false
+        if (selectedArea === 'Under 1,500 sq.ft' && sqft > 1500) return false
+        if (selectedArea === '1,500 - 2,500 sq.ft' && (sqft < 1500 || sqft > 2500)) return false
+        if (selectedArea === '2,500 - 3,500 sq.ft' && (sqft < 2500 || sqft > 3500)) return false
+        if (selectedArea === 'Above 3,500 sq.ft' && sqft < 3500) return false
       }
 
       // Vastu Direction filter
       if (selectedDirection !== 'All Directions') {
-        const dirPrefix = selectedDirection.split(' ')[0].toLowerCase()
-        if (!p.facing.toLowerCase().includes(dirPrefix)) return false
+        const d = selectedDirection.toLowerCase()
+        const f = (p.facing || '').toLowerCase()
+        if (d.includes('east') && !f.includes('east')) return false
+        if (d.includes('north') && !f.includes('north')) return false
+        if (d.includes('west') && !f.includes('west')) return false
+        if (d.includes('south') && !f.includes('south')) return false
       }
 
       // Major City filter

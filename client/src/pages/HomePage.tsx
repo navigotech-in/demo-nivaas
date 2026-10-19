@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import Hero from '../components/Hero'
 import { useSeoMeta } from '../components/useSeoMeta'
 
@@ -34,9 +34,13 @@ interface HomePageProps {
 }
 
 export default function HomePage({ onCalculateEstimate, onOpenConsult }: HomePageProps) {
-  const [loadNearFold, setLoadNearFold] = useState(false)
+  const [loadProofFold, setLoadProofFold] = useState(false)
+  const [loadStudioFold, setLoadStudioFold] = useState(false)
   const [loadDeepFold, setLoadDeepFold] = useState(false)
-  const deepSentinelRef = useRef<HTMLDivElement>(null)
+
+  const [heroSentinelEl, setHeroSentinelEl] = useState<HTMLDivElement | null>(null)
+  const [proofSentinelEl, setProofSentinelEl] = useState<HTMLDivElement | null>(null)
+  const [studioSentinelEl, setStudioSentinelEl] = useState<HTMLDivElement | null>(null)
 
   useSeoMeta({
     title: 'House Plans, 3D Front Elevations & Interior Designs for Indian Homes | Indore House Makers',
@@ -45,39 +49,77 @@ export default function HomePage({ onCalculateEstimate, onOpenConsult }: HomePag
     canonicalUrl: 'https://indorehousemakers.in/',
   })
 
-  // Phase 1 -> Phase 2: Load near-fold components after initial render settles or on user interaction
+  // Tier 1 -> Tier 2 (Proof Fold): On user interaction, Hero scroll, or gentle idle fallback (4.5s)
   useEffect(() => {
     let idleHandle: any = null
-    let timer: any = null
+    let fallbackTimer: any = null
 
-    const activateNearFold = () => setLoadNearFold(true)
-
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      idleHandle = (window as any).requestIdleCallback(activateNearFold, { timeout: 1200 })
-    } else {
-      timer = setTimeout(activateNearFold, 500)
-    }
+    const activateProof = () => setLoadProofFold(true)
 
     const onUserInteract = () => {
-      setLoadNearFold(true)
+      activateProof()
       window.removeEventListener('scroll', onUserInteract)
       window.removeEventListener('touchstart', onUserInteract)
+      window.removeEventListener('pointerdown', onUserInteract)
+      window.removeEventListener('keydown', onUserInteract)
     }
+
     window.addEventListener('scroll', onUserInteract, { passive: true, once: true })
     window.addEventListener('touchstart', onUserInteract, { passive: true, once: true })
+    window.addEventListener('pointerdown', onUserInteract, { passive: true, once: true })
+    window.addEventListener('keydown', onUserInteract, { passive: true, once: true })
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleHandle = (window as any).requestIdleCallback(activateProof, { timeout: 4500 })
+    } else {
+      fallbackTimer = setTimeout(activateProof, 4000)
+    }
 
     return () => {
       if (idleHandle && 'cancelIdleCallback' in window) (window as any).cancelIdleCallback(idleHandle)
-      if (timer) clearTimeout(timer)
+      if (fallbackTimer) clearTimeout(fallbackTimer)
       window.removeEventListener('scroll', onUserInteract)
       window.removeEventListener('touchstart', onUserInteract)
+      window.removeEventListener('pointerdown', onUserInteract)
+      window.removeEventListener('keydown', onUserInteract)
     }
   }, [])
 
-  // Phase 2 -> Phase 3: Load deep below-the-fold components when approaching middle of page or after delay
+  // Hero bottom sentinel observer (loads Proof fold 300px before user reaches bottom of Hero)
   useEffect(() => {
-    if (!loadNearFold) return
+    if (!heroSentinelEl || loadProofFold) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setLoadProofFold(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '300px 0px' }
+    )
+    observer.observe(heroSentinelEl)
+    return () => observer.disconnect()
+  }, [heroSentinelEl, loadProofFold])
 
+  // Tier 2 -> Tier 3 (Studio Fold): Triggered 350px before user reaches DesignStudio
+  useEffect(() => {
+    if (!loadProofFold || !proofSentinelEl || loadStudioFold) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setLoadStudioFold(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '350px 0px' }
+    )
+    observer.observe(proofSentinelEl)
+    return () => observer.disconnect()
+  }, [loadProofFold, proofSentinelEl, loadStudioFold])
+
+  // Tier 3 -> Tier 4 (Deep Fold): Triggered 450px before user reaches Cost Calculator & lower sections
+  useEffect(() => {
+    if (!loadStudioFold || !studioSentinelEl || loadDeepFold) return
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
@@ -85,98 +127,96 @@ export default function HomePage({ onCalculateEstimate, onOpenConsult }: HomePag
           observer.disconnect()
         }
       },
-      { rootMargin: '600px 0px' }
+      { rootMargin: '450px 0px' }
     )
-
-    if (deepSentinelRef.current) {
-      observer.observe(deepSentinelRef.current)
-    }
-
-    const fallbackTimer = setTimeout(() => setLoadDeepFold(true), 3000)
-
-    return () => {
-      observer.disconnect()
-      clearTimeout(fallbackTimer)
-    }
-  }, [loadNearFold])
+    observer.observe(studioSentinelEl)
+    return () => observer.disconnect()
+  }, [loadStudioFold, studioSentinelEl, loadDeepFold])
 
   return (
-    <main>
-      {/* 1. Critical Above-the-Fold Hero Section (Instant FCP & LCP) */}
+    <div>
+      {/* 1. Critical Above-the-Fold Hero Section (Instant FCP & LCP with 0ms TBT) */}
       <Hero onCalculate={onCalculateEstimate} />
+      <div ref={setHeroSentinelEl} className="h-px w-full pointer-events-none" aria-hidden="true" />
 
-      {/* 2. Near-Fold Components (Media Spotlight, Counter, About, Design Studio, Services) */}
-      {loadNearFold && (
-        <Suspense fallback={<div className="min-h-[160px] bg-transparent" />}>
+      {/* 2. Tier 2: Proof & Authority Fold (Media Spotlight, Counter, About Nivaas) */}
+      {loadProofFold && (
+        <Suspense fallback={<div className="min-h-[140px] bg-transparent" />}>
           <div className="content-auto">
-            {/* 2. Media Coverage & Credibility Spotlight */}
+            {/* Media Coverage & Credibility Spotlight */}
             <MediaSpotlight />
 
-            {/* 3. Trusted Numbers & Scale */}
+            {/* Trusted Numbers & Scale */}
             <StatsCounter />
 
-            {/* 4. Value Proposition & Comparison */}
+            {/* Value Proposition & Comparison */}
             <AboutNivaas />
-
-            {/* 5. Interactive Design Studio (House Plans | 3D Elevations | Interiors) */}
-            <DesignStudio onOpenConsult={onOpenConsult} />
           </div>
 
-          <div className="content-auto">
-            {/* 6. How NIVAAS Works (4-Step Journey) */}
-            <HowItWorks onOpenConsult={onOpenConsult} />
-
-            {/* 7. Commercial & Mixed-Use Designs */}
-            <CommercialDesigns onOpenConsult={onOpenConsult} />
-
-            {/* 8. Architectural, Structural, MEP & PMC Services */}
-            <Services onOpenConsult={onOpenConsult} />
-          </div>
-
-          {/* Sentinel element to trigger deep fold loading 600px ahead */}
-          <div ref={deepSentinelRef} className="h-1 w-full" aria-hidden="true" />
+          <div ref={setProofSentinelEl} className="h-px w-full pointer-events-none" aria-hidden="true" />
         </Suspense>
       )}
 
-      {/* 3. Deep-Fold Components (Estimator, Contractors, Reviews, Blogs, FAQ, Contact) */}
+      {/* 3. Tier 3: Interactive Architecture & Engineering Studio (Plans, Elevations, Services) */}
+      {loadStudioFold && (
+        <Suspense fallback={<div className="min-h-[160px] bg-transparent" />}>
+          <div className="content-auto">
+            {/* Interactive Design Studio (House Plans | 3D Elevations | Interiors) */}
+            <DesignStudio onOpenConsult={onOpenConsult} />
+
+            {/* How NIVAAS Works (4-Step Journey) */}
+            <HowItWorks onOpenConsult={onOpenConsult} />
+
+            {/* Commercial & Mixed-Use Designs */}
+            <CommercialDesigns onOpenConsult={onOpenConsult} />
+
+            {/* Architectural, Structural, MEP & PMC Services */}
+            <Services onOpenConsult={onOpenConsult} />
+          </div>
+
+          <div ref={setStudioSentinelEl} className="h-px w-full pointer-events-none" aria-hidden="true" />
+        </Suspense>
+      )}
+
+      {/* 4. Tier 4: Deep Conversion & Discovery Fold (Estimator, Contractors, Reviews, FAQ, Contact) */}
       {loadDeepFold && (
         <Suspense fallback={<div className="min-h-[160px] bg-transparent" />}>
           <div className="content-auto">
-            {/* 9. Interactive Detailed Cost Estimator */}
+            {/* Interactive Detailed Cost Estimator */}
             <CostCalculator onOpenConsult={onOpenConsult} />
 
-            {/* 10. One-Stop Turnkey Construction & Financial Ecosystem */}
+            {/* One-Stop Turnkey Construction & Financial Ecosystem */}
             <OneStop onOpenConsult={onOpenConsult} />
 
-            {/* 11. Verified Contractors & Trades Grid */}
+            {/* Verified Contractors & Trades Grid */}
             <ContractorGrid onOpenConsult={onOpenConsult} />
 
-            {/* 12. Client Reviews & Testimonials */}
+            {/* Client Reviews & Testimonials */}
             <Reviews />
 
-            {/* 13. Pan-India Completed Projects Proof */}
+            {/* Pan-India Completed Projects Proof */}
             <ProjectCompleted />
           </div>
 
           <div className="content-auto">
-            {/* 14. Architecture & Vastu Guides */}
+            {/* Architecture & Vastu Guides */}
             <Blogs onOpenConsult={onOpenConsult} />
 
-            {/* 15. Quick Answers & Frequently Asked Questions */}
+            {/* Quick Answers & Frequently Asked Questions */}
             <QuickAnswers onOpenConsult={onOpenConsult} />
             <FAQ onOpenConsult={() => onOpenConsult('FAQ Architect Consultation')} />
 
-            {/* 16. Contact & Enquiry Form */}
+            {/* Contact & Enquiry Form */}
             <Contact />
 
-            {/* 17. Mobile App CTA */}
+            {/* Mobile App CTA */}
             <AppCta />
 
-            {/* 18. Achievements & Ventures */}
+            {/* Achievements & Ventures */}
             <Achievements />
           </div>
         </Suspense>
       )}
-    </main>
+    </div>
   )
 }
