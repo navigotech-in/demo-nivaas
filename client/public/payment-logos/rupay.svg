@@ -2,6 +2,6 @@
   <g fill="none">
     <path d="M78 2l12 10-12 10 5-10z" fill="#097939"/>
     <path d="M84 2l11 10-11 10 5-10z" fill="#F26522"/>
-    <text x="0" y="18" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="19" font-style="italic" letter-spacing="0.5">RuPay</text>
+    <text x="0" y="18" fill="#0B2545" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="19" font-style="italic" letter-spacing="0.5">RuPay</text>
   </g>
 </svg>

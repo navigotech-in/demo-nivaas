@@ -572,67 +572,63 @@ export default function Footer({ onOpenConsult, onOpenLogin, onOpenAiStudio }: F
           <span className="text-[11px] font-bold uppercase tracking-widest text-[#EAE6DF] text-center md:text-left">
             SECURE PAYMENTS VIA
           </span>
-          <div className="flex flex-wrap items-center justify-center md:justify-end gap-y-2.5 gap-x-3.5 sm:gap-x-4.5">
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 sm:gap-2.5">
             {/* UPI */}
-            <div className="flex items-center hover:opacity-80 transition-opacity shrink-0">
+            <div className="h-7 px-2.5 bg-white rounded-md flex items-center justify-center shadow-xs border border-white/20 hover:scale-105 transition-transform shrink-0" title="UPI">
               <img
                 src="/payment-logos/upi.svg"
                 alt="UPI"
                 width={50}
-                height={22}
-                className="h-5 sm:h-5.5 w-auto object-contain"
+                height={20}
+                className="h-3.5 sm:h-4 w-auto object-contain"
                 loading="lazy"
                 decoding="async"
               />
             </div>
 
-            {/* Divider */}
-            <div className="h-4 w-px bg-white/15 shrink-0" aria-hidden="true" />
-
-            {/* Card Networks: Visa, Mastercard, RuPay */}
-            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-              <div className="flex items-center hover:opacity-80 transition-opacity">
-                <img
-                  src="/payment-logos/visa.svg"
-                  alt="Visa"
-                  width={48}
-                  height={16}
-                  className="h-3.5 sm:h-4 w-auto object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div className="flex items-center hover:opacity-80 transition-opacity">
-                <img
-                  src="/payment-logos/mastercard.svg"
-                  alt="Mastercard"
-                  width={34}
-                  height={20}
-                  className="h-4.5 sm:h-5 w-auto object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div className="flex items-center hover:opacity-80 transition-opacity">
-                <img
-                  src="/payment-logos/rupay.svg"
-                  alt="RuPay"
-                  width={60}
-                  height={18}
-                  className="h-4 sm:h-4.5 w-auto object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
+            {/* Visa */}
+            <div className="h-7 px-2.5 bg-white rounded-md flex items-center justify-center shadow-xs border border-white/20 hover:scale-105 transition-transform shrink-0" title="Visa">
+              <img
+                src="/payment-logos/visa.svg"
+                alt="Visa"
+                width={48}
+                height={16}
+                className="h-3.5 w-auto object-contain"
+                loading="lazy"
+                decoding="async"
+              />
             </div>
 
-            {/* Divider */}
-            <div className="h-4 w-px bg-white/15 shrink-0" aria-hidden="true" />
+            {/* Mastercard */}
+            <div className="h-7 px-2.5 bg-white rounded-md flex items-center justify-center shadow-xs border border-white/20 hover:scale-105 transition-transform shrink-0" title="Mastercard">
+              <img
+                src="/payment-logos/mastercard.svg"
+                alt="Mastercard"
+                width={34}
+                height={20}
+                className="h-4 sm:h-4.5 w-auto object-contain"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+
+            {/* RuPay */}
+            <div className="h-7 px-2.5 bg-white rounded-md flex items-center justify-center shadow-xs border border-white/20 hover:scale-105 transition-transform shrink-0" title="RuPay">
+              <img
+                src="/payment-logos/rupay.svg"
+                alt="RuPay"
+                width={60}
+                height={18}
+                className="h-3.5 sm:h-4 w-auto object-contain"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
 
             {/* Net Banking */}
-            <span className="text-xs font-semibold text-[#E0DBD5] hover:opacity-80 transition-opacity tracking-tight shrink-0">
+            <div className="h-7 px-3 bg-white/10 rounded-md flex items-center justify-center border border-white/15 text-[11px] font-bold text-[#FAF8F5] tracking-wide hover:bg-white/15 transition shrink-0" title="Net Banking">
               Net Banking
-            </span>
+            </div>
           </div>
         </div>
       </div>

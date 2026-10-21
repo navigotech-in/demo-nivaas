@@ -357,7 +357,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/65 p-2 sm:p-4 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-[120000] flex items-center justify-center bg-black/65 p-2 sm:p-4 backdrop-blur-sm animate-fadeIn">
       <div
         className={`relative w-full ${
           mode === 'SIGNUP' && !otpSent ? 'max-w-xl sm:max-w-2xl' : 'max-w-md sm:max-w-lg'

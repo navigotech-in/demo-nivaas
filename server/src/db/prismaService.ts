@@ -812,14 +812,30 @@ export class PrismaDatabaseService {
   }
 
   public async getUserSessions(userId: string) {
-    return await prisma.refreshSession.findMany({
-      where: {
-        userId,
-        isRevoked: false,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
+    try {
+      return await prisma.refreshSession.findMany({
+        where: {
+          userId,
+          isRevoked: false,
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+    } catch {
+      const memSessions = db.getUserSessions(userId)
+      return memSessions.map((s: any) => ({
+        id: s.id,
+        userId: s.userId,
+        familyId: s.familyId,
+        tokenHash: s.tokenHash,
+        userAgent: s.userAgent,
+        ipAddress: s.ipAddress,
+        isRevoked: s.isRevoked,
+        expiresAt: new Date(s.expiresAt),
+        createdAt: new Date(s.createdAt),
+        updatedAt: new Date(s.updatedAt),
+      }))
+    }
   }
 
   public async revokeUserSession(userId: string, sessionId: string) {

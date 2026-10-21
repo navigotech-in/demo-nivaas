@@ -31,9 +31,31 @@ export default function ProtectedRoute({ children, adminOnly = false }: Protecte
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-[#FDFCF9] flex flex-col items-center justify-center p-6 text-center">
-        <div className="h-8 w-8 border-2 border-[#E76F2E] border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-xs font-semibold text-[#54504A]">Redirecting to authentication...</p>
+      <div className="min-h-[75vh] bg-[#FDFCF9] flex flex-col items-center justify-center p-4 sm:p-6 text-center animate-fadeIn">
+        <div className="max-w-sm w-full bg-white p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-[#E7E0D7] shadow-xl">
+          <div className="h-14 w-14 rounded-2xl bg-[#FFF6E8] text-[#E76F2E] flex items-center justify-center mx-auto mb-4 border border-[#E76F2E]/20 shadow-xs">
+            <Icons.User size={26} />
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black text-[#111827] tracking-tight mb-2">
+            Sign In Required
+          </h2>
+          <p className="text-xs text-[#54504A] leading-relaxed mb-6 font-medium">
+            Please log in with your mobile number or email to view your projects, house plans, and workspace.
+          </p>
+          <button
+            type="button"
+            onClick={() => openLoginModal()}
+            className="w-full h-11 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] hover:from-[#C65320] hover:to-[#B53E26] text-white font-bold text-xs shadow-md transition cursor-pointer mb-2.5 active:scale-[0.99]"
+          >
+            Sign In / Create Account
+          </button>
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center w-full h-10 rounded-xl border border-[#E7E0D7] text-[#54504A] hover:text-[#292826] font-semibold text-xs hover:bg-[#FAF8F5] transition"
+          >
+            Back to Homepage
+          </Link>
+        </div>
       </div>
     )
   }

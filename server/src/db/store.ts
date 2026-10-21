@@ -338,6 +338,16 @@ class DatabaseStore {
     }
   }
 
+  public getUserSessions(userId: string): RefreshSession[] {
+    const list: RefreshSession[] = []
+    for (const session of this.sessions.values()) {
+      if (session.userId === userId && !session.isRevoked && new Date(session.expiresAt) > new Date()) {
+        list.push(session)
+      }
+    }
+    return list
+  }
+
   // --- Audit Logs ---
   public logAudit(log: Omit<AuditLog, 'id' | 'createdAt'>): AuditLog {
     const entry: AuditLog = {

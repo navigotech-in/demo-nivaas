@@ -444,6 +444,28 @@ class OtpService {
         })
       } catch (err: any) {
         console.warn('[OtpService] Prisma user create warning:', err.message)
+        // If user already exists in PostgreSQL (e.g. initial findFirst failed due to connection error)
+        if (err.code === 'P2002' || err.message?.includes('Unique constraint')) {
+          try {
+            const existingDbUser = await prisma.user.findFirst({
+              where: {
+                OR: [
+                  { email: freshUser.email },
+                  ...(freshUser.phone ? [{ phone: freshUser.phone }] : []),
+                ],
+              },
+            })
+            if (existingDbUser) {
+              freshUser.id = existingDbUser.id
+              freshUser.email = existingDbUser.email
+              freshUser.name = existingDbUser.name
+              freshUser.phone = existingDbUser.phone || undefined
+              freshUser.role = existingDbUser.role as any
+              isNewUser = false
+              db.createUser(freshUser)
+            }
+          } catch {}
+        }
       }
 
       targetUser = freshUser

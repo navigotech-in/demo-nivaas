@@ -239,7 +239,7 @@ router.get('/me/sessions', async (req: Request, res: Response, next: NextFunctio
     const currentSessionId = req.user!.sessionId
     const rawSessions = await prismaDb.getUserSessions(userId)
 
-    const sessions = rawSessions.map((s) => ({
+    const sessions = (rawSessions as any[]).map((s: any) => ({
       id: s.id,
       userAgent: s.userAgent,
       ipAddress: s.ipAddress,

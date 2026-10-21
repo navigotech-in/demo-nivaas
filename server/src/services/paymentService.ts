@@ -149,11 +149,37 @@ export class PaymentService {
             },
           })
 
+          // Ensure user exists in PostgreSQL to avoid Foreign Key violation
+          let effectiveUserId = userId
+          const existingUserInDb = await tx.user.findUnique({ where: { id: effectiveUserId } })
+          if (!existingUserInDb) {
+            const memUser = db.findUserById(userId)
+            if (memUser) {
+              const existingByEmail = await tx.user.findUnique({ where: { email: memUser.email } })
+              if (existingByEmail) {
+                effectiveUserId = existingByEmail.id
+              } else {
+                await tx.user.create({
+                  data: {
+                    id: memUser.id,
+                    email: memUser.email,
+                    name: memUser.name,
+                    phone: memUser.phone || null,
+                    passwordHash: memUser.passwordHash,
+                    role: memUser.role as any,
+                    isEmailVerified: memUser.isEmailVerified,
+                    isPhoneVerified: memUser.isPhoneVerified,
+                  },
+                })
+              }
+            }
+          }
+
           // Create Purchase snapshot
           await tx.purchase.create({
             data: {
               id: purchaseId,
-              userId,
+              userId: effectiveUserId,
               productId: product.id,
               amountInr: product.priceInr,
               amountInPaise: product.priceInPaise,
@@ -170,7 +196,7 @@ export class PaymentService {
             data: {
               id: 'pay_' + crypto.randomBytes(8).toString('hex'),
               purchaseId,
-              userId,
+              userId: effectiveUserId,
               orderId,
               amountInr: product.priceInr,
               amountInPaise: product.priceInPaise,

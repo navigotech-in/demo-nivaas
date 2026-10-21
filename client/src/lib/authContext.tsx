@@ -581,12 +581,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return json.data
   }
 
-  // Logout
+  // Logout - Instant 0ms UI cleanup with asynchronous backend session revocation
   const logout = async () => {
     terminalAuthFailureRef.current = true
     const currentHeaders = getAuthHeaders()
+
+    // 1. Instantly reset local state (0ms instant logout in UI)
     tokenRef.current = null
     saveSessionCache(null, null)
+    setAccessToken(null)
+    setUser(null)
+    authChannel?.postMessage({ type: 'AUTH_LOGOUT' })
+
+    // 2. Clear backend refresh cookie / session in background
     try {
       await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST',
@@ -602,7 +609,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null)
       tokenRef.current = null
       terminalAuthFailureRef.current = true
-      authChannel?.postMessage({ type: 'AUTH_LOGOUT' })
     }
   }
 

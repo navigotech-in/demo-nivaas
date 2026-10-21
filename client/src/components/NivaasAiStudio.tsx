@@ -283,7 +283,7 @@ export default function NivaasAiStudio({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       from: 'bot',
-      text: 'Namaste! 🙏 I am your Indore House Makers AI Architecture Assistant. Ask me anything about floor plans, irregular plot layouts, municipal bylaws, Vastu directions, 3D elevation styles, or construction estimates.',
+      text: 'Namaste! I am your Indore House Makers AI Architecture Assistant. Ask me anything about floor plans, irregular plot layouts, municipal bylaws, Vastu directions, 3D elevation styles, or construction estimates.',
       time: 'Just now',
     },
   ])
@@ -627,19 +627,19 @@ export default function NivaasAiStudio({
       let reply = 'I can help you customize 2D floor plans, verify Vastu alignments, estimate construction costs in Indore, or recommend 3D elevation designs. You can also generate a custom 2D/3D concept in the "AI Plan Generator" tab!'
 
       if (/(299|plan pack|credit|subscription|package|pricing)/i.test(qLower)) {
-        reply = `✨ Indore House Makers AI Starter Plan (₹299 / month):\n• 5 Full AI Design Generations per billing cycle\n• High-Resolution 2D CAD Layouts with Room Dimensions\n• Area Statements, Built-up & Carpet Area Summary\n• Photorealistic 3D Front Elevation Renders\n• Watermark-free PDF & PNG Downloads\n• 1 Free Plan Regeneration within 7 days\n\n📌 Note: All designs are conceptual recommendations. Construction requires verification by a licensed architect/structural engineer.`
+        reply = `Indore House Makers AI Starter Plan (₹299 / month):\n• 5 Full AI Design Generations per billing cycle\n• High-Resolution 2D CAD Layouts with Room Dimensions\n• Area Statements, Built-up & Carpet Area Summary\n• Photorealistic 3D Front Elevation Renders\n• Watermark-free PDF & PNG Downloads\n• 1 Free Plan Regeneration within 7 days\n\nNote: All designs are conceptual recommendations. Construction requires verification by a licensed architect/structural engineer.`
       } else if (/(price|cost|budget|rate|lakh|estimate|sq\.? ?ft)/i.test(qLower)) {
-        reply = `💰 Estimated Construction Cost for Indore & MP Region:\n• Standard Economy: ₹1,550 – ₹1,750 / sq.ft\n• Premium Executive: ₹2,100 – ₹2,450 / sq.ft (Most Popular)\n• Luxury Ultra: ₹2,900 – ₹3,500 / sq.ft\n\nFor your ${isRegular ? `${plotWidth}x${plotDepth} ft` : 'selected'} plot (~${builtUpArea} sq.ft built-up), the estimated construction budget is approx ₹${estimatedCostLakhs} Lakhs.`
+        reply = `Estimated Construction Cost for Indore & MP Region:\n• Standard Economy: ₹1,550 – ₹1,750 / sq.ft\n• Premium Executive: ₹2,100 – ₹2,450 / sq.ft (Most Popular)\n• Luxury Ultra: ₹2,900 – ₹3,500 / sq.ft\n\nFor your ${isRegular ? `${plotWidth}x${plotDepth} ft` : 'selected'} plot (~${builtUpArea} sq.ft built-up), the estimated construction budget is approx ₹${estimatedCostLakhs} Lakhs.`
       } else if (/(30x50|20x40|20x50|30x60|plot|dimension|size)/i.test(qLower)) {
-        reply = `📐 Recommended Layout for ${q.toUpperCase()}:\n• Configuration: 3 BHK / 4 BHK G+1 Duplex with Car Parking\n• Ground Floor: Living Room, Master Bedroom with Attached Toilet, Kitchen in SE (Agneya), Pooja in NE (Ishanya)\n• First Floor: 2 Bedrooms, Family Lounge, Balcony & Open Terrace\n• Switch to the "AI Plan Generator" tab above to generate this exact dimensioned floor plan!`
+        reply = `Recommended Layout for ${q.toUpperCase()}:\n• Configuration: 3 BHK / 4 BHK G+1 Duplex with Car Parking\n• Ground Floor: Living Room, Master Bedroom with Attached Toilet, Kitchen in SE (Agneya), Pooja in NE (Ishanya)\n• First Floor: 2 Bedrooms, Family Lounge, Balcony & Open Terrace\n• Switch to the "AI Plan Generator" tab above to generate this exact dimensioned floor plan!`
       } else if (/(irregular|asymmetric|cut|shape|l-shape|corner|trap)/i.test(qLower)) {
-        reply = `📐 Irregular Plot Planning Engine:\nIndore House Makers AI automatically computes setback buffers (18% standard deduction) and converts non-90° corner cuts into landscaped green pockets, ventilation shafts, or utility zones. This ensures 100% Vastu compliance and square interior living spaces!`
+        reply = `Irregular Plot Planning Engine:\nIndore House Makers AI automatically computes setback buffers (18% standard deduction) and converts non-90° corner cuts into landscaped green pockets, ventilation shafts, or utility zones. This ensures 100% Vastu compliance and square interior living spaces!`
       } else if (/(vastu|vaastu|direction|mandir|pooja|kitchen|north|east|south|west)/i.test(qLower)) {
-        reply = `🧭 100% Vastu Shastra Guidelines:\n• Pooja Mandir: North-East (Ishanya) — Most sacred corner\n• Kitchen: South-East (Agneya) or North-West (Vayavya)\n• Master Bedroom: South-West (Nairutya) for stability\n• Staircase: South or West (Clockwise rotation)\n• Main Entrance: North or East (Positive energy zones)`
+        reply = `100% Vastu Shastra Guidelines:\n• Pooja Mandir: North-East (Ishanya) — Most sacred corner\n• Kitchen: South-East (Agneya) or North-West (Vayavya)\n• Master Bedroom: South-West (Nairutya) for stability\n• Staircase: South or West (Clockwise rotation)\n• Main Entrance: North or East (Positive energy zones)`
       } else if (/(3d|elevation|facade|exterior|render|night|light)/i.test(qLower)) {
-        reply = `🏛️ 3D Front Elevation Styles:\n• Modern Indian Duplex (Warm wooden textures + ambient profile LEDs)\n• Contemporary Jaali & Stone Cladding (Perforated CNC screens)\n• Kerala Tropical Sloped Roof with Mangalore tiles\n• Classical Spanish Villa with arched balconies\n\nAll 3D elevations feature Day and Twilight lighting modes with material breakdowns!`
+        reply = `3D Front Elevation Styles:\n• Modern Indian Duplex (Warm wooden textures + ambient profile LEDs)\n• Contemporary Jaali & Stone Cladding (Perforated CNC screens)\n• Kerala Tropical Sloped Roof with Mangalore tiles\n• Classical Spanish Villa with arched balconies\n\nAll 3D elevations feature Day and Twilight lighting modes with material breakdowns!`
       } else if (/(talk|architect|call|contact|consult|callback|phone)/i.test(qLower)) {
-        reply = `📞 Connect with Indore House Makers Chief Architect:\nOur senior architectural consultants are available for 1-on-1 review calls.\n• Helpline: ${site.phone}\n• Email: ${site.email}\n• You can click "Book Free Consultation" to schedule an instant callback.`
+        reply = `Connect with Indore House Makers Chief Architect:\nOur senior architectural consultants are available for 1-on-1 review calls.\n• Helpline: ${site.phone}\n• Email: ${site.email}\n• You can click "Book Free Consultation" to schedule an instant callback.`
       }
 
       setChatMessages((prev) => [
@@ -750,18 +750,18 @@ export default function NivaasAiStudio({
             {entitlements?.designPass.active ? (
               <div className="hidden md:flex items-center gap-2">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold shadow-2xs">
-                  <span>🪙</span>
+                  <Icons.Sparkles size={13} className="text-amber-600" />
                   <span>3D Pass: {entitlements.designPass.creditsRemaining} Credits</span>
                   <span className="text-[10px] text-amber-700 font-semibold">({entitlements.designPass.daysRemaining}d left)</span>
                 </div>
                 <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-sky-50 border border-sky-300 text-sky-900 text-xs font-bold shadow-2xs">
-                  <span>📐</span>
+                  <Icons.Blueprint size={13} className="text-sky-600" />
                   <span>2D: {entitlements.daily2D ? `${entitlements.daily2D.remaining}/5 Today` : '5/day'}</span>
                 </div>
               </div>
             ) : entitlements?.daily2D && entitlements.daily2D.remaining > 0 ? (
               <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold shadow-2xs">
-                <span>🎁</span>
+                <Icons.Check size={13} className="text-emerald-600" />
                 <span>Free 2D: {entitlements.daily2D.remaining}/5 Today</span>
               </div>
             ) : isAuthenticated && !entitlements?.designPass?.active ? (
@@ -770,7 +770,7 @@ export default function NivaasAiStudio({
                 onClick={() => setShowPassModal(true)}
                 className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#E76F2E] to-[#C94F36] text-white text-xs font-bold shadow-2xs hover:opacity-95 transition cursor-pointer"
               >
-                <span>✨</span>
+                <Icons.Sparkles size={13} />
                 <span>Upgrade (₹299 Pass)</span>
               </button>
             ) : null}
@@ -797,7 +797,7 @@ export default function NivaasAiStudio({
                   : 'text-[#54504A] hover:text-[#292826]'
                   }`}
               >
-                <span className="shrink-0 text-xs">💬</span>
+                <Icons.MessageSquare size={13} className="shrink-0" />
                 <span>Ask AI</span>
               </button>
             </div>
@@ -2612,7 +2612,7 @@ export default function NivaasAiStudio({
                       /* STATE 1: GUEST / UNAUTHENTICATED USER */
                       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7E0D7] shadow-sm text-center space-y-5">
                         <div className="h-12 w-12 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xl border border-amber-200 shadow-xs">
-                          🔒
+                          <Icons.ShieldCheck size={22} className="text-amber-600" />
                         </div>
                         <div>
                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-xs font-bold border border-amber-200 mb-2">
@@ -2664,7 +2664,7 @@ export default function NivaasAiStudio({
                             <span>Sign In / Create Account to Generate (Free)</span>
                           </button>
                           <p className="text-[11px] text-[#8C827A] font-medium flex items-center justify-center gap-1.5">
-                            <span>🛡️</span> Your draft state is automatically preserved &amp; restored after login.
+                            <Icons.ShieldCheck size={13} className="text-amber-600 shrink-0" /> Your draft state is automatically preserved &amp; restored after login.
                           </p>
                         </div>
                       </div>
@@ -2672,11 +2672,12 @@ export default function NivaasAiStudio({
                       /* STATE 1: ACTIVE DESIGN PASS HOLDER (PAID GENERATION UNLOCKED) */
                       <div className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-amber-400/60 shadow-sm text-center space-y-5 animate-fadeIn">
                         <div className="h-12 w-12 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xl border border-amber-300 shadow-xs">
-                          🪙
+                          <Icons.Sparkles size={22} className="text-amber-600" />
                         </div>
                         <div>
                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 text-xs font-bold border border-amber-300 mb-2">
-                            <span>🪙 Design Pass Active</span> · {entitlements.designPass.creditsRemaining}/5 3D Credits · 2D: {entitlements.daily2D ? `${entitlements.daily2D.remaining}/5 Today` : '5/day'}
+                            <Icons.Sparkles size={13} className="text-amber-600" />
+                            <span>Design Pass Active</span> · {entitlements.designPass.creditsRemaining}/5 3D Credits · 2D: {entitlements.daily2D ? `${entitlements.daily2D.remaining}/5 Today` : '5/day'}
                             {entitlements.designPass.daysRemaining > 0 && (
                               <span> · Valid for {entitlements.designPass.daysRemaining} days</span>
                             )}
@@ -2766,8 +2767,9 @@ export default function NivaasAiStudio({
                             )}
                           </button>
 
-                          <p className="text-[11px] text-[#8C827A] font-medium">
-                            🪙 3D models use 1 of your {entitlements.designPass.creditsRemaining} remaining 3D Pass credits. 2D plans use your 5 daily quota without consuming 3D credits.
+                          <p className="text-[11px] text-[#8C827A] font-medium flex items-center justify-center gap-1.5">
+                            <Icons.Sparkles size={12} className="text-amber-600 inline shrink-0" />
+                            <span>3D models use 1 of your {entitlements.designPass.creditsRemaining} remaining 3D Pass credits. 2D plans use your 5 daily quota without consuming 3D credits.</span>
                           </p>
                         </div>
                       </div>
@@ -2775,11 +2777,12 @@ export default function NivaasAiStudio({
                       /* STATE 2: AUTHENTICATED USER — FREE 2D PREVIEWS AVAILABLE (5 LIFETIME QUOTA) */
                       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7E0D7] shadow-sm text-center space-y-5 animate-fadeIn">
                         <div className="h-12 w-12 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xl border border-emerald-200 shadow-xs">
-                          ✓
+                          <Icons.Check size={22} className="text-emerald-600" />
                         </div>
                         <div>
                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 mb-2">
-                            🎉 Free 2D Quota · {entitlements?.free2D?.remaining ?? entitlements?.freeEntitlement?.creditsRemaining ?? 5}/5 Remaining · {user?.name || user?.email || 'Verified Account'}
+                            <Icons.Sparkles size={12} className="text-emerald-600" />
+                            <span>Free 2D Quota · {entitlements?.free2D?.remaining ?? entitlements?.freeEntitlement?.creditsRemaining ?? 5}/5 Remaining · {user?.name || user?.email || 'Verified Account'}</span>
                           </div>
                           <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#111827]">
                             Your 2D Blueprint is Ready to Generate
@@ -2850,7 +2853,8 @@ export default function NivaasAiStudio({
                             onClick={() => setShowPassModal(true)}
                             className="w-full py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold border border-amber-200 transition flex items-center justify-center gap-1.5 cursor-pointer"
                           >
-                            <span>✨ Want 3D Facades &amp; Renders? Upgrade to ₹299 Pass</span>
+                            <Icons.Sparkles size={13} className="text-amber-700" />
+                            <span>Want 3D Facades &amp; Renders? Upgrade to ₹299 Pass</span>
                           </button>
                         </div>
                       </div>
@@ -2858,11 +2862,12 @@ export default function NivaasAiStudio({
                       /* STATE 3: FREE PREVIEW CONSUMED & NO ACTIVE PASS */
                       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7E0D7] shadow-sm text-center space-y-5 animate-fadeIn">
                         <div className="h-12 w-12 mx-auto rounded-full bg-orange-50 text-[#E76F2E] flex items-center justify-center font-bold text-xl border border-orange-200 shadow-xs">
-                          ⚡
+                          <Icons.Sparkles size={22} className="text-[#E76F2E]" />
                         </div>
                         <div>
                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 text-[#C65320] text-xs font-bold border border-orange-200 mb-2">
-                            <span>⚡ Today's Free 2D Quota Completed (5/5 Used)</span>
+                            <Icons.Sparkles size={12} className="text-[#C65320]" />
+                            <span>Today's Free 2D Quota Completed (5/5 Used)</span>
                           </div>
                           <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#111827]">
                             Unlock 3D Designs &amp; Instant Quota (₹299 Pass)
@@ -3504,8 +3509,8 @@ export default function NivaasAiStudio({
                       onClick={() => handleSendChat('30x50 East Facing Vastu Plan')}
                       className="p-2 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:border-[#E76F2E] hover:bg-[#FFF6E8] text-left transition group cursor-pointer"
                     >
-                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1">
-                        <span>📐</span> <span>2D House Plans</span>
+                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1.5">
+                        <Icons.Blueprint size={13} className="text-[#E76F2E] shrink-0" /> <span>2D House Plans</span>
                       </div>
                       <div className="text-[9.5px] text-[#54504A] mt-0.5">30x50, 20x40 layouts</div>
                     </button>
@@ -3515,8 +3520,8 @@ export default function NivaasAiStudio({
                       onClick={() => handleSendChat('Vastu rules for Kitchen and Pooja room')}
                       className="p-2 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:border-[#E76F2E] hover:bg-[#FFF6E8] text-left transition group cursor-pointer"
                     >
-                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1">
-                        <span>🧭</span> <span>100% Vastu Shastra</span>
+                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1.5">
+                        <Icons.Compass size={13} className="text-[#E76F2E] shrink-0" /> <span>100% Vastu Shastra</span>
                       </div>
                       <div className="text-[9.5px] text-[#54504A] mt-0.5">Kitchen &amp; Mandir rules</div>
                     </button>
@@ -3526,8 +3531,8 @@ export default function NivaasAiStudio({
                       onClick={() => handleSendChat('Construction cost for 1500 sq.ft in Indore')}
                       className="p-2 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:border-[#E76F2E] hover:bg-[#FFF6E8] text-left transition group cursor-pointer"
                     >
-                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1">
-                        <span>💰</span> <span>Cost Estimator</span>
+                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1.5">
+                        <Icons.Calculator size={13} className="text-[#E76F2E] shrink-0" /> <span>Cost Estimator</span>
                       </div>
                       <div className="text-[9.5px] text-[#54504A] mt-0.5">Indore material rates</div>
                     </button>
@@ -3537,8 +3542,8 @@ export default function NivaasAiStudio({
                       onClick={() => handleSendChat('What is included in the ₹299 AI Plan?')}
                       className="p-2 rounded-lg bg-[#FAF8F5] border border-[#EEE9E3] hover:border-[#E76F2E] hover:bg-[#FFF6E8] text-left transition group cursor-pointer"
                     >
-                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1">
-                        <span>✨</span> <span>₹299 AI Plan</span>
+                      <div className="font-bold text-[10.5px] text-[#292826] group-hover:text-[#E76F2E] flex items-center gap-1.5">
+                        <Icons.Sparkles size={13} className="text-[#E76F2E] shrink-0" /> <span>₹299 AI Plan</span>
                       </div>
                       <div className="text-[9.5px] text-[#54504A] mt-0.5">5 Credits • CAD &amp; 3D</div>
                     </button>
@@ -3625,12 +3630,12 @@ export default function NivaasAiStudio({
                 <Icons.Sparkles size={11} className="text-[#E76F2E]" /> Quick:
               </span>
               {[
-                { label: '📐 30x50 East Plan', query: '30x50 East Facing House Plan recommendation' },
-                { label: '💰 Indore Construction Cost', query: 'Construction cost for 1500 sq.ft in Indore' },
-                { label: '🧭 Vastu for Mandir & Kitchen', query: 'Vastu directions for Mandir and Kitchen' },
-                { label: '✨ What is in ₹299 Plan?', query: 'What is included in the ₹299 AI Plan?' },
-                { label: '🏛️ Modern Duplex 3D Elevation', query: 'Modern 3D Front Elevation designs' },
-                { label: '📞 Speak with Architect', query: 'I want to talk to an architect' },
+                { label: '30x50 East Plan', query: '30x50 East Facing House Plan recommendation' },
+                { label: 'Indore Construction Cost', query: 'Construction cost for 1500 sq.ft in Indore' },
+                { label: 'Vastu for Mandir & Kitchen', query: 'Vastu directions for Mandir and Kitchen' },
+                { label: 'What is in ₹299 Plan?', query: 'What is included in the ₹299 AI Plan?' },
+                { label: 'Modern Duplex 3D Elevation', query: 'Modern 3D Front Elevation designs' },
+                { label: 'Speak with Architect', query: 'I want to talk to an architect' },
               ].map((s) => (
                 <button
                   key={s.label}
